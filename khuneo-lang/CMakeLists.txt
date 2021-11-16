@@ -4,9 +4,10 @@ add_library(khuneo-lang INTERFACE
 	"khuneo.hpp"
 	"khuneo_vm.hpp"
 	"khuneo_state.hpp"
-	"khuneo_def.hpp"
+	
 	"khuneo_vm_ops.hpp"
 	"khuneo_vm_context.hpp"
+	"khuneo_data.hpp"
 )
 
 set_target_properties(khuneo-lang PROPERTIES LINKER_LANGUAGE CXX)
