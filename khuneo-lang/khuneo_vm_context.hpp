@@ -34,13 +34,25 @@ namespace khuneo::vm::impl
 			{
 				struct
 				{
-					khuneo::impl::kh_data_store r0; // General register 0
-					khuneo::impl::kh_data_store r1; // General register 1
-					khuneo::impl::kh_data_store r2; // General register 2
-					khuneo::impl::kh_data_store r3; // General register 3
+					khuneo::impl::kh_data_store r0;
+					khuneo::impl::kh_data_store r1;
+					khuneo::impl::kh_data_store r2;
+					khuneo::impl::kh_data_store r3;
+					khuneo::impl::kh_data_store r4;
+					khuneo::impl::kh_data_store r5;
+					khuneo::impl::kh_data_store r6;
+					khuneo::impl::kh_data_store r7;
+					khuneo::impl::kh_data_store r8;
+					khuneo::impl::kh_data_store r9;
+					khuneo::impl::kh_data_store r10;
+					khuneo::impl::kh_data_store r11;
+					khuneo::impl::kh_data_store r12;
+					khuneo::impl::kh_data_store r13;
+					khuneo::impl::kh_data_store r14;
+					khuneo::impl::kh_data_store r15;
 				};
 
-				khuneo::impl::kh_data_store r[];
+				khuneo::impl::kh_data_store r[16];
 			};
 		} registers;
 	};

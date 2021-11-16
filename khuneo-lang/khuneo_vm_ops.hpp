@@ -154,10 +154,11 @@ namespace khuneo::vm::codes
 	// 
 	//		'a' = Any interrupt | inti a
 	//			> Nothing significant, can be used for any purpose. eg sending this interrupt
-	//			  to do things from the VM execution context
+	//			  to do things from the interrupt handler
+	//			> Invokes handler? Yes
 	// 
 	//		'm' = Message interrupt | inti m "message\0"
-	//			> Affects registers r0 and ip
+	//			> Sets the r0 register to the address of the null terminated cstring message
 	//			> Invokes handler? Yes
 	//
 	using op_inti = impl::define_opcode<"inti", 1, [](KHUNEO_CTX_PARAM)
