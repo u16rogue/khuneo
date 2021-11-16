@@ -152,6 +152,10 @@ namespace khuneo::vm::codes
 	//		inti <interrupt code | 1 byte>
 	// Interrupt codes:
 	// 
+	//		'a' = Any interrupt
+	//			> Nothing significant, can be used for any purpose. eg sending this interrupt
+	//			  to do things from the VM execution context
+	// 
 	//		'm' = Message interrupt | inti m "message\0"
 	//			> Affects registers r0 and ip
 	//			> Invokes handler? Yes
@@ -163,6 +167,15 @@ namespace khuneo::vm::codes
 		// Prepare the interrupt request
 		switch (KHUNEO_CTX.registers.interrupt_flag)
 		{
+			case 'a':
+			{
+				if (KHUNEO_CTX.interrupt_handler)
+					KHUNEO_CTX.interrupt_handler(KHUNEO_CTX);
+
+				KHUNEO_CTX.registers.ip.ptr += 5;
+				break;
+			}
+
 			case 'm':
 			{
 				char *message = reinterpret_cast<char *>(KHUNEO_CTX.registers.ip.ptr + 5);

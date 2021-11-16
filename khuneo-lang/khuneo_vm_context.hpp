@@ -46,6 +46,7 @@ namespace khuneo::vm::impl
 					context_storage r0; // General register 0
 					context_storage r1; // General register 1
 					context_storage r2; // General register 2
+					context_storage r3; // General register 3
 				};
 
 				context_storage r[];
