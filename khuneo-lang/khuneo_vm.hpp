@@ -30,9 +30,9 @@ namespace khuneo::vm::impl
 namespace khuneo::vm
 {
 	template <class... custom_opcodes>
-	auto execute(KHUNEO_CTX_PARAM, void * code, void * eoc) -> void
+	auto execute(KHUNEO_CTX_PARAM, void * code, void * eoc) -> bool
 	{
-		impl::basic_execute<
+		return impl::basic_execute<
 			// Default opcodes used by the VM
 			khuneo::vm::codes::op_nop,
 			khuneo::vm::codes::op_inti,
