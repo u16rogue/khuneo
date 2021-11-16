@@ -15,9 +15,20 @@ namespace khuneo::impl
 
 	struct kh_managed_value_block
 	{
+		static auto alloc(std::size_t buffer_size) -> kh_managed_value_block *
+		{
+			// TODO: replace this with a templated custom allocator
+			return reinterpret_cast<kh_managed_value_block *>(std::malloc(sizeof(kh_managed_value_block) + buffer_size));
+		}
+
+		auto get_block_size() -> std::size_t
+		{
+			return sizeof(kh_managed_value_block) + buffer_size;
+		}
+
 		int             ref_count { 0 };
 		kh_managed_type type;
-		std::size_t     size;
+		std::size_t     buffer_size;
 		char            buffer[];
 	};
 
