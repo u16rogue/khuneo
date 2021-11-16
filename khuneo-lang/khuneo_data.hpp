@@ -19,13 +19,15 @@ namespace khuneo::impl
 	enum class symbol_type
 	{
 		INTEGER,
-		STRING
+		STRING,
+		FUNCTION
 	};
 	
 	struct symbol_flags
 	{
-		bool is_ref   : 1; // If true, the actual data is stored somewhere else referenced (pointer) by data.ptr, otherwise if false the data is inside the data variable itself
-		bool is_const : 1; // Determines if its modifiable or not
+		bool is_ref    : 1; // If true, the actual data is stored somewhere else referenced (pointer) by data.ptr, otherwise if false the data is inside the data variable itself
+		bool is_const  : 1; // Determines if its modifiable or not
+		bool is_native : 1;
 	};
 
 	class symbol
