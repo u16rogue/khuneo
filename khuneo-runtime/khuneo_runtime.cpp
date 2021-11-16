@@ -16,7 +16,7 @@ auto vm_interrupt_handler(KHUNEO_CTX_PARAM) -> void
             std::cin.get();
             break;
         case 'm':
-            printf("vm message interrupt (0x%p @ 0x%p): %s\n", &KHUNEO_CTX, KHUNEO_CTX.registers.ip.ptr, KHUNEO_CTX.registers.r0.ptr);
+            printf("vm message interrupt (0x%p @ 0x%p): %s\n", &KHUNEO_CTX, KHUNEO_CTX.registers.ip, KHUNEO_CTX.registers.r0.value.ptr);
             break;
         default:
             printf("Invalid interrupt flag\n");
@@ -33,10 +33,10 @@ auto vm_exception_handler(KHUNEO_CTX_PARAM, khuneo::vm::exceptions ex) -> void
         case khuneo::vm::exceptions::INVALID_OPCODE:
         {
             printf(": invalid opcode [%X %X %X %X]",
-                   KHUNEO_CTX.registers.ip.ptr[0],
-                   KHUNEO_CTX.registers.ip.ptr[1],
-                   KHUNEO_CTX.registers.ip.ptr[2],
-                   KHUNEO_CTX.registers.ip.ptr[3]
+                   KHUNEO_CTX.registers.ip[0],
+                   KHUNEO_CTX.registers.ip[1],
+                   KHUNEO_CTX.registers.ip[2],
+                   KHUNEO_CTX.registers.ip[3]
             );
             break;
         }
@@ -46,7 +46,7 @@ auto vm_exception_handler(KHUNEO_CTX_PARAM, khuneo::vm::exceptions ex) -> void
             break;
 
         case khuneo::vm::exceptions::NO_INTERRUPT_HANDLER:
-            printf(": No interrupt handler found! IP: 0x%p", KHUNEO_CTX.registers.ip.ptr);
+            printf(": No interrupt handler found! IP: 0x%p", KHUNEO_CTX.registers.ip);
             break;
 
         default:
@@ -72,6 +72,7 @@ auto main(int argc, char ** argv) -> int
         filepath = argv[1];
     }
 
+    /* if you're using VS with clang, this is not an error. */
     if (!std::filesystem::exists(filepath))
     {
         printf("Invalid .bun file path!");

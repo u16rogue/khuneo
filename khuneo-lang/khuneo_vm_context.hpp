@@ -17,7 +17,23 @@ namespace khuneo::vm
 
 namespace khuneo::vm::impl
 {
-	// TODO: define struct for registers
+	enum class ctx_register_type
+	{
+		SYMBOL, // The current value of the register is a symbol
+		NUMBER  // The current value of the register is a value itself
+	};
+
+	struct ctx_register
+	{
+		union
+		{
+			std::uint8_t         * ptr;
+			khuneo::impl::symbol * symbol;
+			double                 number;
+		} value;
+
+		ctx_register_type contains;
+	};
 
 	// The current context that the VM uses.
 	// Similar to the concept of where each thread in a system has its own state, storage, registers, etc...
@@ -29,32 +45,32 @@ namespace khuneo::vm::impl
 
 		struct
 		{
-			khuneo::impl::kh_data_store ip  { 0 }; // instruction pointer
+			std::uint8_t * ip   { 0 }; // instruction pointer
 			char interrupt_flag { 0 };
 
 			union
 			{
 				struct
 				{
-					khuneo::impl::kh_data_store r0;
-					khuneo::impl::kh_data_store r1;
-					khuneo::impl::kh_data_store r2;
-					khuneo::impl::kh_data_store r3;
-					khuneo::impl::kh_data_store r4;
-					khuneo::impl::kh_data_store r5;
-					khuneo::impl::kh_data_store r6;
-					khuneo::impl::kh_data_store r7;
-					khuneo::impl::kh_data_store r8;
-					khuneo::impl::kh_data_store r9;
-					khuneo::impl::kh_data_store r10;
-					khuneo::impl::kh_data_store r11;
-					khuneo::impl::kh_data_store r12;
-					khuneo::impl::kh_data_store r13;
-					khuneo::impl::kh_data_store r14;
-					khuneo::impl::kh_data_store r15;
+					ctx_register r0;
+					ctx_register r1;
+					ctx_register r2;
+					ctx_register r3;
+					ctx_register r4;
+					ctx_register r5;
+					ctx_register r6;
+					ctx_register r7;
+					ctx_register r8;
+					ctx_register r9;
+					ctx_register r10;
+					ctx_register r11;
+					ctx_register r12;
+					ctx_register r13;
+					ctx_register r14;
+					ctx_register r15;
 				};
 
-				khuneo::impl::kh_data_store r[16];
+				ctx_register r[16];
 			};
 		} registers;
 	};

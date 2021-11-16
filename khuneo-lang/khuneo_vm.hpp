@@ -10,9 +10,9 @@ namespace khuneo::vm::impl
 		static_assert(!khuneo::vm::impl::opcode_collision_check::run<opcodes...>(), "Static check failed due to an opcode collision! This is caused by an opcode generating the same code value for the VM.");
 
 		// Initialize the context
-		KHUNEO_CTX.registers.ip.ptr = reinterpret_cast<decltype(KHUNEO_CTX.registers.ip.ptr)>(code);
+		KHUNEO_CTX.registers.ip = reinterpret_cast<decltype(KHUNEO_CTX.registers.ip)>(code);
 
-		while (KHUNEO_CTX.registers.ip.ptr < eoc)
+		while (KHUNEO_CTX.registers.ip < eoc)
 		{
 			if ((opcodes::check_and_exec(KHUNEO_CTX) || ...) == false)
 			{

@@ -7,7 +7,7 @@ namespace khuneo::impl
 {
 	enum class kh_managed_type
 	{
-		INTEGER,
+		NUMBER,
 		STRING,
 		FUNCTION,
 		STRUCTURE

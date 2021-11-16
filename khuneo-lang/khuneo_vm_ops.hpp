@@ -44,7 +44,7 @@ namespace khuneo::vm::impl
 		
 		static auto check_and_exec(KHUNEO_CTX_PARAM) -> bool
 		{
-			if (*reinterpret_cast<decltype(op.code)*>(KHUNEO_CTX.registers.ip.ptr) != op.code)
+			if (*reinterpret_cast<decltype(op.code)*>(KHUNEO_CTX.registers.ip) != op.code)
 				return false;
 
 			constexpr auto _op_exec = op_exec; // for debugging.
@@ -145,7 +145,7 @@ namespace khuneo::vm::codes
 	// No operation
 	using op_nop = impl::define_opcode<"nop", 0, [](KHUNEO_CTX_PARAM)
 	{
-		KHUNEO_CTX.registers.ip.ptr += 4;
+		KHUNEO_CTX.registers.ip += 4;
 	}>;
 
 	// Intermidiate interrupt
@@ -163,7 +163,7 @@ namespace khuneo::vm::codes
 	//
 	using op_inti = impl::define_opcode<"inti", 1, [](KHUNEO_CTX_PARAM)
 	{
-		KHUNEO_CTX.registers.interrupt_flag = reinterpret_cast<const char *>(KHUNEO_CTX.registers.ip.ptr)[4];
+		KHUNEO_CTX.registers.interrupt_flag = reinterpret_cast<const char *>(KHUNEO_CTX.registers.ip)[4];
 
 		// Process the interrupt request
 		switch (KHUNEO_CTX.registers.interrupt_flag)
@@ -173,14 +173,14 @@ namespace khuneo::vm::codes
 				if (KHUNEO_CTX.interrupt_handler)
 					KHUNEO_CTX.interrupt_handler(KHUNEO_CTX);
 
-				KHUNEO_CTX.registers.ip.ptr += 5;
+				KHUNEO_CTX.registers.ip += 5;
 				break;
 			}
 
 			case 'm':
 			{
-				char *message = reinterpret_cast<char *>(KHUNEO_CTX.registers.ip.ptr + 5);
-				KHUNEO_CTX.registers.r0.ptr = reinterpret_cast<decltype(KHUNEO_CTX.registers.r0.ptr)>(message);
+				char *message = reinterpret_cast<char *>(KHUNEO_CTX.registers.ip + 5);
+				KHUNEO_CTX.registers.r0.value.ptr = reinterpret_cast<decltype(KHUNEO_CTX.registers.r0.value.ptr)>(message);
 
 				if (KHUNEO_CTX.interrupt_handler)
 				{
@@ -194,7 +194,7 @@ namespace khuneo::vm::codes
 
 				// Advance the instruction pointer past the message string
 				while (*message) ++message;
-				KHUNEO_CTX.registers.ip.ptr = reinterpret_cast<decltype(KHUNEO_CTX.registers.ip.ptr)>(message + 1);
+				KHUNEO_CTX.registers.ip = reinterpret_cast<decltype(KHUNEO_CTX.registers.ip)>(message + 1);
 				break;
 			}
 
@@ -203,7 +203,7 @@ namespace khuneo::vm::codes
 				if (KHUNEO_CTX.exception_handler)
 					KHUNEO_CTX.exception_handler(KHUNEO_CTX, khuneo::vm::exceptions::INVALID_INTERRUPT_CODE);
 
-				KHUNEO_CTX.registers.ip.iptr = -1;
+				KHUNEO_CTX.registers.ip = reinterpret_cast<decltype(KHUNEO_CTX.registers.ip)>(-1);
 				break;
 			}
 		}
