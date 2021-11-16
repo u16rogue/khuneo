@@ -12,7 +12,8 @@ auto vm_interrupt_handler(KHUNEO_CTX_PARAM) -> void
     switch (KHUNEO_CTX.registers.interrupt_flag)
     {
         case 'a':
-            printf("Any interrupt was received!\n");
+            printf("Any interrupt was received! Press any key!\n");
+            std::cin.get();
             break;
         case 'm':
             printf("vm message interrupt (0x%p @ 0x%p): %s\n", &KHUNEO_CTX, KHUNEO_CTX.registers.ip.ptr, KHUNEO_CTX.registers.r0.ptr);
@@ -73,7 +74,7 @@ auto main(int argc, char ** argv) -> int
 
     if (!std::filesystem::exists(filepath))
     {
-        printf("Input file not found.");
+        printf("Invalid .bun file path!");
         return 0;
     }
 

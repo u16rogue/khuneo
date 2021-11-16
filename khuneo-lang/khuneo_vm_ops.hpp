@@ -148,11 +148,11 @@ namespace khuneo::vm::codes
 		KHUNEO_CTX.registers.ip.ptr += 4;
 	}>;
 
-	// Intermiddiate interrupt
-	//		inti <interrupt code | 1 byte>
+	// Intermidiate interrupt
+	//		inti <interrupt code | 1 byte> <optional data>
 	// Interrupt codes:
 	// 
-	//		'a' = Any interrupt
+	//		'a' = Any interrupt | inti a
 	//			> Nothing significant, can be used for any purpose. eg sending this interrupt
 	//			  to do things from the VM execution context
 	// 
@@ -160,11 +160,11 @@ namespace khuneo::vm::codes
 	//			> Affects registers r0 and ip
 	//			> Invokes handler? Yes
 	//
-	using op_interrupt_imm = impl::define_opcode<"inti", 1, [](KHUNEO_CTX_PARAM)
+	using op_inti = impl::define_opcode<"inti", 1, [](KHUNEO_CTX_PARAM)
 	{
 		KHUNEO_CTX.registers.interrupt_flag = reinterpret_cast<const char *>(KHUNEO_CTX.registers.ip.ptr)[4];
 
-		// Prepare the interrupt request
+		// Process the interrupt request
 		switch (KHUNEO_CTX.registers.interrupt_flag)
 		{
 			case 'a':

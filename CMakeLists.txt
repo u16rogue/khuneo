@@ -13,3 +13,8 @@ option(KHUNEO_BUILD_RUNTIME "Build the khuneo runtime executable." OFF)
 if (KHUNEO_BUILD_RUNTIME)
 	add_subdirectory(khuneo-runtime)
 endif()
+
+option(KHUNEO_BUILD_ASSEMBLER "Build the khuneo byte code assembler." OFF)
+if (KHUNEO_BUILD_ASSEMBLER)
+    add_subdirectory(khuneo-assembler)
+endif ()

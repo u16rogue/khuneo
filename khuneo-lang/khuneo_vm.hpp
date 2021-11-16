@@ -36,7 +36,7 @@ namespace khuneo::vm
 		impl::basic_execute<
 			// Default opcodes used by the VM
 			khuneo::vm::codes::op_nop,
-			khuneo::vm::codes::op_interrupt_imm,
+			khuneo::vm::codes::op_inti,
 			// Add custom opcodes
 			custom_opcodes...
 		>(KHUNEO_CTX, code, eoc);

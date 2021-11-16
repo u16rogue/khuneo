@@ -15,15 +15,18 @@ namespace khuneo::vm
 
 namespace khuneo::vm::impl
 {
-	union context_storage
+	struct context_storage
 	{
-		std::uint8_t * ptr;
-		std::uintptr_t iptr;
+		union
+		{
+			std::uint8_t * ptr;
+			std::uintptr_t iptr;
 
-		std::uint8_t   u8;
-		std::uint16_t u16;
-		std::uint32_t u32;
-		std::uint64_t u64;
+			std::uint8_t   u8;
+			std::uint16_t u16;
+			std::uint32_t u32;
+			std::uint64_t u64;
+		};
 	};
 
 	// The current context that the VM uses.
