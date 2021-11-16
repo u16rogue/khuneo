@@ -92,7 +92,7 @@ auto main(int argc, char ** argv) -> int
         .interrupt_handler = vm_interrupt_handler,
         .exception_handler = vm_exception_handler
     };
-
+    
     khuneo::vm::execute(ctx, code.get(), end);
 
     return 0;

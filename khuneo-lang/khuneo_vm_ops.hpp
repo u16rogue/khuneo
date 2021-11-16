@@ -54,7 +54,7 @@ namespace khuneo::vm::impl
 
 		// Assembles the current opcode to a buffer pointed by place_at
 		template <typename ret_t = std::uint8_t, typename... vargs_t>
-		static auto assemble_to(void * place_at, void * end, vargs_t... vargs) -> ret_t *
+		static auto assemble_to(void * place_at, void * end, vargs_t... vargs /*operands*/) -> ret_t *
 		{
 			#if 0
 			if constexpr (OPERAND_SIZE != 0)
@@ -83,7 +83,7 @@ namespace khuneo::vm::impl
 					if constexpr (std::is_same_v<decltype(vargs), const char *>)
 					{
 						const char * s_source = vargs;
-						/*+1 to make sure a space for a null terminator can be inserted*/
+						/// +1 to make sure a space for a null terminator can be inserted
 						while (current + 1 < end && *s_source)
 						{
 							*current = *s_source;

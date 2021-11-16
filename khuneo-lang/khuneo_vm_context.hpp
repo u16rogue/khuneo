@@ -17,6 +17,8 @@ namespace khuneo::vm
 
 namespace khuneo::vm::impl
 {
+	// TODO: define struct for registers
+
 	// The current context that the VM uses.
 	// Similar to the concept of where each thread in a system has its own state, storage, registers, etc...
 	struct context
@@ -55,13 +57,5 @@ namespace khuneo::vm::impl
 				khuneo::impl::kh_data_store r[16];
 			};
 		} registers;
-	};
-
-	struct register_id
-	{
-		enum
-		{
-
-		};
 	};
 }
