@@ -1,0 +1,14 @@
+.vs/
+.vscode/
+
+.out/
+out/
+
+.build/
+build/
+
+.test/
+test/
+
+CMakeSettings.json
+setup_env.sh
