@@ -10,5 +10,14 @@ build/
 .test/
 test/
 
+.bin/
+bin/
+
+.obj/
+obj/
+
+.packages/
+packages/
+
 CMakeSettings.json
 setup_env.sh

@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "khuneo-assembler-cli", "khuneo-assembler-cli\khuneo-assembler-cli.csproj", "{BFA1E8D0-17D2-4B55-ABD8-FF35F3FD79C4}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "khuneo-assembler-core", "khuneo-assembler-core\khuneo-assembler-core.shproj", "{C88C9BDA-0C13-4ABB-A7C8-5525242DFDAD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "khuneo-assembler-gui", "khuneo-assembler-gui\khuneo-assembler-gui.csproj", "{363F1174-D9B9-4D04-BA48-03299A33D964}"
+EndProject
+Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		khuneo-assembler-core\khuneo-assembler-core.projitems*{363f1174-d9b9-4d04-ba48-03299a33d964}*SharedItemsImports = 4
+		khuneo-assembler-core\khuneo-assembler-core.projitems*{bfa1e8d0-17d2-4b55-abd8-ff35f3fd79c4}*SharedItemsImports = 5
+		khuneo-assembler-core\khuneo-assembler-core.projitems*{c88c9bda-0c13-4abb-a7c8-5525242dfdad}*SharedItemsImports = 13
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BFA1E8D0-17D2-4B55-ABD8-FF35F3FD79C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFA1E8D0-17D2-4B55-ABD8-FF35F3FD79C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BFA1E8D0-17D2-4B55-ABD8-FF35F3FD79C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BFA1E8D0-17D2-4B55-ABD8-FF35F3FD79C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{363F1174-D9B9-4D04-BA48-03299A33D964}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{363F1174-D9B9-4D04-BA48-03299A33D964}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{363F1174-D9B9-4D04-BA48-03299A33D964}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{363F1174-D9B9-4D04-BA48-03299A33D964}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {97F8EAC5-2DA7-4A6F-976F-44ABD1AD2985}
+	EndGlobalSection
+EndGlobal
