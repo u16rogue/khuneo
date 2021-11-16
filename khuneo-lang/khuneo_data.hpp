@@ -5,8 +5,26 @@
 
 namespace khuneo::impl
 {
+	enum class kh_managed_type
+	{
+		INTEGER,
+		STRING,
+		FUNCTION,
+		STRUCTURE
+	};
+
+	struct kh_managed_value_block
+	{
+		int             ref_count { 0 };
+		kh_managed_type type;
+		std::size_t     size;
+		char            buffer[];
+	};
+
 	union kh_data_store
 	{
+		kh_managed_value_block * managed_block;
+
 		std::uint8_t * ptr;
 		std::uintptr_t iptr;
 
@@ -18,28 +36,17 @@ namespace khuneo::impl
 
 	enum class symbol_type
 	{
-		INTEGER,
-		STRING,
-		FUNCTION
-	};
-	
-	struct symbol_flags
-	{
-		bool is_ref    : 1; // If true, the actual data is stored somewhere else referenced (pointer) by data.ptr, otherwise if false the data is inside the data variable itself
-		bool is_const  : 1; // Determines if its modifiable or not
-		bool is_native : 1;
+		MANAGED,    // symbol::data is a pointer to a kh_managed_value_block
+		INPLACE,    // symbol::data contains the value itself
+		NATIVE_REF, // symbol::data is a pointer to an unmanaged memory
 	};
 
 	class symbol
 	{
 		const char * name;
 		unsigned int hashed_name;
-		int ref_count;
 
+		symbol_type   type;
 		kh_data_store data;
-		std::size_t size;
-
-		symbol_type type;
-		symbol_flags flags;
 	};
 }
