@@ -9,6 +9,9 @@
     <Import_RootNamespace>khuneo_assembler_core</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)assembler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)opcodes\op_inti.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)opcodes\op_nop.cs" />
     <Compile Include="..\khuneo-assembler-core\opcode.cs" />
   </ItemGroup>
 </Project>
