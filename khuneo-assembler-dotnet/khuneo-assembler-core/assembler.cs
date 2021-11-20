@@ -38,6 +38,17 @@ namespace khuneo_assembler_core
                             return null;
                         }
                     }
+                    else if (line.StartsWith("!"))
+                    {
+                        matched = true;
+                        string mnenomic = line.Substring(1);
+                        UInt32 opcode = hash.fnv32(mnenomic);
+                        byte[] opbytes = BitConverter.GetBytes(opcode);
+                        logger($"WARNING: Forcing assembler to generate opcode for [ {line_num} | {mnenomic} ]" +
+                               $"\nGenerated opcode: [{BitConverter.ToString(opbytes)}]");
+                        byte_code.AddRange(opbytes);
+                        break;
+                    }
                 }
 
                 if (!matched)
