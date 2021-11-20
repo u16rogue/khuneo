@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.IO;
 
 namespace khuneo_assembler_core
 {
-    public class OpCode
+    public class opcode
     {
-        public OpCode(string mnenomic, int operand_size)
+        public opcode(string mnenomic, int operand_size)
         {
             this.mnenomic = mnenomic;
             this.operand_size = operand_size;
@@ -23,18 +24,32 @@ namespace khuneo_assembler_core
         /// <summary>
         /// Parses a C++ source file for impl::define_opcode<> defintions and automatically imports them into the opcodes list
         /// </summary>
-        public static void ParseFromSourceFile(string filepath)
+        public static int ParseFromSourceFile(string filepath)
         {
+            if (!File.Exists(filepath))
+                return -1;
 
+            int new_opcodes = 0;
+
+            string source_code;
+            using (StreamReader sr = new(filepath))
+            {
+                source_code = sr.ReadToEnd();
+                sr.Close();
+            }
+
+
+
+            return new_opcodes;
         }
 
         /// <summary>
         /// Predefined opcodes
         /// </summary>
-        static List<OpCode> opcodes = new()
+        static List<opcode> opcodes = new()
         {
-            new OpCode("nop",  0),
-            new OpCode("inti", 1)
+            new opcode("nop",  0),
+            new opcode("inti", 1)
         };
     }
 }
