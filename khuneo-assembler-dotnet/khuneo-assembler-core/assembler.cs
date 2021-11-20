@@ -6,13 +6,14 @@ namespace khuneo_assembler_core
 {
     public class assembler
     {
-        private opcode.logger_delegate logger;
+        private logging.cb_delegate logger;
 
-        public assembler(opcode.logger_delegate logger_)
+        public assembler(logging.cb_delegate logger_)
         {
             this.logger = logger_;
         }
 
+        #nullable enable
         public List<byte>? assemble(string code)
         {
             List<byte> byte_code = new() {  };
@@ -34,7 +35,7 @@ namespace khuneo_assembler_core
                         }
                         else
                         {
-                            logger($"Failed to assemble at [{line_num} | {line}]");
+                            logger($"Failed to assemble at [{line_num} | {line}]", logging.type.ERROR);
                             return null;
                         }
                     }
@@ -45,7 +46,7 @@ namespace khuneo_assembler_core
                         UInt32 opcode = hash.fnv32(mnenomic);
                         byte[] opbytes = BitConverter.GetBytes(opcode);
                         logger($"WARNING: Forcing assembler to generate opcode for [ {line_num} | {mnenomic} ]" +
-                               $"\nGenerated opcode: [{BitConverter.ToString(opbytes)}]");
+                               $"\nGenerated opcode: [{BitConverter.ToString(opbytes)}]", logging.type.WARNING);
                         byte_code.AddRange(opbytes);
                         break;
                     }
@@ -53,13 +54,14 @@ namespace khuneo_assembler_core
 
                 if (!matched)
                 {
-                    logger($"Cannot assemble [{line_num} | {line}]");
+                    logger($"Cannot assemble [{line_num} | {line}]", logging.type.ERROR);
                     return null;
                 }
 
                 LBL_NEXT_LINE:;
             }
 
+            logger("Successfully assembled kel assembly to bun bytecode!", logging.type.SUCCESS);
             return byte_code;
         }
 

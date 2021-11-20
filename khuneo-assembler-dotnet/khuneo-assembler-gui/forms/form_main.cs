@@ -2,8 +2,9 @@
 using khuneo_assembler_core;
 using System.Windows.Forms;
 using System.IO;
+using System.Drawing;
 
-namespace khuneo_assembler_gui
+namespace khuneo_assembler_gui.forms
 {
     public partial class form_main : Form
     {
@@ -96,7 +97,35 @@ namespace khuneo_assembler_gui
 
         private void btn_assemble_Click(object sender, EventArgs e)
         {
-            var asm = new assembler((string msg) => { Console.WriteLine(msg); });
+            Program.form_log.Show();
+
+            var asm = new assembler((string msg, logging.type type) =>
+            {
+                Program.form_log.rtb_log.SelectionStart = Program.form_log.rtb_log.TextLength;
+                Program.form_log.rtb_log.SelectionLength = 0;
+                Color col = Program.form_log.rtb_log.ForeColor;
+
+                switch (type)
+                {
+                    case logging.type.MESSAGE:
+                        col = Color.DarkGray;
+                        break;
+                    case logging.type.WARNING:
+                        col = Color.DarkOrange;
+                        break;
+                    case logging.type.ERROR:
+                        col = Color.Red;
+                        break;
+                    case logging.type.SUCCESS:
+                        col = Color.LightGreen;
+                        break;
+                }
+
+                Program.form_log.rtb_log.SelectionColor = col;
+                Program.form_log.rtb_log.AppendText("\n" + msg);
+                Program.form_log.rtb_log.SelectionColor = Program.form_log.rtb_log.ForeColor;
+            });
+
             var res = asm.assemble(rtb_code.Text);
             if (res == null)
             {

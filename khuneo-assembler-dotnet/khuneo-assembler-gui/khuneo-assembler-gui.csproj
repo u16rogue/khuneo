@@ -51,16 +51,25 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="app_config.cs" />
-    <Compile Include="form_main.cs">
+    <Compile Include="forms\form_main.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="form_main.Designer.cs">
+    <Compile Include="forms\form_main.Designer.cs">
       <DependentUpon>form_main.cs</DependentUpon>
+    </Compile>
+    <Compile Include="forms\output_log.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="forms\output_log.Designer.cs">
+      <DependentUpon>output_log.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="form_main.resx">
+    <EmbeddedResource Include="forms\form_main.resx">
       <DependentUpon>form_main.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="forms\output_log.resx">
+      <DependentUpon>output_log.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

@@ -12,9 +12,10 @@ namespace khuneo_assembler_gui
     {
         public static app_config config;
 
-        public static form_main  form_main;
-        public static string     file_source = null;
-        public static string     runner      = null;
+        public static forms.form_main  form_main;
+        public static forms.output_log form_log;
+        public static string          file_source = null;
+        public static string          runner      = null;
 
         public static bool load_source_file(string file_path = null)
         {
@@ -71,6 +72,7 @@ namespace khuneo_assembler_gui
             Application.SetCompatibleTextRenderingDefault(false);
             Program.config = app_config.load_from_file();
             Program.form_main = new ();
+            Program.form_log  = new ();
             Application.Run(Program.form_main);
         }
     }
