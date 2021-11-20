@@ -21,10 +21,12 @@ namespace khuneo_assembler_core
             foreach (string line in code.Split('\n'))
             {
                 ++line_num;
+                bool matched = false;
                 foreach (opcode op in assembler.registered_opcodes)
                 {
                     if (line.StartsWith(op.mnenomic))
                     {
+                        matched = true;
                         byte_code.AddRange(BitConverter.GetBytes(op.code));
                         if (op.parse(ref byte_code, line.Substring(op.mnenomic.Length), this.logger))
                         {
@@ -32,10 +34,16 @@ namespace khuneo_assembler_core
                         }
                         else
                         {
-                            logger($"Failed to assemble at line {line_num}.");
+                            logger($"Failed to assemble at [{line_num} | {line}]");
                             return null;
                         }
                     }
+                }
+
+                if (!matched)
+                {
+                    logger($"Cannot assemble [{line_num} | {line}]");
+                    return null;
                 }
 
                 LBL_NEXT_LINE:;

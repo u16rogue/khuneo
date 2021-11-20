@@ -100,7 +100,7 @@ namespace khuneo_assembler_gui
             var res = asm.assemble(rtb_code.Text);
             if (res == null)
             {
-                MessageBox.Show("Failed to assemble .kel file to .bun", "Assembler failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Failed to assemble kel assembly file to bun bytecode", "Assembler failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             File.WriteAllBytes(Program.file_source.Replace(".kel", ".bun"), res.ToArray());
