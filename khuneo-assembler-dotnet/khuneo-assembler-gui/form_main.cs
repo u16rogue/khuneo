@@ -93,5 +93,17 @@ namespace khuneo_assembler_gui
 
             Program.save_source_file();
         }
+
+        private void btn_assemble_Click(object sender, EventArgs e)
+        {
+            var asm = new assembler((string msg) => { Console.WriteLine(msg); });
+            var res = asm.assemble(rtb_code.Text);
+            if (res == null)
+            {
+                MessageBox.Show("Failed to assemble .kel file to .bun", "Assembler failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            File.WriteAllBytes(Program.file_source.Replace(".kel", ".bun"), res.ToArray());
+        }
     }
 }

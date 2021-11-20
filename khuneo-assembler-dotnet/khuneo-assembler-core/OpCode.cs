@@ -7,6 +7,8 @@ namespace khuneo_assembler_core
 {
     public abstract class opcode
     {
+        public delegate void logger_delegate(string message);
+
         public opcode(string mnenomic, int operand_size)
         {
             this.mnenomic = mnenomic;
@@ -21,6 +23,6 @@ namespace khuneo_assembler_core
         public readonly UInt32 code         = 0x811c9dc5;
         public readonly int    operand_size = 0;
 
-        public abstract bool parse(string code);
+        public abstract bool parse(ref List<byte> byte_buffer, string code, logger_delegate logger);
     }
 }

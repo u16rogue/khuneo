@@ -117,6 +117,7 @@
             this.btn_assemble.Name = "btn_assemble";
             this.btn_assemble.Size = new System.Drawing.Size(62, 22);
             this.btn_assemble.Text = "Assemble";
+            this.btn_assemble.Click += new System.EventHandler(this.btn_assemble_Click);
             // 
             // btn_run
             // 

@@ -8,9 +8,9 @@ namespace khuneo_assembler_core.opcodes
     {
         public op_inti() : base("inti", 1) {}
 
-        public override bool parse(string code)
+        public override bool parse(ref List<byte> byte_buffer, string code, logger_delegate logger)
         {
-            throw new NotImplementedException();
+            return false;
         }
     }
 }

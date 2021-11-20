@@ -12,7 +12,8 @@ namespace khuneo_assembler_gui
     {
         public const string config_path = "./config.json";
 
-        public List<string> recent_files = new();
+        public List<string> recent_files   = new();
+        public string       khuneo_runtime = null;
 
         public bool save_to_file(string file_path = app_config.config_path)
         {
