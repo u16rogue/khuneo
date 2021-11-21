@@ -1,6 +1,7 @@
 #pragma once
 
 #include "khuneo_vm_ops.hpp"
+#include "opcodes/khuneo_opcodes.hpp"
 
 namespace khuneo::vm::impl
 {
@@ -10,9 +11,12 @@ namespace khuneo::vm::impl
 		static_assert(!khuneo::vm::impl::opcode_collision_check::run<opcodes...>(), "Static check failed due to an opcode collision! This is caused by an opcode generating the same code value for the VM.");
 
 		// Initialize the context
-		KHUNEO_CTX.registers.ip = reinterpret_cast<decltype(KHUNEO_CTX.registers.ip)>(code);
+		KHUNEO_CTX.registers.instruction_pointer = reinterpret_cast<decltype(KHUNEO_CTX.registers.instruction_pointer)>(code);
+		KHUNEO_CTX.stack_first             = &KHUNEO_CTX.stack[0];
+		KHUNEO_CTX.stack_last              = &KHUNEO_CTX.stack[sizeof(KHUNEO_CTX.stack) / sizeof(KHUNEO_CTX.stack[0])];
+		KHUNEO_CTX.registers.stack_pointer = KHUNEO_CTX.stack_last;
 
-		while (KHUNEO_CTX.registers.ip < eoc)
+		while (KHUNEO_CTX.registers.instruction_pointer < eoc)
 		{
 			if ((opcodes::check_and_exec(KHUNEO_CTX) || ...) == false)
 			{
@@ -34,8 +38,8 @@ namespace khuneo::vm
 	{
 		return impl::basic_execute<
 			// Default opcodes used by the VM
-			khuneo::vm::codes::op_nop,
-			khuneo::vm::codes::op_inti,
+			khuneo::vm::opcode::op_nop,
+			khuneo::vm::opcode::op_inti,
 			// Add custom opcodes
 			custom_opcodes...
 		>(KHUNEO_CTX, code, eoc);

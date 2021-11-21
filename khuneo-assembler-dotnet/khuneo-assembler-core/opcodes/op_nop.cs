@@ -16,6 +16,7 @@ namespace khuneo_assembler_core.opcodes
                 return false;
             }
 
+            logger("Encoded nop", logging.type.SUCCESS);
             return true;
         }
     }

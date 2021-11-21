@@ -17,61 +17,53 @@ namespace khuneo::vm
 
 namespace khuneo::vm::impl
 {
-	enum class ctx_register_type
+	struct context_register
 	{
-		SYMBOL, // The current value of the register is a symbol
-		NUMBER  // The current value of the register is a value itself
+		khuneo::impl::kh_data value;
+		khuneo::impl::kh_tag  tag;
 	};
 
-	struct ctx_register
-	{
-		union
-		{
-			std::uint8_t         * ptr;
-			khuneo::impl::symbol * symbol;
-			double                 number;
-		} value;
-
-		ctx_register_type contains;
-	};
-
-	// The current context that the VM uses.
-	// Similar to the concept of where each thread in a system has its own state, storage, registers, etc...
 	struct context
 	{
 		khuneo::state * state { nullptr };
 		void(*interrupt_handler)(context &);
 		void(*exception_handler)(context &, exceptions);
 
+		khuneo::impl::kh_stack_entry * stack_last;    // Last element of stack (&buffer[last_index])
+		khuneo::impl::kh_stack_entry * stack_first;   // Top element of stack (&buffer[0])
+
 		struct
 		{
-			std::uint8_t * ip   { 0 }; // instruction pointer
+			std::uint8_t                 * instruction_pointer { 0 };
+			khuneo::impl::kh_stack_entry * stack_pointer; // Current stack pointer (initialized to be lastof_stackbuffer)
 			char interrupt_flag { 0 };
 
 			union
 			{
 				struct
 				{
-					ctx_register r0;
-					ctx_register r1;
-					ctx_register r2;
-					ctx_register r3;
-					ctx_register r4;
-					ctx_register r5;
-					ctx_register r6;
-					ctx_register r7;
-					ctx_register r8;
-					ctx_register r9;
-					ctx_register r10;
-					ctx_register r11;
-					ctx_register r12;
-					ctx_register r13;
-					ctx_register r14;
-					ctx_register r15;
+					context_register r0;
+					context_register r1;
+					context_register r2;
+					context_register r3;
+					context_register r4;
+					context_register r5;
+					context_register r6;
+					context_register r7;
+					context_register r8;
+					context_register r9;
+					context_register r10;
+					context_register r11;
+					context_register r12;
+					context_register r13;
+					context_register r14;
+					context_register r15;
 				};
 
-				ctx_register r[16];
+				context_register r[16];
 			};
 		} registers;
+
+		khuneo::impl::kh_stack_entry stack[256]; // This is temporary, will (maybe) dynamically allocate stack in the future and support resizing.
 	};
 }

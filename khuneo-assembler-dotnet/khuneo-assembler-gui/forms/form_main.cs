@@ -34,6 +34,7 @@ namespace khuneo_assembler_gui.forms
             }
 
             this.update_recent_list();
+            Program.form_log.Show();
         }
 
         private void update_recent_list()

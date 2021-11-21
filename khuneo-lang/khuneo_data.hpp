@@ -5,37 +5,22 @@
 
 namespace khuneo::impl
 {
-	enum class kh_managed_type
+	enum class kh_tag
 	{
+		INVALID,
+		MANAGED_BLOCK,
+		INPLACE,
+		NATIVE_REF,
 		NUMBER,
 		STRING,
 		FUNCTION,
 		STRUCTURE
 	};
 
-	struct kh_managed_value_block
+	struct kh_managed_block;
+
+	union kh_data
 	{
-		static auto alloc(std::size_t buffer_size) -> kh_managed_value_block *
-		{
-			// TODO: replace this with a templated custom allocator
-			return reinterpret_cast<kh_managed_value_block *>(std::malloc(sizeof(kh_managed_value_block) + buffer_size));
-		}
-
-		auto get_block_size() -> std::size_t
-		{
-			return sizeof(kh_managed_value_block) + buffer_size;
-		}
-
-		int             ref_count { 0 };
-		kh_managed_type type;
-		std::size_t     buffer_size;
-		char            buffer[];
-	};
-
-	union kh_data_store
-	{
-		kh_managed_value_block * managed_block;
-
 		std::uint8_t * ptr;
 		std::uintptr_t iptr;
 
@@ -43,21 +28,39 @@ namespace khuneo::impl
 		std::uint16_t u16;
 		std::uint32_t u32;
 		std::uint64_t u64;
+		
+		kh_managed_block * kh_managed_block;
+		char               kh_buffer[]; 
+		double             kh_number;
 	};
 
-	enum class symbol_type
+	// Used for dynamically loaded data
+	struct kh_managed_block
 	{
-		MANAGED,    // symbol::data is a pointer to a kh_managed_value_block
-		INPLACE,    // symbol::data contains the value itself
-		NATIVE_REF, // symbol::data is a pointer to an unmanaged memory
+		int         ref_count   { 0 };
+		kh_tag      tag         { kh_tag::INVALID };
+		std::size_t buffer_size { sizeof(buffer)  };
+		kh_data     buffer      { 0 };
+
+		auto get_block_size() -> std::size_t
+		{
+			return sizeof(kh_managed_block) - sizeof(decltype(buffer)) + buffer_size;
+		}
 	};
 
-	class symbol
+	// Used for storing references or data
+	struct kh_symbol
 	{
 		const char * name;
 		unsigned int hashed_name;
 
-		symbol_type   type;
-		kh_data_store data;
+		kh_tag  tag;
+		kh_data value;
+	};
+
+	struct kh_stack_entry
+	{
+		kh_tag  tag;
+		kh_data value;
 	};
 }

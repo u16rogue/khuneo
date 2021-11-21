@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)assembler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)extensions\Strings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)hash.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)logging.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)opcodes\op_inti.cs" />
