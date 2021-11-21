@@ -14,12 +14,12 @@ namespace khuneo_assembler_core
         }
 
         #nullable enable
-        public List<byte>? assemble(string code)
+        public List<byte>? assemble(string[] code)
         {
             List<byte> byte_code = new() {  };
 
             int line_num = 0;
-            foreach (string line in code.Split('\n'))
+            foreach (string line in code)
             {
                 ++line_num;
                 bool matched = false;

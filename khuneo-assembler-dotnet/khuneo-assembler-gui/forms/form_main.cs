@@ -3,6 +3,8 @@ using khuneo_assembler_core;
 using System.Windows.Forms;
 using System.IO;
 using System.Drawing;
+using System.Diagnostics;
+using System.Threading;
 
 namespace khuneo_assembler_gui.forms
 {
@@ -15,7 +17,7 @@ namespace khuneo_assembler_gui.forms
 
         public void update_title()
         {
-            this.Text = "khuneo assember - " + (Program.file_source != null ? Program.file_source : "Untitled (*.kel)");
+            this.Text = "khuneo assembler - " + (Program.file_source != null ? Program.file_source : "Untitled (*.kel)");
         }
 
         private void on_load(object sender, EventArgs e)
@@ -52,6 +54,50 @@ namespace khuneo_assembler_gui.forms
                 Program.config.save_to_file();
                 this.update_recent_list();
             }));
+        }
+
+        private string run_assembler()
+        {
+            Program.form_log.Show();
+
+            var asm = new assembler((string msg, logging.type type) =>
+            {
+                Program.form_log.rtb_log.SelectionStart = Program.form_log.rtb_log.TextLength;
+                Program.form_log.rtb_log.SelectionLength = 0;
+                Color col = Program.form_log.rtb_log.ForeColor;
+
+                switch (type)
+                {
+                    case logging.type.MESSAGE:
+                        col = Color.DarkGray;
+                        break;
+                    case logging.type.WARNING:
+                        col = Color.DarkOrange;
+                        break;
+                    case logging.type.ERROR:
+                        col = Color.Red;
+                        break;
+                    case logging.type.SUCCESS:
+                        col = Color.DarkGreen;
+                        break;
+                }
+
+                Program.form_log.rtb_log.SelectionColor = col;
+                Program.form_log.rtb_log.AppendText("\n" + msg);
+                Program.form_log.rtb_log.SelectionColor = Program.form_log.rtb_log.ForeColor;
+            });
+
+            var res = asm.assemble(rtb_code.Text.Split('\n'));
+            if (res == null)
+            {
+                MessageBox.Show("Failed to assemble kel assembly file to bun bytecode", "Assembler failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return null;
+            }
+
+            string out_file = Program.file_source.Replace(".kel", ".bun");
+            File.WriteAllBytes(out_file, res.ToArray());
+
+            return out_file;
         }
 
         private void tsmi_new_Click(object sender, EventArgs e)
@@ -97,42 +143,51 @@ namespace khuneo_assembler_gui.forms
 
         private void btn_assemble_Click(object sender, EventArgs e)
         {
-            Program.form_log.Show();
+            this.run_assembler();
+        }
 
-            var asm = new assembler((string msg, logging.type type) =>
-            {
-                Program.form_log.rtb_log.SelectionStart = Program.form_log.rtb_log.TextLength;
-                Program.form_log.rtb_log.SelectionLength = 0;
-                Color col = Program.form_log.rtb_log.ForeColor;
-
-                switch (type)
-                {
-                    case logging.type.MESSAGE:
-                        col = Color.DarkGray;
-                        break;
-                    case logging.type.WARNING:
-                        col = Color.DarkOrange;
-                        break;
-                    case logging.type.ERROR:
-                        col = Color.Red;
-                        break;
-                    case logging.type.SUCCESS:
-                        col = Color.LightGreen;
-                        break;
-                }
-
-                Program.form_log.rtb_log.SelectionColor = col;
-                Program.form_log.rtb_log.AppendText("\n" + msg);
-                Program.form_log.rtb_log.SelectionColor = Program.form_log.rtb_log.ForeColor;
-            });
-
-            var res = asm.assemble(rtb_code.Text);
-            if (res == null)
-            {
-                MessageBox.Show("Failed to assemble kel assembly file to bun bytecode", "Assembler failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        private void btn_run_Click(object sender, EventArgs e)
+        {
+            string out_file = this.run_assembler();
+            if (out_file == null)
                 return;
+
+            if (Program.config.khuneo_runtime == null)
+            {
+                OpenFileDialog _ofd = new();
+                _ofd.Filter = "khuneo runtime|*.exe";
+                _ofd.Title = "Path to Khuneo Runtime Executable";
+                _ofd.FileName = "khuneo-runtime.exe";
+                if (_ofd.ShowDialog() != DialogResult.OK)
+                    return;
+                Program.config.khuneo_runtime = _ofd.FileName;
+                Program.config.save_to_file();
             }
-            File.WriteAllBytes(Program.file_source.Replace(".kel", ".bun"), res.ToArray());
+
+            new Thread(() =>
+            {
+                Process runtime = new();
+                runtime.StartInfo.FileName = Program.config.khuneo_runtime;
+                runtime.StartInfo.Arguments = out_file;
+                runtime.StartInfo.UseShellExecute = false;
+                runtime.StartInfo.RedirectStandardOutput = true;
+
+                runtime.OutputDataReceived += (s, e) =>
+                {
+                    Program.form_log.rtb_log.Invoke(new Action(() =>
+                    {
+                        Program.form_log.rtb_log.SelectionStart = Program.form_log.rtb_log.TextLength;
+                        Program.form_log.rtb_log.SelectionLength = 0;
+                        Program.form_log.rtb_log.SelectionColor = Color.DarkBlue;
+                        Program.form_log.rtb_log.AppendText("\n" + e.Data);
+                        Program.form_log.rtb_log.SelectionColor = Program.form_log.rtb_log.ForeColor;
+                    }));
+                };
+
+                runtime.Start();
+                runtime.BeginOutputReadLine();
+                runtime.WaitForExit();
+            }).Start();
         }
     }
 }

@@ -39,7 +39,8 @@
             this.rtb_log.Name = "rtb_log";
             this.rtb_log.Size = new System.Drawing.Size(547, 464);
             this.rtb_log.TabIndex = 0;
-            this.rtb_log.Text = "output log";
+            this.rtb_log.Text = "output log\nDarkGray = Message\nDarkOrange = Warnings\nRed = Errors\nDark Green = Suc" +
+    "cess\nDark Blue = khuneo runtime output\n# ----";
             // 
             // output_log
             // 
@@ -49,7 +50,6 @@
             this.Controls.Add(this.rtb_log);
             this.Name = "output_log";
             this.Text = "output_log";
-            this.TopMost = true;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.output_log_FormClosing);
             this.ResumeLayout(false);
 

@@ -45,8 +45,8 @@
             // 
             // rtb_code
             // 
-            this.rtb_code.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
+            this.rtb_code.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.rtb_code.DetectUrls = false;
             this.rtb_code.Font = new System.Drawing.Font("Cascadia Code SemiBold", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -85,28 +85,28 @@
             // tsmi_new
             // 
             this.tsmi_new.Name = "tsmi_new";
-            this.tsmi_new.Size = new System.Drawing.Size(180, 22);
+            this.tsmi_new.Size = new System.Drawing.Size(110, 22);
             this.tsmi_new.Text = "New";
             this.tsmi_new.Click += new System.EventHandler(this.tsmi_new_Click);
             // 
             // tsmi_open
             // 
             this.tsmi_open.Name = "tsmi_open";
-            this.tsmi_open.Size = new System.Drawing.Size(180, 22);
+            this.tsmi_open.Size = new System.Drawing.Size(110, 22);
             this.tsmi_open.Text = "Open";
             this.tsmi_open.Click += new System.EventHandler(this.tsmi_open_Click);
             // 
             // tsmi_save
             // 
             this.tsmi_save.Name = "tsmi_save";
-            this.tsmi_save.Size = new System.Drawing.Size(180, 22);
+            this.tsmi_save.Size = new System.Drawing.Size(110, 22);
             this.tsmi_save.Text = "Save";
             this.tsmi_save.Click += new System.EventHandler(this.tsmi_save_Click);
             // 
             // tsmi_recent
             // 
             this.tsmi_recent.Name = "tsmi_recent";
-            this.tsmi_recent.Size = new System.Drawing.Size(180, 22);
+            this.tsmi_recent.Size = new System.Drawing.Size(110, 22);
             this.tsmi_recent.Text = "Recent";
             // 
             // btn_assemble
@@ -127,6 +127,7 @@
             this.btn_run.Name = "btn_run";
             this.btn_run.Size = new System.Drawing.Size(32, 22);
             this.btn_run.Text = "Run";
+            this.btn_run.Click += new System.EventHandler(this.btn_run_Click);
             // 
             // ofd
             // 
