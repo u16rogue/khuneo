@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="app_config.cs" />
+    <Compile Include="extensions\RichTextBox.cs" />
     <Compile Include="forms\form_main.cs">
       <SubType>Form</SubType>
     </Compile>

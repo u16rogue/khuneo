@@ -5,6 +5,7 @@ using System.IO;
 using System.Drawing;
 using System.Diagnostics;
 using System.Threading;
+using khuneo_assembler_gui.extensions;
 
 namespace khuneo_assembler_gui.forms
 {
@@ -62,8 +63,6 @@ namespace khuneo_assembler_gui.forms
 
             var asm = new assembler((string msg, logging.type type) =>
             {
-                Program.form_log.rtb_log.SelectionStart = Program.form_log.rtb_log.TextLength;
-                Program.form_log.rtb_log.SelectionLength = 0;
                 Color col = Program.form_log.rtb_log.ForeColor;
 
                 switch (type)
@@ -82,9 +81,7 @@ namespace khuneo_assembler_gui.forms
                         break;
                 }
 
-                Program.form_log.rtb_log.SelectionColor = col;
-                Program.form_log.rtb_log.AppendText("\n" + msg);
-                Program.form_log.rtb_log.SelectionColor = Program.form_log.rtb_log.ForeColor;
+                Program.form_log.rtb_log.AppendColoredText("\n" + msg, col);
             });
 
             var res = asm.assemble(rtb_code.Text.Split('\n'));
@@ -171,19 +168,7 @@ namespace khuneo_assembler_gui.forms
                 runtime.StartInfo.Arguments = out_file;
                 runtime.StartInfo.UseShellExecute = false;
                 runtime.StartInfo.RedirectStandardOutput = true;
-
-                runtime.OutputDataReceived += (s, e) =>
-                {
-                    Program.form_log.rtb_log.Invoke(new Action(() =>
-                    {
-                        Program.form_log.rtb_log.SelectionStart = Program.form_log.rtb_log.TextLength;
-                        Program.form_log.rtb_log.SelectionLength = 0;
-                        Program.form_log.rtb_log.SelectionColor = Color.DarkBlue;
-                        Program.form_log.rtb_log.AppendText("\n" + e.Data);
-                        Program.form_log.rtb_log.SelectionColor = Program.form_log.rtb_log.ForeColor;
-                    }));
-                };
-
+                runtime.OutputDataReceived += (s, e) => Program.form_log.rtb_log.Invoke(new Action(() => Program.form_log.rtb_log.AppendColoredText("\n" + e.Data, Color.DarkBlue) ));
                 runtime.Start();
                 runtime.BeginOutputReadLine();
                 runtime.WaitForExit();
