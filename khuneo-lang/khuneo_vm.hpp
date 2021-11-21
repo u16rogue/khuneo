@@ -13,7 +13,7 @@ namespace khuneo::vm::impl
 		// Initialize the context
 		KHUNEO_CTX.registers.instruction_pointer = reinterpret_cast<decltype(KHUNEO_CTX.registers.instruction_pointer)>(code);
 		KHUNEO_CTX.stack_first             = &KHUNEO_CTX.stack[0];
-		KHUNEO_CTX.stack_last              = &KHUNEO_CTX.stack[sizeof(KHUNEO_CTX.stack) / sizeof(KHUNEO_CTX.stack[0])];
+		KHUNEO_CTX.stack_last              = &KHUNEO_CTX.stack[(sizeof(KHUNEO_CTX.stack) / sizeof(KHUNEO_CTX.stack[0])) - 1];
 		KHUNEO_CTX.registers.stack_pointer = KHUNEO_CTX.stack_last;
 
 		while (KHUNEO_CTX.registers.instruction_pointer < eoc)

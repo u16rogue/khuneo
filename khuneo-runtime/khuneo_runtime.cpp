@@ -7,13 +7,45 @@
 #include <string>
 #include "khuneo_runtime.hpp"
 
+auto dump_context(KHUNEO_CTX_PARAM) -> void
+{
+    printf("\nContext:"
+           "\n\tStack pointer: 0x%p"
+           "\n\tStack first: 0x%p"
+           "\n\tStack last: 0x%p"
+           "\n\tState: 0x%p"
+           "\n\tInterrupt handler: 0x%p"
+           "\n\tInterrupt flag: %c"
+           "\n\tException handler: 0x%p"
+           "\n\tInstruction pointer: 0x%p"
+           "\n\tStack size: %llu",
+           KHUNEO_CTX.registers.stack_pointer,
+           KHUNEO_CTX.stack_first,
+           KHUNEO_CTX.stack_last,
+           KHUNEO_CTX.state,
+           KHUNEO_CTX.interrupt_handler,
+           KHUNEO_CTX.registers.interrupt_flag,
+           KHUNEO_CTX.exception_handler,
+           KHUNEO_CTX.registers.instruction_pointer,
+           sizeof(KHUNEO_CTX.stack)
+    );
+
+    printf("\nRegisters: ");
+    int r_count = 0;
+    for (const auto & r : KHUNEO_CTX.registers.r)
+        printf("\n\tr%d = [%d] %f", r_count++, r.tag, r.value.kh_number);
+
+    printf("\nStack: ");
+    for (const auto * s = KHUNEO_CTX.registers.stack_pointer; s != KHUNEO_CTX.stack_last + 1; ++s)
+        printf("\n\t0x%p = [%d] %f", s, s->tag, s->value.kh_number);
+}
+
 auto vm_interrupt_handler(KHUNEO_CTX_PARAM) -> void
 {
     switch (KHUNEO_CTX.registers.interrupt_flag)
     {
         case 'a':
-            printf("Any interrupt was received! Press any key!\n");
-            std::cin.get();
+            dump_context(KHUNEO_CTX);
             break;
         case 'm':
             printf("vm message interrupt (0x%p @ 0x%p): %s\n", &KHUNEO_CTX, KHUNEO_CTX.registers.instruction_pointer, KHUNEO_CTX.registers.r0.value.ptr);
