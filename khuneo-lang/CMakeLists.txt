@@ -12,7 +12,6 @@ add_library(khuneo-lang INTERFACE
 	"khuneo_vm_ops.hpp"
 	"khuneo_vm_context.hpp"
 	"khuneo_data.hpp"
-	
 )
 
 set_target_properties(khuneo-lang PROPERTIES LINKER_LANGUAGE CXX)
