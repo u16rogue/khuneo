@@ -10,6 +10,8 @@
 
 namespace khuneo::vm::impl
 {
+	using opcode_id_t = unsigned int;
+
 	template <std::size_t len>
 	struct opcode_mnenomic
 	{
@@ -24,9 +26,9 @@ namespace khuneo::vm::impl
 			}
 		}
 
-		char         mnenomic[len] {  0  };
-		unsigned int code          { 0x811c9dc5 };
-		std::size_t  length        { len };
+		char        mnenomic[len] {  0  };
+		opcode_id_t code          { 0x811c9dc5 };
+		std::size_t length        { len };
 
 		static_assert(sizeof(code) == 4, "khuneo::vm::impl::opcode_mnenomic::code requires to be 4 bytes.");
 	};
@@ -46,7 +48,7 @@ namespace khuneo::vm::impl
 		
 		static auto check_and_exec(KHUNEO_CTX_PARAM) -> bool
 		{
-			if (*reinterpret_cast<decltype(op.code)*>(KHUNEO_CTX.registers.instruction_pointer) != op.code)
+			if (*reinterpret_cast<opcode_id_t*>(KHUNEO_CTX.registers.instruction_pointer) != op.code)
 				return false;
 
 			constexpr auto _op_exec = op_exec; // for debugging.
@@ -71,7 +73,7 @@ namespace khuneo::vm::impl
 				return nullptr;
 
 			// Place the opcode
-			*reinterpret_cast<decltype(op.code)*>(current) = op.code;
+			*reinterpret_cast<opcode_id_t *>(current) = op.code;
 			current += 4; // advance the current pointer
 
 			// Place the args as operands for our opcode

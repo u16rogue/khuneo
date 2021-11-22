@@ -7,6 +7,9 @@
 #include <string>
 #include "khuneo_runtime.hpp"
 
+
+#include <khuneo_hash.hpp>
+
 auto dump_context(KHUNEO_CTX_PARAM) -> void
 {
     printf("\nContext:"
