@@ -7,8 +7,7 @@
 #include <string>
 #include "khuneo_runtime.hpp"
 
-
-#include <khuneo_hash.hpp>
+#include <khuneo_parameters.hpp>
 
 auto dump_context(KHUNEO_CTX_PARAM) -> void
 {
