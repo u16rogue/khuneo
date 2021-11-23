@@ -56,13 +56,13 @@ auto vm_interrupt_handler(KHUNEO_CTX_PARAM) -> void
     };
 }
 
-auto vm_exception_handler(KHUNEO_CTX_PARAM, khuneo::vm::exceptions ex) -> void
+auto vm_exception_handler(KHUNEO_CTX_PARAM, khuneo::exceptions ex) -> void
 {
     printf("vm exception (0x%p)", &KHUNEO_CTX);
 
     switch (ex)
     {
-        case khuneo::vm::exceptions::INVALID_OPCODE:
+        case khuneo::exceptions::INVALID_OPCODE:
         {
             printf(": invalid opcode [%X %X %X %X]",
                    KHUNEO_CTX.registers.instruction_pointer[0],
@@ -73,11 +73,11 @@ auto vm_exception_handler(KHUNEO_CTX_PARAM, khuneo::vm::exceptions ex) -> void
             break;
         }
 
-        case khuneo::vm::exceptions::INVALID_INTERRUPT_CODE:
+        case khuneo::exceptions::INVALID_INTERRUPT_CODE:
             printf(": Invalid interrupt code [0x%x | %c]", KHUNEO_CTX.registers.interrupt_flag, KHUNEO_CTX.registers.interrupt_flag);
             break;
 
-        case khuneo::vm::exceptions::NO_INTERRUPT_HANDLER:
+        case khuneo::exceptions::NO_INTERRUPT_HANDLER:
             printf(": No interrupt handler found! IP: 0x%p", KHUNEO_CTX.registers.instruction_pointer);
             break;
 
@@ -121,12 +121,12 @@ auto main(int argc, char ** argv) -> int
 
     bin.read(code.get(), len);
 
-    khuneo::vm::impl::context ctx {
+    khuneo::impl::context ctx {
         .interrupt_handler = vm_interrupt_handler,
         .exception_handler = vm_exception_handler
     };
     
-    khuneo::vm::execute(ctx, code.get(), end);
+    khuneo::impl::vm_execute(ctx, code.get(), end);
 
     return 0;
 }

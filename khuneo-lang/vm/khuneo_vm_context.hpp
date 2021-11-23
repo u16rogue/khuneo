@@ -5,7 +5,7 @@
 #include "../khuneo_state.hpp"
 #include "../khuneo_data.hpp"
 
-namespace khuneo::vm
+namespace khuneo
 {
 	enum class exceptions
 	{
@@ -15,7 +15,7 @@ namespace khuneo::vm
 	};
 }
 
-namespace khuneo::vm::impl
+namespace khuneo::impl
 {
 	struct context_register
 	{

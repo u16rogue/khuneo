@@ -3,12 +3,12 @@
 #include "khuneo_vm_ops.hpp"
 #include "opcodes/khuneo_opcodes.hpp"
 
-namespace khuneo::vm::impl
+namespace khuneo::impl
 {
 	template <class... opcodes>
-	auto basic_execute(KHUNEO_CTX_PARAM, void * code, void * eoc) -> bool
+	auto basic_vm_execute(KHUNEO_CTX_PARAM, void * code, void * eoc) -> bool
 	{
-		static_assert(!khuneo::vm::impl::opcode_collision_check::run<opcodes...>(), "Static check failed due to an opcode collision! This is caused by an opcode generating the same code value for the VM.");
+		static_assert(!khuneo::impl::opcode_collision_check::run<opcodes...>(), "Static check failed due to an opcode collision! This is caused by an opcode generating the same code value for the VM.");
 
 		// Initialize the context
 		KHUNEO_CTX.registers.instruction_pointer = reinterpret_cast<decltype(KHUNEO_CTX.registers.instruction_pointer)>(code);
@@ -21,7 +21,7 @@ namespace khuneo::vm::impl
 			if ((opcodes::check_and_exec(KHUNEO_CTX) || ...) == false)
 			{
 				if (KHUNEO_CTX.exception_handler)
-					KHUNEO_CTX.exception_handler(KHUNEO_CTX, khuneo::vm::exceptions::INVALID_OPCODE);
+					KHUNEO_CTX.exception_handler(KHUNEO_CTX, khuneo::exceptions::INVALID_OPCODE);
 
 				return false;
 			}
@@ -31,15 +31,15 @@ namespace khuneo::vm::impl
 	}
 }
 
-namespace khuneo::vm
+namespace khuneo::impl
 {
 	template <class... custom_opcodes>
-	auto execute(KHUNEO_CTX_PARAM, void * code, void * eoc) -> bool
+	auto vm_execute(KHUNEO_CTX_PARAM, void * code, void * eoc) -> bool
 	{
-		return impl::basic_execute<
+		return khuneo::impl::basic_vm_execute<
 			// Default opcodes used by the VM
-			khuneo::vm::opcode::op_nop,
-			khuneo::vm::opcode::op_inti,
+			khuneo::impl::op_nop,
+			khuneo::impl::op_inti,
 			// Add custom opcodes
 			custom_opcodes...
 		>(KHUNEO_CTX, code, eoc);

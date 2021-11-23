@@ -2,7 +2,7 @@
 
 #include "../khuneo_vm_ops.hpp"
 
-namespace khuneo::vm::opcode
+namespace khuneo::impl
 {
 	// Intermidiate interrupt
 	//		inti <interrupt code | 1 byte> <optional data>
@@ -45,7 +45,7 @@ namespace khuneo::vm::opcode
 				else
 				{
 					if (KHUNEO_CTX.exception_handler)
-						KHUNEO_CTX.exception_handler(KHUNEO_CTX, khuneo::vm::exceptions::NO_INTERRUPT_HANDLER);
+						KHUNEO_CTX.exception_handler(KHUNEO_CTX, khuneo::exceptions::NO_INTERRUPT_HANDLER);
 				}
 
 				// Advance the instruction pointer past the message string
@@ -57,7 +57,7 @@ namespace khuneo::vm::opcode
 			default:
 			{
 				if (KHUNEO_CTX.exception_handler)
-					KHUNEO_CTX.exception_handler(KHUNEO_CTX, khuneo::vm::exceptions::INVALID_INTERRUPT_CODE);
+					KHUNEO_CTX.exception_handler(KHUNEO_CTX, khuneo::exceptions::INVALID_INTERRUPT_CODE);
 
 				KHUNEO_CTX.registers.instruction_pointer = reinterpret_cast<decltype(KHUNEO_CTX.registers.instruction_pointer)>(-1);
 				break;

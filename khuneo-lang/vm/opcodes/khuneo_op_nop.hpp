@@ -2,7 +2,7 @@
 
 #include "../khuneo_vm_ops.hpp"
 
-namespace khuneo::vm::opcode
+namespace khuneo::impl
 {
 	// No operation
 	using op_nop = impl::define_opcode<"nop", 0, [](KHUNEO_CTX_PARAM)

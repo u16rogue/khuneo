@@ -8,7 +8,7 @@
 
 #include "khuneo_vm_context.hpp"
 
-namespace khuneo::vm::impl
+namespace khuneo::impl
 {
 	using opcode_id_t = unsigned int;
 
@@ -34,7 +34,7 @@ namespace khuneo::vm::impl
 	};
 
 	#define KHUNEO_CTX ctx                                          // Defines the current context. ONLY USE WHEN KHUNEO_CTX_PARAM is in scope!
-	#define	KHUNEO_CTX_PARAM khuneo::vm::impl::context & KHUNEO_CTX // Declares the current context
+	#define	KHUNEO_CTX_PARAM khuneo::impl::context & KHUNEO_CTX // Declares the current context
 
 	template <opcode_mnenomic op, std::size_t operand_size, void(*op_exec)(KHUNEO_CTX_PARAM)>
 	struct define_opcode
