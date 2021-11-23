@@ -1,6 +1,6 @@
 #pragma once
 
-#include <khuneo_vm.hpp>
+#include "vm/khuneo_vm.hpp"
 
 namespace khuneo
 {

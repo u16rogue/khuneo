@@ -15,6 +15,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)logging.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)opcodes\op_inti.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)opcodes\op_nop.cs" />
-    <Compile Include="..\khuneo-assembler-core\opcode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)opcode.cs" />
   </ItemGroup>
 </Project>

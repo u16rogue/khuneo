@@ -2,8 +2,8 @@
 
 #include <cstdint>
 
-#include "khuneo_state.hpp"
-#include "khuneo_data.hpp"
+#include "../khuneo_state.hpp"
+#include "../khuneo_data.hpp"
 
 namespace khuneo::vm
 {
@@ -19,8 +19,8 @@ namespace khuneo::vm::impl
 {
 	struct context_register
 	{
-		khuneo::impl::kh_data value;
 		khuneo::impl::kh_tag  tag;
+		khuneo::impl::kh_data value;
 	};
 
 	struct context
@@ -31,6 +31,7 @@ namespace khuneo::vm::impl
 
 		khuneo::impl::kh_stack_entry * stack_last;    // Last element of stack (&buffer[last_index])
 		khuneo::impl::kh_stack_entry * stack_first;   // Top element of stack (&buffer[0])
+		khuneo::impl::kh_stack_entry   stack[256]; // This is temporary, will (maybe) dynamically allocate stack in the future and support resizing.
 
 		struct
 		{
@@ -63,7 +64,5 @@ namespace khuneo::vm::impl
 				context_register r[16];
 			};
 		} registers;
-
-		khuneo::impl::kh_stack_entry stack[256]; // This is temporary, will (maybe) dynamically allocate stack in the future and support resizing.
 	};
 }

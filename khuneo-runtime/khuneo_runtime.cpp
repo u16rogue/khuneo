@@ -1,3 +1,4 @@
+#include "khuneo_runtime.hpp"
 #include <cstdio>
 #include <khuneo.hpp>
 #include <cstdint>
@@ -5,9 +6,6 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include "khuneo_runtime.hpp"
-
-#include <khuneo_parameters.hpp>
 
 auto dump_context(KHUNEO_CTX_PARAM) -> void
 {

@@ -39,12 +39,9 @@ namespace khuneo::vm::impl
 	template <opcode_mnenomic op, std::size_t operand_size, void(*op_exec)(KHUNEO_CTX_PARAM)>
 	struct define_opcode
 	{
-		enum
-		{
-			OPERAND_SIZE = operand_size,
-			SIZE         = sizeof(decltype(op.code)) + operand_size,
-			CODE         = op.code,
-		};
+		static constexpr auto OPERAND_SIZE = operand_size;
+		static constexpr auto SIZE = sizeof(opcode_id_t) + operand_size;
+		static constexpr auto CODE = op.code;
 		
 		static auto check_and_exec(KHUNEO_CTX_PARAM) -> bool
 		{
