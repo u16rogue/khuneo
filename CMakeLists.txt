@@ -6,6 +6,8 @@ project(
 	DESCRIPTION "A modular and abstracted embedded programming language for C++"
 )
 
+option(KH_LOCAL_TEST "Local testing executable" OFF)
+
 add_library(
 	${PROJECT_NAME}
 
@@ -18,3 +20,8 @@ target_include_directories(
 	PUBLIC
 	"${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
+
+if (KH_LOCAL_TEST)
+	add_subdirectory("localtest")
+	target_link_libraries(kh_localtest PRIVATE ${PROJECT_NAME})
+endif()

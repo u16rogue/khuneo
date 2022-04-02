@@ -5,3 +5,4 @@ build/
 *.obj
 out/
 localtest/
+CMakeSettings.json
