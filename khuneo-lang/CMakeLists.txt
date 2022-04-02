@@ -14,7 +14,8 @@ add_library(khuneo-lang INTERFACE
 	"vm/opcodes/khuneo_opcodes.hpp"
 	"vm/opcodes/khuneo_op_nop.hpp"
 	"vm/opcodes/khuneo_op_inti.hpp"
- "vm/opcodes/khuneo_op_mov.hpp")
+	"vm/opcodes/khuneo_op_mov.hpp"
+)
 
 set_target_properties(khuneo-lang PROPERTIES LINKER_LANGUAGE CXX)
 set(khuneo-lang-includes "${CMAKE_CURRENT_SOURCE_DIR}" PARENT_SCOPE)
