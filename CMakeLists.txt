@@ -6,6 +6,9 @@ project(
 	DESCRIPTION "A modular and abstracted embedded programming language for C++"
 )
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED true)
+
 option(KH_LOCAL_TEST "Local testing executable" OFF)
 
 # "${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/.hpp"

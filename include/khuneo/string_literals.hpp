@@ -16,7 +16,7 @@ namespace khuneo
 		T str[sz] { 0 };
 		const int length  { sz - 1 };
 
-		auto match(const T * other) -> bool
+		auto match(const T * other) const noexcept -> bool
 		{
 			for (int i = 0; i < length; ++i)
 			{
@@ -30,14 +30,15 @@ namespace khuneo
 			return false;
 		}
 
-		auto operator==(const T * rhs) -> bool
+		auto operator==(const T * const rhs) const noexcept -> bool
 		{
 			return match(rhs);
 		}
 	};
 
+	#if 0
 	// For single characters
-	template <typename T>
+	template <typename T, 1>
 	struct string_literal
 	{
 		using type = T;
@@ -60,4 +61,5 @@ namespace khuneo
 			return match(rhs);
 		}
 	};
+	#endif
 }
