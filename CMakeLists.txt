@@ -8,11 +8,19 @@ project(
 
 option(KH_LOCAL_TEST "Local testing executable" OFF)
 
+# "${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/.hpp"
+# "${CMAKE_CURRENT_SOURCE_DIR}/src/.cpp"
+
 add_library(
 	${PROJECT_NAME}
 
 	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/khuneo.hpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/khuneo.cpp"
+
+	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/parser.hpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/parser.cpp"
+
+	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/string_literals.hpp"
 )
 
 target_include_directories(
