@@ -43,7 +43,7 @@ namespace khuneo::parser::impl
 	template <khuneo::string_literal... delims>
 	struct any
 	{
-		template <typename T_wc, typename... vargs_t>
+		template <typename T_wc>
 		static auto check(const parse_context<T_wc> & wc, parse_response & resp) -> bool
 		{
 			if (([&]() -> bool
@@ -69,16 +69,6 @@ namespace khuneo::parser::impl
 	{
 
 	};
-	
-	struct parse_forward
-	{
-		
-	};
-
-	struct parse_backward
-	{
-
-	};
 
 	struct skip
 	{
@@ -93,8 +83,15 @@ namespace khuneo::parser::impl
 	{
 	};
 
+	template <auto start, auto end>
 	struct encapsulated
 	{
+
+	};
+
+	struct parse_forward
+	{
+
 	};
 
 	template <typename... vargs_t>

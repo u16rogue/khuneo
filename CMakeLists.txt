@@ -10,6 +10,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 option(KH_LOCAL_TEST "Local testing executable" OFF)
+option(KH_TESTS "Compiles the test executable that verifies that khuneo is working." OFF)
+
 
 # "${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/.hpp"
 # "${CMAKE_CURRENT_SOURCE_DIR}/src/.cpp"
@@ -33,6 +35,10 @@ target_include_directories(
 )
 
 if (KH_LOCAL_TEST)
-	add_subdirectory("localtest")
+	add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/localtest")
 	target_link_libraries(kh_localtest PRIVATE ${PROJECT_NAME})
+endif()
+
+if (KH_TESTS)
+	add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/test")
 endif()
