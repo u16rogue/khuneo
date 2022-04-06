@@ -37,7 +37,6 @@ target_include_directories(
 
 if (KH_LOCAL_TEST)
 	add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/localtest")
-	target_link_libraries(kh_localtest PRIVATE ${PROJECT_NAME})
 endif()
 
 if (KH_TESTS)

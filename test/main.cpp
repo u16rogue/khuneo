@@ -35,6 +35,36 @@ private:
 
 #define TEST(x) auto _test = print_test(x)
 
+auto test_parse_negate() -> bool
+{
+	{
+		TEST("Test negate parse result true -> false");
+		char buff[50] = { "foo" };
+		auto pc = parse_context<char>(buff, &buff[50]);
+		auto pr = parse_response();
+
+		if (negate< any<"foo"> >::parse(pc, pr) != false)
+			return false;
+
+		_test.passed();
+	}
+
+	{
+		TEST("Test negate parse result false -> true");
+		char buff[50] = { "bar" };
+		auto pc = parse_context<char>(buff, &buff[50]);
+		auto pr = parse_response();
+
+		if (negate< any<"foo"> >::parse(pc, pr) != true)
+			return false;
+
+		_test.passed();
+	}
+
+
+	return true;
+}
+
 auto test_parse_encapsulated() -> bool
 {
 	struct entry_check
@@ -144,6 +174,7 @@ auto main() -> int
 {
 	RUN_TEST(test_parse_any);
 	RUN_TEST(test_parse_encapsulated);
+	RUN_TEST(test_parse_negate);
 
 	return 0;
 }

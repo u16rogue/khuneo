@@ -141,6 +141,24 @@ namespace khuneo::parser::impl
 
 	};
 
+	/*
+	*  Negates the result of expression::parse
+	*/
+	template <typename expression>
+	struct negate
+	{
+		static auto parse(auto & ... args) -> bool
+		{
+			return !expression::parse(args...);
+		}
+
+		// TODO: implement the other static methods
+	};
+
+	/*
+	* 
+	*/
+	template <typename... delims>
 	struct skip
 	{
 
