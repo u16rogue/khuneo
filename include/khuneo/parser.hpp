@@ -3,6 +3,8 @@
 // #include <type_traits> // TODO: check if this library can compile everywhere, if not implement our own SFINAE
 #include "string_literals.hpp"
 
+// TODO: document grouping and add annotations for each parser to denote its group to make sure a parser wont consume an implementation it cant consume, something like precedence.
+
 namespace khuneo::parser::impl
 {
 	/*
@@ -43,6 +45,23 @@ namespace khuneo::parser::impl
 	* Used by parser implementations to pass information back to its caller,
 	* A parser implementation should have its own anonymous struct inside
 	* the union and should limit itself to only modifying the struct for itself
+	* 
+	* Side note: The current implementation isn't really good. Suppose we should have
+	* a variable that indicates which parser implementation is passing the parse_response
+	* back and a function that can use that information to "abstractly" provide us the
+	* information we need. But the reasoning behind keeping it simple like this is due to
+	* the fact that:
+	* > when we start parsing we will only be matching one instance and it will immediately result in a success
+	* > our parser is multi pass, we dont need to collect multiple information about
+	* the currently parsed block (esp with something like scopes) because we'll be doing that
+	* in the next pass. This means that all derivatives of parser implementation SHOULD NOT try to
+	* match nested scopes but instead capture that scope in an encapsulation<> then run an independent
+	* pass on it. An example with this is having
+	* 
+	* fn main(argc:i32, argv) void { return 0; }
+	* 
+	* If we want to match it we should only try to match [fn] -> [main] -> [( <run on next pass> )] -> [void] -> [{ <run on next pass> }]
+	* instead of trying to immediately match everything.
 	*/
 	union parse_response
 	{
@@ -172,13 +191,20 @@ namespace khuneo::parser::impl
 	struct skip
 	{
 		template <typename T_wc>
-		static auto parse(const parse_context<T_wc> * pc, parse_response * resp) -> bool
+		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
 		{
 			parse_response _resp {};
-			([&]()
+			while (([&]()
 			{
+				if (pc->current + delims::minlength() >= pc->end)
+					return false;
 
-			}, ...);
+				if (!delims::parse(pc, &_resp) || pc->current + _resp.abs.resulting_size >= pc->end) // The bound check is redundant for any<>
+					return false;
+
+				pc->current += _resp.abs.resulting_size;
+				return true;
+			} () || ...));
 
 			return true;
 		}

@@ -35,6 +35,22 @@ private:
 
 #define TEST(x) auto _test = print_test(x)
 
+auto test_parse_skip() -> bool
+{
+	TEST("Skipping multiple delimeters");
+	char buff[50] = { "  ... FOO BARZ" };
+	auto pc = parse_context<char>(buff, &buff[50]);
+	auto pr = parse_response();
+
+	skip< any<" ", ".", "FOO"> >::parse(&pc, &pr);
+
+	if (*(int *)pc.current != *(int*)"BARZ")
+		return false;
+
+	_test.passed();
+	return true;
+}
+
 auto test_parse_negate() -> bool
 {
 	{
@@ -175,6 +191,7 @@ auto main() -> int
 	RUN_TEST(test_parse_any);
 	RUN_TEST(test_parse_encapsulated);
 	RUN_TEST(test_parse_negate);
+	RUN_TEST(test_parse_skip);
 
 	return 0;
 }
