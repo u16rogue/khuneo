@@ -43,7 +43,7 @@ auto test_parse_negate() -> bool
 		auto pc = parse_context<char>(buff, &buff[50]);
 		auto pr = parse_response();
 
-		if (negate< any<"foo"> >::parse(pc, pr) != false)
+		if (negate< any<"foo"> >::parse(&pc, &pr) != false)
 			return false;
 
 		_test.passed();
@@ -55,7 +55,7 @@ auto test_parse_negate() -> bool
 		auto pc = parse_context<char>(buff, &buff[50]);
 		auto pr = parse_response();
 
-		if (negate< any<"foo"> >::parse(pc, pr) != true)
+		if (negate< any<"foo"> >::parse(&pc, &pr) != true)
 			return false;
 
 		_test.passed();
@@ -98,7 +98,7 @@ auto test_parse_encapsulated() -> bool
 		auto pc = khuneo::parser::impl::parse_context<char>(check.buffer, &check.buffer[buffer_size]);
 		auto pr = khuneo::parser::impl::parse_response();
 
-		if (encapsulated< any<"{", "<">, any<"}", ">"> >::parse(pc, pr) == check.expected_result && (!check.expected_result || check.expected_result && pr.encapsulated.block_size == check.expected_block_size))
+		if (encapsulated< any<"{", "<">, any<"}", ">"> >::parse(&pc, &pr) == check.expected_result && (!check.expected_result || check.expected_result && pr.encapsulated.block_size == check.expected_block_size))
 		{
 			_test.passed();
 			continue;
@@ -122,7 +122,7 @@ auto test_parse_any() -> bool
 	{
 		TEST("Test match 'foo'");
 		auto pr = khuneo::parser::impl::parse_response();
-		if (!khuneo::parser::impl::any<"foo">::parse(pc, pr) || pr.any.match_length != 3)
+		if (!khuneo::parser::impl::any<"foo">::parse(&pc, &pr) || pr.any.match_length != 3)
 			return false;
 
 		_test.passed();
@@ -132,7 +132,7 @@ auto test_parse_any() -> bool
 	{
 		TEST("Test mismatch 'bar'");
 		auto pr = khuneo::parser::impl::parse_response();
-		if (khuneo::parser::impl::any<"bar">::parse(pc, pr))
+		if (khuneo::parser::impl::any<"bar">::parse(&pc, &pr))
 			return false;
 
 		_test.passed();
@@ -142,7 +142,7 @@ auto test_parse_any() -> bool
 	{
 		TEST("Test match multiple as 'foo'");
 		auto pr = khuneo::parser::impl::parse_response();
-		if (!khuneo::parser::impl::any<"foo", "bar">::parse(pc, pr) || pr.any.match_length != 3)
+		if (!khuneo::parser::impl::any<"foo", "bar">::parse(&pc, &pr) || pr.any.match_length != 3)
 			return false;
 
 		_test.passed();
@@ -154,7 +154,7 @@ auto test_parse_any() -> bool
 		const char * eocb2 = &cbuff2[sizeof(cbuff2)];
 		auto pc = khuneo::parser::impl::parse_context<char>(cbuff2, eocb2);
 		auto pr = khuneo::parser::impl::parse_response();
-		if (!khuneo::parser::impl::any<"foo", "bar">::parse(pc, pr) || pr.any.match_length != 3)
+		if (!khuneo::parser::impl::any<"foo", "bar">::parse(&pc, &pr) || pr.any.match_length != 3)
 			return false;
 
 		_test.passed();

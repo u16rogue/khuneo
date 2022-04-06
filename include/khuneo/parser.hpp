@@ -85,17 +85,17 @@ namespace khuneo::parser::impl
 	struct any
 	{
 		template <typename T_wc>
-		static auto parse(const parse_context<T_wc> & pc, parse_response & resp) -> bool
+		static auto parse(const parse_context<T_wc> * pc, parse_response * resp) -> bool
 		{
 			if (([&]() -> bool
 			{
 				// check if there's enough space in the buffer for the match to even take place (prevent matching beyond the buffer)
-				if (pc.current + delims.length >= pc.end)
+				if (pc->current + delims.length >= pc->end)
 					return false;
 
-				if (delims == pc.current)
+				if (delims == pc->current)
 				{
-					resp.any.match_length = delims.length;
+					resp->any.match_length = delims.length;
 					return true;
 				}
 
@@ -147,7 +147,7 @@ namespace khuneo::parser::impl
 	template <typename expression>
 	struct negate
 	{
-		static auto parse(auto & ... args) -> bool
+		static auto parse(auto * ... args) -> bool
 		{
 			return !expression::parse(args...);
 		}
@@ -208,25 +208,25 @@ namespace khuneo::parser::impl
 	struct encapsulated
 	{
 		template <typename T_wc>
-		static auto parse(parse_context<T_wc> & pc, parse_response & resp) -> bool
+		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
 		{
-			if (pc.current + start::minlength() + end::minlength() >= pc.end)
+			if (pc->current + start::minlength() + end::minlength() >= pc->end)
 				return false;
 
-			const auto * const o_current = pc.current;
+			const auto * const o_current = pc->current;
 
 			// Parse the starting point of the encapsulation
 			parse_response _resp {};
-			if (!start::parse(pc, _resp))
+			if (!start::parse(pc, &_resp))
 				return false;
 
 			// Update our response for the start
-			resp.encapsulated.start        = (void *)pc.current;
-			resp.encapsulated.start_length = _resp.any.match_length;
+			resp->encapsulated.start        = (void *)pc->current;
+			resp->encapsulated.start_length = _resp.any.match_length;
 
 			// Move the context's current past the start delimeter
-			pc.current = pc.current + _resp.any.match_length;
-			if (pc.current >= pc.end)
+			pc->current = pc->current + _resp.any.match_length;
+			if (pc->current >= pc->end)
 				return false;
 
 			_resp = {};
@@ -236,14 +236,14 @@ namespace khuneo::parser::impl
 			do
 			{
 				// Check if entering a new scope
-				if (start::parse(pc, _resp))
+				if (start::parse(pc, &_resp))
 				{
 					++nest_scope;
-					pc.current += _resp.any.match_length;
+					pc->current += _resp.any.match_length;
 					continue;
 				}
 
-				if (end::parse(pc, _resp))
+				if (end::parse(pc, &_resp))
 				{
 					if (nest_scope == 0)
 					{
@@ -253,21 +253,21 @@ namespace khuneo::parser::impl
 					else
 					{
 						--nest_scope;
-						pc.current += _resp.any.match_length;
+						pc->current += _resp.any.match_length;
 						continue;
 					}
 				}
 
-				++pc.current;
-			} while (pc.current < pc.end && *pc.current);
+				++pc->current;
+			} while (pc->current < pc->end && *pc->current);
 
 			if (!valid)
 				return false;
 
-			pc.current += _resp.any.match_length;
-			resp.encapsulated.end_length = _resp.any.match_length;
-			resp.encapsulated.end = (void *)pc.current;
-			resp.encapsulated.block_size = (int)((unsigned long long)resp.encapsulated.end - (unsigned long long)resp.encapsulated.start); // TODO: clean this up
+			pc->current += _resp.any.match_length;
+			resp->encapsulated.end_length = _resp.any.match_length;
+			resp->encapsulated.end = (void *)pc->current;
+			resp->encapsulated.block_size = (int)((unsigned long long)resp->encapsulated.end - (unsigned long long)resp->encapsulated.start); // TODO: clean this up
 
 			return true;
 		}
