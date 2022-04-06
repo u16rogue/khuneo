@@ -48,18 +48,26 @@ namespace khuneo::parser::impl
 	{
 		struct
 		{
+			int resulting_size; // Abstract, can be used by all implementations to indicate
+			                    // the length/size consumed by the match, each parse_response
+			                    // struct entry must have an int type as its first member that functions
+			                    // the same as abs.resulting_size purpose.
+		} abs;
+
+		struct
+		{
 			int match_length; // Length of the matched delimeter
 		} any;
 
 		struct
 		{
+			int    block_size;   // The size of the entire encapsulation eg. "{}" = 2, "{ }" = 3, "{foo}" = 5
+
 			void * start;        // Pointer to the start of the start identifier match
 			int    start_length; // Length of the start matched delimeter
 
 			void * end;          // Pointer to the end of the end identifier match
 			int    end_length;   // Length of the end matched delimeter
-
-			int    block_size;   // The size of the entire encapsulation eg. "{}" = 2, "{ }" = 3, "{foo}" = 5
 		} encapsulated;
 	};
 
@@ -136,6 +144,7 @@ namespace khuneo::parser::impl
 		}
 	};
 	
+
 	struct range
 	{
 
@@ -156,12 +165,23 @@ namespace khuneo::parser::impl
 	};
 
 	/*
-	* 
+	* Advances the parser context's current when the
+	* delimeter is met. This will always return true regardless.
 	*/
 	template <typename... delims>
 	struct skip
 	{
+		template <typename T_wc>
+		static auto parse(const parse_context<T_wc> * pc, parse_response * resp) -> bool
+		{
+			parse_response _resp {};
+			([&]()
+			{
 
+			}, ...);
+
+			return true;
+		}
 	};
 
 	struct kh_or
