@@ -33,13 +33,38 @@ private:
 	bool pass { false };
 };
 
-#define TEST(x) auto _test = print_test(x)
+#define TEST(x) auto _test = print_test(x) 
+
+auto test_parse_range() -> bool
+{
+	
+	char buff[8] = { "CAR" };
+	auto pc = parse_context<char>(buff, &buff[sizeof(buff)]);
+	auto pr = parse_response();
+
+	{
+		TEST("Test range match A to Z with match to C");
+		if (!range<'A', 'Z'>::parse(&pc, &pr))
+			return false;
+		_test.passed();
+	}
+
+	{
+		TEST("Test range mismatch a to z with match to C");
+		if (range<'a', 'z'>::parse(&pc, &pr))
+			return false;
+		_test.passed();
+	}
+	
+
+	return true;
+}
 
 auto test_parse_skip() -> bool
 {
 	TEST("Skipping multiple delimeters");
 	char buff[50] = { "  ... FOO BARZ" };
-	auto pc = parse_context<char>(buff, &buff[50]);
+	auto pc = parse_context<char>(buff, &buff[sizeof(buff)]);
 	auto pr = parse_response();
 
 	skip< any<" ", ".", "FOO"> >::parse(&pc, &pr);
@@ -192,6 +217,7 @@ auto main() -> int
 	RUN_TEST(test_parse_encapsulated);
 	RUN_TEST(test_parse_negate);
 	RUN_TEST(test_parse_skip);
+	RUN_TEST(test_parse_range);
 
 	return 0;
 }

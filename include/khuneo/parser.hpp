@@ -81,6 +81,7 @@ namespace khuneo::parser::impl
 		struct
 		{
 			int match_length;
+			int index; // Index of the match relative to <start>. Eg range<'A', 'Z'> matches to 'B' therefore index is equal to 1
 		} range;
 
 		struct
@@ -175,7 +176,7 @@ namespace khuneo::parser::impl
 	*  side effects.
 	*  
 	*  Eg. range<'A', 'Z'> will match a single character
-	*  that is capital
+	*  that is capitalized
 	*/
 	template <auto start, auto end> requires (sizeof(start) == sizeof(end))
 	struct range
@@ -183,6 +184,13 @@ namespace khuneo::parser::impl
 		template <typename T_wc>
 		static auto parse(const parse_context<T_wc> * pc, parse_response * resp) -> bool
 		{
+			if (*pc->current >= start && *pc->current <= end)
+			{
+				resp->range.index = *pc->current - start;
+				return true;
+			}
+
+			return false;
 		}
 
 		static consteval auto length() -> int
@@ -252,7 +260,7 @@ namespace khuneo::parser::impl
 
 			([&]()
 			{
-				if (delims.length > highest)
+				if (delims::length() > highest)
 					highest = delims::length();
 			} (), ...);
 
@@ -267,9 +275,9 @@ namespace khuneo::parser::impl
 			([&]()
 			{
 				if (lowest == -1)
-					lowest = delims.length;
-				else if (delims.length < lowest)
 					lowest = delims::minlength();
+				else if (auto ml = delims::minlength(); ml < lowest)
+					lowest = ml;
 			} (), ...);
 
 			return lowest;
