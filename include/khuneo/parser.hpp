@@ -80,6 +80,11 @@ namespace khuneo::parser::impl
 
 		struct
 		{
+			int match_length;
+		} range;
+
+		struct
+		{
 			int    block_size;   // The size of the entire encapsulation eg. "{}" = 2, "{ }" = 3, "{foo}" = 5
 
 			void * start;        // Pointer to the start of the start identifier match
@@ -163,9 +168,32 @@ namespace khuneo::parser::impl
 		}
 	};
 	
-
+	/*
+	*  Matches anything between the start and end
+	*  delimeter. The delimeters should be a single
+	*  numeric. This implementation does not cause
+	*  side effects.
+	*  
+	*  Eg. range<'A', 'Z'> will match a single character
+	*  that is capital
+	*/
+	template <auto start, auto end> requires (sizeof(start) == sizeof(end))
 	struct range
 	{
+		template <typename T_wc>
+		static auto parse(const parse_context<T_wc> * pc, parse_response * resp) -> bool
+		{
+		}
+
+		static consteval auto length() -> int
+		{
+			return 1;
+		}
+
+		static consteval auto minlength() -> int
+		{
+			return 1;
+		}
 
 	};
 
@@ -180,7 +208,15 @@ namespace khuneo::parser::impl
 			return !expression::parse(args...);
 		}
 
-		// TODO: implement the other static methods
+		static consteval auto length() -> int
+		{
+			return expression::length();
+		}
+
+		static consteval auto minlength() -> int
+		{
+			return expression::minlength();
+		}
 	};
 
 	/*
@@ -208,14 +244,36 @@ namespace khuneo::parser::impl
 
 			return true;
 		}
-	};
 
-	struct kh_or
-	{
-	};
+		// Returns the longest length
+		static consteval auto length() -> int
+		{
+			int highest { 0 };
 
-	struct kh_and
-	{
+			([&]()
+			{
+				if (delims.length > highest)
+					highest = delims::length();
+			} (), ...);
+
+			return highest;
+		}
+
+		// Returns the lowest length
+		static consteval auto minlength() -> int
+		{
+			int lowest { -1 };
+
+			([&]()
+			{
+				if (lowest == -1)
+					lowest = delims.length;
+				else if (delims.length < lowest)
+					lowest = delims::minlength();
+			} (), ...);
+
+			return lowest;
+		}
 	};
 
 	/*
@@ -226,25 +284,25 @@ namespace khuneo::parser::impl
 	* identifier. The parse of this will produce side effects to the parse context where
 	* it would modify the current to the resulting end match + 1.
 	*
-    * when parsed with encapsulate<any<"\"">, any<"\"">>::parse(...)
-    * 
-    *   ┌── parse_response::encapsulated.start ~ start_length = 1
-    *   ▼
-    * " { }       "
-    *      ▲
-    *      └── parse_response::encapsulated.end and parse_context::current  ~ end_length = 1
-    * 
-    * this can also be matched with multiple any<..., ...> for both
-    * start and end as such a valid encapsulation expression can be
+	* when parsed with encapsulate<any<"\"">, any<"\"">>::parse(...)
 	* 
-    * using foo_or_bar = any<"foo", "bar">;
-    * encapsulate<foo_or_bar, any<"foo", "barz">>::parse(...)
-    * 
-    *   ┌──── parse_response::encapsulated.start ~ start_length = 3
-    *   ▼
-    * " foo barz  "
-    *           ▲
-    *           └── parse_response::encapsulated.end & parse_context::current ~ end_length = 4
+	*   ┌── parse_response::encapsulated.start ~ start_length = 1
+	*   ▼
+	* " { }       "
+	*      ▲
+	*      └── parse_response::encapsulated.end and parse_context::current  ~ end_length = 1
+	* 
+	* this can also be matched with multiple any<..., ...> for both
+	* start and end as such a valid encapsulation expression can be
+	* 
+	* using foo_or_bar = any<"foo", "bar">;
+	* encapsulate<foo_or_bar, any<"foo", "barz">>::parse(...)
+	* 
+	*   ┌──── parse_response::encapsulated.start ~ start_length = 3
+	*   ▼
+	* " foo barz  "
+	*           ▲
+	*           └── parse_response::encapsulated.end & parse_context::current ~ end_length = 4
 	* 
 	* Side effects are made to the parse_context as encapsulated<..., ...> runs its parser
 	* regardless of success or failure, this is designed like this incase of a syntax error
@@ -279,7 +337,7 @@ namespace khuneo::parser::impl
 			bool valid = false;
 			int nest_scope = 0;
 
-			do
+			while (pc->current < pc->end && *pc->current)
 			{
 				// Check if entering a new scope
 				if (start::parse(pc, &_resp))
@@ -305,18 +363,30 @@ namespace khuneo::parser::impl
 				}
 
 				++pc->current;
-			} while (pc->current < pc->end && *pc->current);
+			}
 
 			if (!valid)
 				return false;
 
 			pc->current += _resp.any.match_length;
 			resp->encapsulated.end_length = _resp.any.match_length;
-			resp->encapsulated.end = (void *)pc->current;
+			resp->encapsulated.end        = (void *)pc->current;
 			resp->encapsulated.block_size = (int)((unsigned long long)resp->encapsulated.end - (unsigned long long)resp->encapsulated.start); // TODO: clean this up
 
 			return true;
 		}
+	};
+
+	struct consume
+	{
+	};
+
+	struct kh_or
+	{
+	};
+
+	struct kh_and
+	{
 	};
 
 	struct parse_forward
