@@ -56,12 +56,11 @@ auto test_parse_gulp() -> bool
 	TEST("Gulping test expression with any, range, skip, and encapsulation");
 
 	TEST_EXPECT_OK((gulp<
-						any<"FOO">,
+						any<"FOO", " ", "{", "}">,
 						range<'a', 'z'>,
-						skip<any<" ">>,
-						encapsulated<any<"{">, any<"}">>
+						any<" ">
 					>::parse(&pc, &pr)
-					&& pr.gulp.consumed_count == sizeof(buff)));
+					&& pr.gulp.consumed_count == sizeof(buff) - 1));
 
 	
 	return true;
@@ -114,7 +113,7 @@ auto test_parse_range() -> bool
 
 	{
 		TEST("Test range match A to Z with match to C");
-		TEST_EXPECT_OK((range<'A', 'Z'>::parse(&pc, &pr)));
+		TEST_EXPECT_OK((range<'A', 'Z'>::parse(&pc, &pr) && pr.range.index == 'C' - 'A'));
 	}
 
 	{

@@ -95,7 +95,7 @@ auto main() -> int
 ```
 -->
 
-## Dependecies
+## Dependencies
 * None
 
 ## License

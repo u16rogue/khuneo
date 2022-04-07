@@ -201,6 +201,7 @@ namespace khuneo::parser::impl
 		{
 			if (*pc->current >= start && *pc->current <= end)
 			{
+				resp->range.match_length = 1;
 				resp->range.index = *pc->current - start;
 				return true;
 			}
@@ -263,9 +264,12 @@ namespace khuneo::parser::impl
 	template <typename expression>
 	struct negate
 	{
-		static auto parse(auto * ... args) -> bool
+		static auto parse(auto * pc, parse_response * resp) -> bool
 		{
-			return !expression::parse(args...);
+			// TODO: might need to pass our own parse_response as a negated result might modify a
+			// parse response and change its value unexpectedly eg. a resulting true causing side a
+			// effect even if it shouldnt since its supposed to be negated
+			return !expression::parse(pc, resp);
 		}
 
 		static consteval auto length() -> int
@@ -466,9 +470,13 @@ namespace khuneo::parser::impl
 
 	};
 
-	template <typename... vargs_t>
-	struct basic_parser
+	template <typename... expressions>
+	struct generate_parser
 	{
-
+		template <typename T_wc>
+		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
+		{
+			return (expressions::parse(pc, resp) && ...);
+		}
 	};
 }
