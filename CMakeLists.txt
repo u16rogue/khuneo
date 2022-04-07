@@ -27,6 +27,9 @@ add_library(
 
 	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/string_literals.hpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/string_literals.cpp"
+
+	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/lexer.hpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/lexer.cpp"
 )
 
 target_include_directories(

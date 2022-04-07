@@ -3,6 +3,8 @@
 
 using namespace khuneo::parser::impl;
 
+// TODO: cleanup test
+
 class print_test
 {
 public:
@@ -44,6 +46,26 @@ private:
 	if ((exp) == true) \
 		return false; \
 	_test.passed()
+
+auto test_parse_gulp() -> bool
+{
+	char buff[] = { "FOObar    {}" };
+	auto pc = parse_context<char>(buff, &buff[sizeof(buff)]);
+	auto pr = parse_response();
+
+	TEST("Gulping test expression with any, range, skip, and encapsulation");
+
+	TEST_EXPECT_OK((gulp<
+						any<"FOO">,
+						range<'a', 'z'>,
+						skip<any<" ">>,
+						encapsulated<any<"{">, any<"}">>
+					>::parse(&pc, &pr)
+					&& pr.gulp.consumed_count == sizeof(buff)));
+
+	
+	return true;
+}
 
 auto test_parse_kh_or() -> bool
 {
@@ -264,6 +286,7 @@ auto main() -> int
 	RUN_TEST(test_parse_range);
 	RUN_TEST(test_parse_kh_or);
 	RUN_TEST(test_parse_kh_and);
+	RUN_TEST(test_parse_gulp);
 
 	return 0;
 }

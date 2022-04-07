@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 // #include <type_traits> // TODO: check if this library can compile everywhere, if not implement our own SFINAE
-#include "string_literals.hpp"
+#include <khuneo/string_literals.hpp>
 
 // TODO: document grouping and add annotations for each parser to denote its group to make sure a parser wont consume an implementation it cant consume, something like precedence.
 
@@ -76,7 +76,13 @@ namespace khuneo::parser::impl
 		struct
 		{
 			int match_length; // Length of the matched delimeter
+			void * start;     // Pointer to the beginning of the gulped delimeter
 		} any;
+
+		struct
+		{
+			int skipped_count; // Number of characters skipped
+		} skip;
 
 		struct
 		{
@@ -94,6 +100,11 @@ namespace khuneo::parser::impl
 			void * end;          // Pointer to the end of the end identifier match
 			int    end_length;   // Length of the end matched delimeter
 		} encapsulated;
+
+		struct
+		{
+			int consumed_count; // Count of characters consumed by the gulp
+		} gulp;
 	};
 
 	/*
@@ -274,52 +285,41 @@ namespace khuneo::parser::impl
 	* 
 	* Type: Consumer
 	*/
-	template <typename... expression>
+	template <typename... expressions>
 	struct skip
 	{
 		template <typename T_wc>
 		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
 		{
 			parse_response _resp {};
-			while (([&]()
+
+			while ((((pc->current + expressions::minlength() < pc->end) && expressions::parse(pc, &_resp) && pc->current + _resp.abs.resulting_size < pc->end) || ...))
 			{
-				if (pc->current + expression::minlength() >= pc->end)
-					return false;
-
-				if (!expression::parse(pc, &_resp) || pc->current + _resp.abs.resulting_size >= pc->end) // The bound check is redundant for any<>
-					return false;
-
+				resp->skip.skipped_count += _resp.abs.resulting_size;
 				pc->current += _resp.abs.resulting_size;
-				return true;
-			} () || ...));
+			}
 
 			return true;
 		}
 
-		// Returns the longest length
 		static consteval auto length() -> int
 		{
 			int highest { 0 };
 
-			([&]()
-			{
-				if (expression::length() > highest)
-					highest = expression::length();
-			} (), ...);
+			((highest = expressions::length() > highest ? expressions::length() : highest), ...);
 
 			return highest;
 		}
-
-		// Returns the lowest length
+		
 		static consteval auto minlength() -> int
 		{
-			int lowest { -1 };
+			int lowest { -1 }; // There will never be a negative length as there is no negative length string
 
 			([&]()
 			{
 				if (lowest == -1)
-					lowest = expression::minlength();
-				else if (auto ml = expression::minlength(); ml < lowest)
+					lowest = expressions::minlength();
+				else if (auto ml = expressions::minlength(); ml < lowest)
 					lowest = ml;
 			} (), ...);
 
@@ -433,16 +433,35 @@ namespace khuneo::parser::impl
 	/*
 	* Continously consumes a parse context as
 	* long as its parse expressions results to
-	* true.
+	* true. This will produce side effects to the
+	* parsing context and will always return true whether
+	* its able to gulp (/ match) any expression or not.
 	* 
 	* Type: Consumer
 	*/
+	template <typename... expressions>
 	struct gulp
 	{
+		template <typename T_wc>
+		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
+		{
+			parse_response _resp { 0 };
 
+			while ((expressions::parse(pc, &_resp) || ...) && pc->current < pc->end)
+			{
+				resp->gulp.consumed_count += _resp.abs.resulting_size;
+				pc->current += _resp.abs.resulting_size;
+			}
+
+			return true;
+		}
 	};
 
-	struct parse_forward
+	template <typename T_wc>
+	using responder_t = void(*)(const parse_context<T_wc> *, const parse_response * resp);
+
+	template <typename expression>
+	struct exp_respond
 	{
 
 	};
