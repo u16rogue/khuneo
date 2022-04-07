@@ -100,6 +100,8 @@ namespace khuneo::parser::impl
 	* Accepts multiple strings as a variadic template argument
 	* which provides context to its parent consumer.
 	* 
+	* Type: Matcher
+	* 
 	* This does simply run a check, no side effects are made
 	* by this.
 	* 
@@ -175,6 +177,8 @@ namespace khuneo::parser::impl
 	*  numeric. This implementation does not cause
 	*  side effects.
 	*  
+	*  Type: Matcher
+	* 
 	*  Eg. range<'A', 'Z'> will match a single character
 	*  that is capitalized
 	*/
@@ -206,7 +210,44 @@ namespace khuneo::parser::impl
 	};
 
 	/*
-	*  Negates the result of expression::parse
+	* Runs a logical operation against all
+	* the matches if atleast one of them
+	* results to a true expression. This expression
+	* can short circuit
+	* 
+	* Type: Logical
+	*/
+	template <typename... matchers>
+	struct kh_or
+	{
+		template <typename T_wc>
+		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
+		{
+			return ((matchers::parse(pc, resp)) || ...);
+		}
+	};
+
+	/*
+	* Runs a logical operation against all
+	* the matches if all results to a true
+	* expression. This expression can short
+	* circuit
+	* 
+	* Type: Logical
+	*/
+	template <typename... matchers>
+	struct kh_and
+	{
+		template <typename T_wc>
+		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
+		{
+			return ((matchers::parse(pc, resp)) && ...);
+		}
+	};
+
+	/*
+	* Negates the result of expression::parse
+	* Type: Logical
 	*/
 	template <typename expression>
 	struct negate
@@ -230,8 +271,10 @@ namespace khuneo::parser::impl
 	/*
 	* Advances the parser context's current when the
 	* delimeter is met. This will always return true regardless.
+	* 
+	* Type: Consumer
 	*/
-	template <typename... delims>
+	template <typename... expression>
 	struct skip
 	{
 		template <typename T_wc>
@@ -240,10 +283,10 @@ namespace khuneo::parser::impl
 			parse_response _resp {};
 			while (([&]()
 			{
-				if (pc->current + delims::minlength() >= pc->end)
+				if (pc->current + expression::minlength() >= pc->end)
 					return false;
 
-				if (!delims::parse(pc, &_resp) || pc->current + _resp.abs.resulting_size >= pc->end) // The bound check is redundant for any<>
+				if (!expression::parse(pc, &_resp) || pc->current + _resp.abs.resulting_size >= pc->end) // The bound check is redundant for any<>
 					return false;
 
 				pc->current += _resp.abs.resulting_size;
@@ -260,8 +303,8 @@ namespace khuneo::parser::impl
 
 			([&]()
 			{
-				if (delims::length() > highest)
-					highest = delims::length();
+				if (expression::length() > highest)
+					highest = expression::length();
 			} (), ...);
 
 			return highest;
@@ -275,8 +318,8 @@ namespace khuneo::parser::impl
 			([&]()
 			{
 				if (lowest == -1)
-					lowest = delims::minlength();
-				else if (auto ml = delims::minlength(); ml < lowest)
+					lowest = expression::minlength();
+				else if (auto ml = expression::minlength(); ml < lowest)
 					lowest = ml;
 			} (), ...);
 
@@ -292,6 +335,8 @@ namespace khuneo::parser::impl
 	* identifier. The parse of this will produce side effects to the parse context where
 	* it would modify the current to the resulting end match + 1.
 	*
+	* Type: Consumer
+	* 
 	* when parsed with encapsulate<any<"\"">, any<"\"">>::parse(...)
 	* 
 	*   ┌── parse_response::encapsulated.start ~ start_length = 1
@@ -385,16 +430,16 @@ namespace khuneo::parser::impl
 		}
 	};
 
-	struct consume
+	/*
+	* Continously consumes a parse context as
+	* long as its parse expressions results to
+	* true.
+	* 
+	* Type: Consumer
+	*/
+	struct gulp
 	{
-	};
 
-	struct kh_or
-	{
-	};
-
-	struct kh_and
-	{
 	};
 
 	struct parse_forward

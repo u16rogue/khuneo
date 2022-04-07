@@ -35,6 +35,54 @@ private:
 
 #define TEST(x) auto _test = print_test(x) 
 
+#define TEST_EXPECT_OK(exp) \
+	if ((exp) == false) \
+		return false; \
+	_test.passed()
+
+#define TEST_EXPECT_FAIL(exp) \
+	if ((exp) == true) \
+		return false; \
+	_test.passed()
+
+auto test_parse_kh_or() -> bool
+{
+	char buff[8] = { "FOOBAR" };
+	auto pc = parse_context<char>(buff, &buff[sizeof(buff)]);
+	auto pr = parse_response();
+
+	{
+		TEST("Test parser OR uppercase letter range expression on uppercase and lowercase");
+		TEST_EXPECT_OK((kh_or< range<'A', 'Z'>, range<'a', 'z'> >::parse(&pc, &pr)));
+	}
+
+	{
+		TEST("Test parser OR uppercase letter range expression on numerics and lowercase");
+		TEST_EXPECT_FAIL((kh_or< range<'0', '9'>, range<'a', 'z'> >::parse(&pc, &pr)));
+	}
+
+	return true;
+}
+
+auto test_parse_kh_and() -> bool
+{
+	char buff[8] = { "FOOBAR" };
+	auto pc = parse_context<char>(buff, &buff[sizeof(buff)]);
+	auto pr = parse_response();
+
+	{
+		TEST("Test parser AND capital range and phrase match");
+		TEST_EXPECT_OK((kh_and< range<'A', 'Z'>, any<"FOO"> >::parse(&pc, &pr)));
+	}
+
+	{
+		TEST("Test parser AND capital range and phrase mismatch");
+		TEST_EXPECT_FAIL((kh_and< range<'A', 'Z'>, any<"BAR"> >::parse(&pc, &pr)));
+	}
+
+	return true;
+}
+
 auto test_parse_range() -> bool
 {
 	
@@ -44,16 +92,12 @@ auto test_parse_range() -> bool
 
 	{
 		TEST("Test range match A to Z with match to C");
-		if (!range<'A', 'Z'>::parse(&pc, &pr))
-			return false;
-		_test.passed();
+		TEST_EXPECT_OK((range<'A', 'Z'>::parse(&pc, &pr)));
 	}
 
 	{
 		TEST("Test range mismatch a to z with match to C");
-		if (range<'a', 'z'>::parse(&pc, &pr))
-			return false;
-		_test.passed();
+		TEST_EXPECT_FAIL((range<'a', 'z'>::parse(&pc, &pr)));
 	}
 	
 
@@ -218,6 +262,8 @@ auto main() -> int
 	RUN_TEST(test_parse_negate);
 	RUN_TEST(test_parse_skip);
 	RUN_TEST(test_parse_range);
+	RUN_TEST(test_parse_kh_or);
+	RUN_TEST(test_parse_kh_and);
 
 	return 0;
 }
