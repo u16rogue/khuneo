@@ -41,7 +41,7 @@ namespace khuneo
 				str[i] = _str[i];
 		}
 
-		T str[sz] { 0 };
+		T str[sz] { 0 }; // TODO: maybe we shouldn't include the null terminator anymore since its unecessary with what and how we're using this
 		const int length  { sz - 1 };
 
 		auto match(const T * other) const noexcept -> bool

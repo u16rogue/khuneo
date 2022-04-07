@@ -47,13 +47,25 @@ private:
 		return false; \
 	_test.passed()
 
+auto test_parse_exact() -> bool
+{
+	char buff[] = { "FOOBAR" };
+	auto pc = parse_context<char>(buff, &buff[sizeof(buff)]);
+	auto pr = parse_response();
+
+	TEST("Test exact match");
+	TEST_EXPECT_OK((exact< any<"FOOBAR"> >::parse(&pc, &pr)));
+
+	return true;
+}
+
 auto test_parse_gulp() -> bool
 {
 	char buff[] = { "FOObar    {}" };
 	auto pc = parse_context<char>(buff, &buff[sizeof(buff)]);
 	auto pr = parse_response();
 
-	TEST("Gulping test expression with any, range, skip, and encapsulation");
+	TEST("Gulping test expression with any, range");
 
 	TEST_EXPECT_OK((gulp<
 						any<"FOO", " ", "{", "}">,
@@ -286,6 +298,7 @@ auto main() -> int
 	RUN_TEST(test_parse_kh_or);
 	RUN_TEST(test_parse_kh_and);
 	RUN_TEST(test_parse_gulp);
+	RUN_TEST(test_parse_exact);
 
 	return 0;
 }

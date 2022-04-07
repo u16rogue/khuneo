@@ -105,6 +105,11 @@ namespace khuneo::parser::impl
 		{
 			int consumed_count; // Count of characters consumed by the gulp
 		} gulp;
+
+		struct
+		{
+			int match_length;
+		} exact;
 	};
 
 	/*
@@ -458,6 +463,30 @@ namespace khuneo::parser::impl
 			}
 
 			return true;
+		}
+	};
+
+	/*
+	* Consumes only once and must have atleast
+	* one of the expressions result to true. Will
+	* return false if no expression match. This
+	* produces a side effect.
+	*/
+	template <typename... expressions>
+	struct exact
+	{
+		template <typename T_wc>
+		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
+		{
+			parse_response pr {};
+			if ((expressions::parse(pc, &pr) || ...))
+			{
+				resp->exact.match_length = pr.abs.resulting_size;
+				pc->current += pr.abs.resulting_size;
+				return true;
+			}
+
+			return false;
 		}
 	};
 
