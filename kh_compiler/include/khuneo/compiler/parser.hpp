@@ -33,12 +33,13 @@ namespace khuneo::parser
 	template <typename T_sourcebuffer = char>
 	struct parse_context
 	{
-		parse_context(const T_sourcebuffer * _current, const T_sourcebuffer * _end)
-			: current(_current), end(_end)
+		parse_context(const T_sourcebuffer * _current, const T_sourcebuffer * _end, void * _info = nullptr)
+			: current(_current), end(_end), info(_info)
 		{}
 
 		const T_sourcebuffer * current;
 		const T_sourcebuffer * const end;
+		void * info; // extra information about the parse context (eg. current AST builder)
 	};
 
 	/*
@@ -524,6 +525,30 @@ namespace khuneo::parser
 		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
 		{
 			return condition::parse(pc, resp) ? true_exp::parse(pc, resp) : false_exp::parse(pc, resp);
+		}
+	};
+
+	/*
+	* Attaches an expression to a procedure, this allows
+	* for custom routines to be injected into the parser.
+	* the result of this expression is based off the return
+	* of the attached procedure. When only_proc_on_true is false
+	* It is up to procedure to call the expression or not.
+	* void is a valid expression to use if no expression evaluation
+	* is wanted for the sole purpose of running a procedure, by providing
+	* a void type the only_proc_on_true is ignored and will always be
+	* set to false
+	*/
+	template <typename expression, auto procedure, bool only_proc_on_true = true>
+	struct proc
+	{
+		template <typename T_wc>
+		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
+		{
+			if constexpr (sizeof(expression) != 0 && only_proc_on_true)
+				return expression::parse(pc, resp) && procedure<expression>(pc, resp);
+			else
+				return procedure<expression>(pc, resp);
 		}
 	};
 

@@ -1,5 +1,5 @@
 # khuneo
-[GitLab](https://gitlab.com/u16rogue/khuneo) • [GitHub Mirror](https://github.com/u16rogue/khuneo)<br>
+[GitLab](https://gitlab.com/u16rogue/khuneo) • [GitHub](https://github.com/u16rogue/khuneo)<br>
 A modular and abstracted embedded programming language for C++
 
 ## About
