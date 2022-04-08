@@ -2,6 +2,7 @@
 #include <cstdio>
 
 using namespace khuneo::parser;
+using namespace khuneo::lexer::tokens;
 
 // TODO: cleanup test
 
@@ -53,7 +54,7 @@ auto test_parse_ternary() -> bool
 	auto pc = parse_context<char>(buff, &buff[sizeof(buff)]);
 	auto pr = parse_response();
 
-	TEST("Test ternary exact match");
+	TEST("ternary exact match");
 	TEST_EXPECT_OK((ternary< any<"BAR">, exact<any<"BARFOO">>, exact<any<"FOOBAR">> >::parse(&pc, &pr)));
 
 	return true;
@@ -65,7 +66,7 @@ auto test_parse_conditional() -> bool
 	auto pc = parse_context<char>(buff, &buff[sizeof(buff)]);
 	auto pr = parse_response();
 
-	TEST("Test conditional exact match");
+	TEST("conditional exact match");
 	TEST_EXPECT_OK((conditional< any<"FOO">, exact<any<"FOOBAR">> >::parse(&pc, &pr)));
 
 	return true;
@@ -77,7 +78,7 @@ auto test_parse_exact() -> bool
 	auto pc = parse_context<char>(buff, &buff[sizeof(buff)]);
 	auto pr = parse_response();
 
-	TEST("Test exact match");
+	TEST("exact match");
 	TEST_EXPECT_OK((exact< any<"FOOBAR"> >::parse(&pc, &pr)));
 
 	return true;
@@ -109,12 +110,12 @@ auto test_parse_kh_or() -> bool
 	auto pr = parse_response();
 
 	{
-		TEST("Test parser OR uppercase letter range expression on uppercase and lowercase");
+		TEST("parser OR uppercase letter range expression on uppercase and lowercase");
 		TEST_EXPECT_OK((kh_or< range<'A', 'Z'>, range<'a', 'z'> >::parse(&pc, &pr)));
 	}
 
 	{
-		TEST("Test parser OR uppercase letter range expression on numerics and lowercase");
+		TEST("parser OR uppercase letter range expression on numerics and lowercase");
 		TEST_EXPECT_FAIL((kh_or< range<'0', '9'>, range<'a', 'z'> >::parse(&pc, &pr)));
 	}
 
@@ -128,12 +129,12 @@ auto test_parse_kh_and() -> bool
 	auto pr = parse_response();
 
 	{
-		TEST("Test parser AND capital range and phrase match");
+		TEST("parser AND capital range and phrase match");
 		TEST_EXPECT_OK((kh_and< range<'A', 'Z'>, any<"FOO"> >::parse(&pc, &pr)));
 	}
 
 	{
-		TEST("Test parser AND capital range and phrase mismatch");
+		TEST("parser AND capital range and phrase mismatch");
 		TEST_EXPECT_FAIL((kh_and< range<'A', 'Z'>, any<"BAR"> >::parse(&pc, &pr)));
 	}
 
@@ -148,12 +149,12 @@ auto test_parse_range() -> bool
 	auto pr = parse_response();
 
 	{
-		TEST("Test range match A to Z with match to C");
+		TEST("range match A to Z with match to C");
 		TEST_EXPECT_OK((range<'A', 'Z'>::parse(&pc, &pr) && pr.range.index == 'C' - 'A'));
 	}
 
 	{
-		TEST("Test range mismatch a to z with match to C");
+		TEST("range mismatch a to z with match to C");
 		TEST_EXPECT_FAIL((range<'a', 'z'>::parse(&pc, &pr)));
 	}
 	
@@ -180,7 +181,7 @@ auto test_parse_skip() -> bool
 auto test_parse_negate() -> bool
 {
 	{
-		TEST("Test negate parse result true -> false");
+		TEST("negate parse result true -> false");
 		char buff[50] = { "foo" };
 		auto pc = parse_context<char>(buff, &buff[50]);
 		auto pr = parse_response();
@@ -192,7 +193,7 @@ auto test_parse_negate() -> bool
 	}
 
 	{
-		TEST("Test negate parse result false -> true");
+		TEST("negate parse result false -> true");
 		char buff[50] = { "bar" };
 		auto pc = parse_context<char>(buff, &buff[50]);
 		auto pr = parse_response();
@@ -227,11 +228,11 @@ auto test_parse_encapsulated() -> bool
 
 	entry_check checks[] =
 	{
-		{ "Test valid scope",                                      7,  true,  buff_valid           },
-		{ "Test valid nested scope",                               9,  true,  buff_nestedvalid     },
-		{ "Test valid scope with extra invalid end scope",         7,  true,  buff_validextra      },
-		{ "Test invalid nested buffer (missing parent scope end)", 0,  false, buff_invalidnest     },
-		{ "Test valid scope with different delimeter",             11, true,  buff_validmultidelim },
+		{ "valid scope",                                      7,  true,  buff_valid           },
+		{ "valid nested scope",                               9,  true,  buff_nestedvalid     },
+		{ "valid scope with extra invalid end scope",         7,  true,  buff_validextra      },
+		{ "invalid nested buffer (missing parent scope end)", 0,  false, buff_invalidnest     },
+		{ "valid scope with different delimeter",             11, true,  buff_validmultidelim },
 	};
 
 	for (const auto check : checks)
@@ -262,7 +263,7 @@ auto test_parse_any() -> bool
 
 	// Expected: Check -> true, match_length = 3
 	{
-		TEST("Test match 'foo'");
+		TEST("match 'foo'");
 		auto pr = khuneo::parser::parse_response();
 		if (!khuneo::parser::any<"foo">::parse(&pc, &pr) || pr.any.match_length != 3)
 			return false;
@@ -272,7 +273,7 @@ auto test_parse_any() -> bool
 
 	// Expected: Check -> false
 	{
-		TEST("Test mismatch 'bar'");
+		TEST("mismatch 'bar'");
 		auto pr = khuneo::parser::parse_response();
 		if (khuneo::parser::any<"bar">::parse(&pc, &pr))
 			return false;
@@ -282,7 +283,7 @@ auto test_parse_any() -> bool
 
 	// Expected: Check -> true, match_length = 3
 	{
-		TEST("Test match multiple as 'foo'");
+		TEST("match multiple as 'foo'");
 		auto pr = khuneo::parser::parse_response();
 		if (!khuneo::parser::any<"foo", "bar">::parse(&pc, &pr) || pr.any.match_length != 3)
 			return false;
@@ -292,7 +293,7 @@ auto test_parse_any() -> bool
 
 	// Expected: Check -> true, match_length = 3
 	{
-		TEST("Test match multiple as 'bar'");
+		TEST("match multiple as 'bar'");
 		const char * eocb2 = &cbuff2[sizeof(cbuff2)];
 		auto pc = khuneo::parser::parse_context<char>(cbuff2, eocb2);
 		auto pr = khuneo::parser::parse_response();
@@ -300,6 +301,38 @@ auto test_parse_any() -> bool
 			return false;
 
 		_test.passed();
+	}
+
+	return true;
+}
+
+auto test_lexer_valid_name() -> bool
+{
+	{
+		char buff[] = { "_myvar$1234 = 0" };
+		auto pc = parse_context<char>(buff, &buff[sizeof(buff)]);
+		auto pr = parse_response();
+
+		TEST("token on valid name");
+		TEST_EXPECT_OK((valid_name::parse(&pc, &pr)));
+	}
+
+	{
+		char buff[] = { "_my.]{var$1234 = 0" };
+		auto pc = parse_context<char>(buff, &buff[sizeof(buff)]);
+		auto pr = parse_response();
+
+		TEST("token on invalid name");
+		TEST_EXPECT_FAIL((valid_name::parse(&pc, &pr)));
+	}
+
+	{
+		char buff[] = { "0_myvar$1234 = 0" };
+		auto pc = parse_context<char>(buff, &buff[sizeof(buff)]);
+		auto pr = parse_response();
+
+		TEST("token on valid name starting with numeric");
+		TEST_EXPECT_FAIL((valid_name::parse(&pc, &pr)));
 	}
 
 	return true;
@@ -325,6 +358,8 @@ auto main() -> int
 	RUN_TEST(test_parse_exact);
 	RUN_TEST(test_parse_conditional);
 	RUN_TEST(test_parse_ternary);
+	RUN_TEST(test_lexer_valid_name);
 
+	printf("\n\n\n");
 	return 0;
 }
