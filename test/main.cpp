@@ -314,7 +314,7 @@ auto test_lexer_valid_name() -> bool
 		auto pr = parse_response();
 
 		TEST("token on valid name");
-		TEST_EXPECT_OK((valid_name::parse(&pc, &pr)));
+		TEST_EXPECT_OK((symbol::parse(&pc, &pr)));
 	}
 
 	{
@@ -323,7 +323,7 @@ auto test_lexer_valid_name() -> bool
 		auto pr = parse_response();
 
 		TEST("token on invalid name");
-		TEST_EXPECT_FAIL((valid_name::parse(&pc, &pr)));
+		TEST_EXPECT_FAIL((symbol::parse(&pc, &pr)));
 	}
 
 	{
@@ -332,7 +332,7 @@ auto test_lexer_valid_name() -> bool
 		auto pr = parse_response();
 
 		TEST("token on valid name starting with numeric");
-		TEST_EXPECT_FAIL((valid_name::parse(&pc, &pr)));
+		TEST_EXPECT_FAIL((symbol::parse(&pc, &pr)));
 	}
 
 	return true;

@@ -18,6 +18,9 @@ add_library(
 
 	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/compiler/lexer.hpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/lexer.cpp"
+
+	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/compiler/ast.hpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ast.cpp"
 )
 
 target_link_libraries(

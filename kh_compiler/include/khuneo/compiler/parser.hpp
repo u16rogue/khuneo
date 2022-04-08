@@ -2,6 +2,7 @@
 
 // #include <type_traits> // TODO: check if this library can compile everywhere, if not implement our own SFINAE
 #include <khuneo/string_literals.hpp>
+#include <khuneo/compiler/ast.hpp>
 
 // TODO: document grouping and add annotations for each parser to denote its group to make sure a parser wont consume an implementation it cant consume, something like precedence.
 
@@ -39,7 +40,12 @@ namespace khuneo::parser
 
 		const T_sourcebuffer * current;
 		const T_sourcebuffer * const end;
-		void * info; // extra information about the parse context (eg. current AST builder)
+
+		union
+		{
+			void * info; // extra information about the parse context (eg. current AST builder)
+			ast::ast_node * current_ast_node;
+		};
 	};
 
 	/*
@@ -203,7 +209,7 @@ namespace khuneo::parser
 	struct range
 	{
 		template <typename T_wc>
-		static auto parse(const parse_context<T_wc> * pc, parse_response * resp) -> bool
+		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
 		{
 			if (*pc->current >= start && *pc->current <= end)
 			{
@@ -493,23 +499,14 @@ namespace khuneo::parser
 	
 	/*
 	* Conditionally parses an expression if condition is true.
-	* The return_condition parameter determines if it should return
-	* the result of the condition (by which would be always false) on
-	* failure since if its true the return is determined by the true_expression
 	*/
-	template <typename condition, typename true_exp, bool return_condition = false>
+	template <typename condition, typename... true_exp>
 	struct conditional
 	{
 		template <typename T_wc>
 		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
 		{
-			bool r = condition::parse(pc, resp);
-			//if (r)
-			//	return true_exp::parse(pc, resp);
-
-			return r && true_exp::parse(pc, resp);
-
-			//return return_condition ? false /* <- r value */ : true;
+			return !condition::parse(pc, resp) || (true_exp::parse(pc, resp) && ...);
 		}
 	};
 
@@ -559,6 +556,35 @@ namespace khuneo::parser
 		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
 		{
 			return (expressions::parse(pc, resp) && ...);
+		}
+	};
+
+	template <int id, typename allocator, typename expression>
+	struct create_token
+	{
+		template <typename T_wc>
+		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
+		{
+			const auto * old_pc = pc->current;
+			if (expression::parse(pc, resp))
+			{
+				// allocation failure should be handled by the allocator implementation
+				ast::ast_node * new_node = (ast::ast_node *)allocator::kh_alloc(sizeof(ast::ast_node));
+				if (!new_node)
+					return false;
+
+				new_node->char_sz = sizeof(*old_pc);
+				new_node->start   = (void *)old_pc;
+				new_node->end     = (void *)pc->current;
+				new_node->type_id = id;
+
+				pc->current_ast_node->node_next = new_node;
+				pc->current_ast_node = new_node;
+
+				return true;
+			}
+
+			return false;
 		}
 	};
 }
