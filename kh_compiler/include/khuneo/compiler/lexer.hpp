@@ -39,8 +39,7 @@ namespace khuneo
 			using symbol = parser::create_token<TOKEN_ID::SYMBOL, allocator, parser::kh_and
 			<
 				parser::exact< name_alpha_sym_chars >,
-				parser::gulp < name_alpha_sym_chars, parser::range<'0', '9'> >,
-				parser::exact< parser::any<" "> >
+				parser::gulp < name_alpha_sym_chars, parser::range<'0', '9'> >
 			>>;
 
 			using keyword_var = parser::create_token<TOKEN_ID::VARIABLE, allocator, parser::exact<
@@ -65,13 +64,13 @@ namespace khuneo
 
 		using var_decl = parser::generate_parser
 		<
-			tokens::keyword_var,
-			tokens::space_separation,
-			tokens::symbol,
-			parser::gulp< tokens::spacing >,
-			parser::conditional< parser::any<":">, tokens::var_type_set, parser::gulp< tokens::spacing >, tokens::symbol, parser::gulp< tokens::spacing > >,
+			typename tokens::keyword_var,
+			typename tokens::space_separation,
+			typename tokens::symbol,
+			typename parser::gulp< typename tokens::spacing >,
+			typename parser::conditional< typename parser::any<":">, typename tokens::var_type_set, parser::gulp< typename tokens::spacing >, typename tokens::symbol, typename parser::gulp< typename tokens::spacing > >,
 			//parser::conditional< parser::any<"=">,  >,
-			tokens::close
+			typename tokens::close
 		>;
 	};
 }
