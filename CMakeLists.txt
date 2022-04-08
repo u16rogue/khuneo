@@ -10,14 +10,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 option(KH_LOCAL_TEST "Local testing executable" OFF)
-option(KH_TESTS "Compiles the test executable that verifies that khuneo is working." OFF)
+option(KH_TESTS "Compiles the test executable that verifies that khuneo is working." OFF) # TODO: setup test to only run test on included components
 option(KH_INCLUDE_COMPILER "Includes the compiler component to khuneo." ON)
 
 add_subdirectory("kh_core")
-
-if (KH_INCLUDE_COMPILER)
-	add_subdirectory("kh_compiler")
-endif()
 
 add_library(
 	${PROJECT_NAME}
@@ -33,6 +29,7 @@ target_link_libraries(
 )
 
 if (KH_INCLUDE_COMPILER)
+	add_subdirectory("kh_compiler")
 	target_link_libraries(
 		${PROJECT_NAME}
 		PUBLIC

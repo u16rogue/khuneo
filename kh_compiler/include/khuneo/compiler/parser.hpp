@@ -5,7 +5,7 @@
 
 // TODO: document grouping and add annotations for each parser to denote its group to make sure a parser wont consume an implementation it cant consume, something like precedence.
 
-namespace khuneo::parser::impl
+namespace khuneo::parser
 {
 	/*
 	* It is a general standard that parser implementation should implement
