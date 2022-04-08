@@ -28,15 +28,14 @@ add_library(
 
 target_link_libraries(
 	${PROJECT_NAME}
-	PRIVATE
+	PUBLIC
 	KH_CORE
-	KH_COMPILER
 )
 
 if (KH_INCLUDE_COMPILER)
 	target_link_libraries(
 		${PROJECT_NAME}
-		PRIVATE
+		PUBLIC
 		KH_COMPILER
 	)
 endif()
