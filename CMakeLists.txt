@@ -11,31 +11,40 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 option(KH_LOCAL_TEST "Local testing executable" OFF)
 option(KH_TESTS "Compiles the test executable that verifies that khuneo is working." OFF)
+option(KH_INCLUDE_COMPILER "Includes the compiler component to khuneo." ON)
 
+add_subdirectory("kh_core")
 
-# "${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/.hpp"
-# "${CMAKE_CURRENT_SOURCE_DIR}/src/.cpp"
+if (KH_INCLUDE_COMPILER)
+	add_subdirectory("kh_compiler")
+endif()
 
 add_library(
 	${PROJECT_NAME}
 
-	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/khuneo.hpp"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/khuneo.cpp"
-
-	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/parser.hpp"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/parser.cpp"
-
-	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/string_literals.hpp"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/string_literals.cpp"
-
-	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/lexer.hpp"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/lexer.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/kh/include/khuneo/khuneo.hpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/kh/src/khuneo.cpp"
 )
+
+target_link_libraries(
+	${PROJECT_NAME}
+	PRIVATE
+	KH_CORE
+	KH_COMPILER
+)
+
+if (KH_INCLUDE_COMPILER)
+	target_link_libraries(
+		${PROJECT_NAME}
+		PRIVATE
+		KH_COMPILER
+	)
+endif()
 
 target_include_directories(
 	${PROJECT_NAME}
 	PUBLIC
-	"${CMAKE_CURRENT_SOURCE_DIR}/include"
+	"${CMAKE_CURRENT_SOURCE_DIR}/kh/include"
 )
 
 if (KH_LOCAL_TEST)
