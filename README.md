@@ -3,7 +3,7 @@
 A modular and abstracted embedded programming language for C++
 
 ## About
-khuneo is an embeddable programming language for C++ (c++20 +). Each implementation is abstracted to
+khuneo is an embeddable programming language for C++ (cxx20+). Each implementation is abstracted to
 allow developers to extend khuneo to their needs, by design every* aspect and behavior of khuneo can be modified.
 
 <!--

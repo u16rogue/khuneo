@@ -11,7 +11,7 @@ public:
 	print_test(const char * msg)
 		: msg(msg)
 	{
-		printf("\n[+] %s... ", msg);
+		printf("\n\t> %s... ", msg);
 	}
 
 	~print_test()
@@ -46,6 +46,30 @@ private:
 	if ((exp) == true) \
 		return false; \
 	_test.passed()
+
+auto test_parse_ternary() -> bool
+{
+	char buff[] = { "FOOBAR" };
+	auto pc = parse_context<char>(buff, &buff[sizeof(buff)]);
+	auto pr = parse_response();
+
+	TEST("Test ternary exact match");
+	TEST_EXPECT_OK((ternary< any<"BAR">, exact<any<"BARFOO">>, exact<any<"FOOBAR">> >::parse(&pc, &pr)));
+
+	return true;
+}
+
+auto test_parse_conditional() -> bool
+{
+	char buff[] = { "FOOBAR" };
+	auto pc = parse_context<char>(buff, &buff[sizeof(buff)]);
+	auto pr = parse_response();
+
+	TEST("Test conditional exact match");
+	TEST_EXPECT_OK((conditional< any<"FOO">, exact<any<"FOOBAR">> >::parse(&pc, &pr)));
+
+	return true;
+}
 
 auto test_parse_exact() -> bool
 {
@@ -299,6 +323,8 @@ auto main() -> int
 	RUN_TEST(test_parse_kh_and);
 	RUN_TEST(test_parse_gulp);
 	RUN_TEST(test_parse_exact);
+	RUN_TEST(test_parse_conditional);
+	RUN_TEST(test_parse_ternary);
 
 	return 0;
 }

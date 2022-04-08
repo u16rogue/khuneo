@@ -227,68 +227,6 @@ namespace khuneo::parser::impl
 	};
 
 	/*
-	* Runs a logical operation against all
-	* the matches if atleast one of them
-	* results to a true expression. This expression
-	* can short circuit
-	* 
-	* Type: Logical
-	*/
-	template <typename... matchers>
-	struct kh_or
-	{
-		template <typename T_wc>
-		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
-		{
-			return ((matchers::parse(pc, resp)) || ...);
-		}
-	};
-
-	/*
-	* Runs a logical operation against all
-	* the matches if all results to a true
-	* expression. This expression can short
-	* circuit
-	* 
-	* Type: Logical
-	*/
-	template <typename... matchers>
-	struct kh_and
-	{
-		template <typename T_wc>
-		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
-		{
-			return ((matchers::parse(pc, resp)) && ...);
-		}
-	};
-
-	/*
-	* Negates the result of expression::parse
-	* Type: Logical
-	*/
-	template <typename expression>
-	struct negate
-	{
-		static auto parse(auto * pc, parse_response * resp) -> bool
-		{
-			// TODO: might need to pass our own parse_response as a negated result might modify a
-			// parse response and change its value unexpectedly eg. a resulting true causing side a
-			// effect even if it shouldnt since its supposed to be negated
-			return !expression::parse(pc, resp);
-		}
-
-		static consteval auto length() -> int
-		{
-			return expression::length();
-		}
-
-		static consteval auto minlength() -> int
-		{
-			return expression::minlength();
-		}
-	};
-
-	/*
 	* Advances the parser context's current when the
 	* delimeter is met. This will always return true regardless.
 	* 
@@ -490,13 +428,103 @@ namespace khuneo::parser::impl
 		}
 	};
 
-	template <typename T_wc>
-	using responder_t = void(*)(const parse_context<T_wc> *, const parse_response * resp);
-
-	template <typename expression>
-	struct exp_respond
+	/*
+	* Runs a logical operation against all
+	* the matches if atleast one of them
+	* results to a true expression. This expression
+	* can short circuit
+	* 
+	* Type: Logical
+	*/
+	template <typename... matchers>
+	struct kh_or
 	{
+		template <typename T_wc>
+		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
+		{
+			return ((matchers::parse(pc, resp)) || ...);
+		}
+	};
 
+	/*
+	* Runs a logical operation against all
+	* the matches if all results to a true
+	* expression. This expression can short
+	* circuit
+	* 
+	* Type: Logical
+	*/
+	template <typename... matchers>
+	struct kh_and
+	{
+		template <typename T_wc>
+		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
+		{
+			return ((matchers::parse(pc, resp)) && ...);
+		}
+	};
+
+	/*
+	* Negates the result of expression::parse
+	* Type: Logical
+	*/
+	template <typename expression>
+	struct negate
+	{
+		static auto parse(auto * pc, parse_response * resp) -> bool
+		{
+			// TODO: might need to pass our own parse_response as a negated result might modify a
+			// parse response and change its value unexpectedly eg. a resulting true causing side a
+			// effect even if it shouldnt since its supposed to be negated
+			return !expression::parse(pc, resp);
+		}
+
+		static consteval auto length() -> int
+		{
+			return expression::length();
+		}
+
+		static consteval auto minlength() -> int
+		{
+			return expression::minlength();
+		}
+	};
+	
+	/*
+	* Conditionally parses an expression if condition is true.
+	* The return_condition parameter determines if it should return
+	* the result of the condition (by which would be always false) on
+	* failure since if its true the return is determined by the true_expression
+	*/
+	template <typename condition, typename true_exp, bool return_condition = false>
+	struct conditional
+	{
+		template <typename T_wc>
+		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
+		{
+			bool r = condition::parse(pc, resp);
+			//if (r)
+			//	return true_exp::parse(pc, resp);
+
+			return r && true_exp::parse(pc, resp);
+
+			//return return_condition ? false /* <- r value */ : true;
+		}
+	};
+
+	/*
+	* Branches between two expressions determined by a condition. The two
+	* expressions are true_exp and false_exp which are chosen depending on
+	* the result of a condition
+	*/
+	template <typename condition, typename true_exp, typename false_exp>
+	struct ternary
+	{
+		template <typename T_wc>
+		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
+		{
+			return condition::parse(pc, resp) ? true_exp::parse(pc, resp) : false_exp::parse(pc, resp);
+		}
 	};
 
 	template <typename... expressions>
