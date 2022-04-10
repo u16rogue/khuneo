@@ -38,11 +38,15 @@ namespace khuneo
 		consteval string_literal(const T (&_str)[sz])
 		{
 			for (int i = 0; i < sz; ++i)
+			{
+				hash = (hash ^ _str[i]) * 0x01000193;
 				str[i] = _str[i];
+			}
 		}
 
-		T str[sz] { 0 }; // TODO: maybe we shouldn't include the null terminator anymore since its unecessary with what and how we're using this
-		const int length  { sz - 1 };
+		T            str[sz] { 0 }; // TODO: maybe we shouldn't include the null terminator anymore since its unecessary with what and how we're using this
+		const int    length  { sz - 1 };
+		unsigned int hash    { 0x811c9dc5 }; // fnv1a hashed
 
 		auto match(const T * other) const noexcept -> bool
 		{
@@ -52,7 +56,7 @@ namespace khuneo
 					return false;
 
 				if (i == length - 1)
-					return true;
+					return other[i + 1] == str[i + 1] == 0;
 			}
 
 			return false;
@@ -63,31 +67,4 @@ namespace khuneo
 			return match(rhs);
 		}
 	};
-
-	#if 0
-	// For single characters
-	template <typename T, 1>
-	struct string_literal
-	{
-		using type = T;
-
-		consteval string_literal(const T &_str)
-			: str(_str)
-		{
-		}
-
-		T str { 0 };
-		const int length { 1 };
-
-		auto match(const T * other) -> bool
-		{
-			return str == *other;
-		}
-
-		auto operator==(const T * rhs) -> bool
-		{
-			return match(rhs);
-		}
-	};
-	#endif
 }

@@ -12,7 +12,9 @@ namespace khuneo::ast
 
 		int line { -1 };
 		int col  { -1 };
-		int type_id { -1 };
+
+		int token_id { -1 };
+		const char * token_name;
 
 		int    char_sz { -1 }; // very unecessary, we can just template this instead
 		void * start { nullptr };
