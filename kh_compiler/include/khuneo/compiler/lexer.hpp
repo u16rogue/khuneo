@@ -318,6 +318,8 @@ namespace khuneo::impl::lexer
 	template <typename start, typename end>
 	struct encapsulated
 	{
+		enum { HAS_CHILD };
+
 		template <typename T_wc>
 		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
 		{
@@ -607,6 +609,11 @@ namespace khuneo::impl::lexer
 		}
 	};
 
+
+	struct kh_while
+	{
+	};
+
 	template <typename... expressions>
 	struct generate_parser
 	{
@@ -620,6 +627,8 @@ namespace khuneo::impl::lexer
 	template <khuneo::string_literal tok_id, typename allocator, typename expression>
 	struct create_token
 	{
+		using expr_t = expression;
+
 		template <typename T_wc>
 		static auto parse(parse_context<T_wc> * pc, parse_response * resp) -> bool
 		{
@@ -672,6 +681,8 @@ namespace khuneo
 				impl::lexer::exact<spacing>, impl::lexer::gulp<spacing>
 			>>;
 
+			using optional_spacing = impl::lexer::gulp< typename tokens::spacing >;
+
 			using identifier = impl::lexer::create_token<"IDENTIFIER", allocator, impl::lexer::kh_and
 			<
 				impl::lexer::exact< name_alpha_sym_chars >,
@@ -697,19 +708,30 @@ namespace khuneo
 				impl::lexer::any<";">
 			>>;
 
-			using assignment_expr = impl::lexer::create_token<"ASSIGNMENT_OP", allocator, impl::lexer::encapsulated<
-				impl::lexer::any<"=">, impl::lexer::index<1, impl::lexer::any<";">>
+			using assignment_expr = impl::lexer::create_token<"ASSIGNMENT_OP", allocator, impl::lexer::kh_and<
+				impl::lexer::exact< impl::lexer::any<"="> >,
+				impl::lexer::gulp< impl::lexer::negate< impl::lexer::index<1, impl::lexer::any<",", ";", ")">> > >
 			>>;
 		};
 
+		// ------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+		// const keyword
+		using const_mod = impl::lexer::generate_parser
+		<
+			typename tokens::keyword_const,
+			typename tokens::space_separation
+		>;
+
+		// var <identifier>[?<? ><:><identifier><? >][?<? ><=><? ><expression>];
 		using var_decl = impl::lexer::generate_parser
 		<
 			typename tokens::keyword_var,
 			typename tokens::space_separation,
 			typename tokens::identifier,
 			typename impl::lexer::gulp< typename tokens::spacing >,
-			typename impl::lexer::conditional< typename impl::lexer::any<":">, typename tokens::var_type_set, impl::lexer::gulp< typename tokens::spacing >, typename tokens::identifier, typename impl::lexer::gulp< typename tokens::spacing > >,
-			typename impl::lexer::conditional< typename impl::lexer::any<"=">, typename tokens::assignment_expr, typename impl::lexer::gulp< typename tokens::spacing > >,
+			typename impl::lexer::conditional< typename impl::lexer::any<":">, typename tokens::var_type_set,    typename tokens::optional_spacing, typename tokens::identifier, typename tokens::optional_spacing >,
+			typename impl::lexer::conditional< typename impl::lexer::any<"=">, typename tokens::assignment_expr, typename tokens::optional_spacing >,
 			typename tokens::close
 		>;
 	};
