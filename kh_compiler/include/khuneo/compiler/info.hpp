@@ -9,6 +9,8 @@ namespace khuneo::impl
 
 	using fnparser_t = bool(*)(info *);
 
+
+
 	struct info
 	{
 		// Should be considered const and not be modified
@@ -26,14 +28,10 @@ namespace khuneo::impl
 		{
 			const char * source; // pointer to the current source buffer
 			ast::node *  node;   // Pointer to the current AST node
-		} state;
-
-		struct
-		{
 			int line;
 			int column;
-		} text;
-
+		} state;
+		
 		union
 		{
 			struct

@@ -19,7 +19,7 @@ namespace khuneo::impl::lexer
 	{
 		static auto run(impl::info * info) -> bool
 		{
-			if (([&]() -> bool
+			if ((([&]() -> bool
 			{
 				if (info->check_current_overflow(delims.length - 1))
 					return false;
@@ -30,7 +30,7 @@ namespace khuneo::impl::lexer
 				info->response.value = delims.length;
 				return true;
 
-			} ()) || ...) { return true; }
+			} ()) || ...)) { return true; }
 			
 			return false;
 		}
@@ -93,11 +93,11 @@ namespace khuneo::impl::lexer
 				switch (*info->state.source)
 				{
 					case '\t':
-						info->text.column += info->ctx.tab_space;
+						info->state.column += info->ctx.tab_space;
 						break;
 					case '\n':
-						info->text.column = 0;
-						++info->text.line;
+						info->state.column = 0;
+						++info->state.line;
 						break;
 					default:
 						++info->state.source;

@@ -13,8 +13,8 @@ auto khuneo::impl::info::check_current_overflow(const int & diff) -> bool
 auto khuneo::impl::info::push_tokend() -> void
 {
 	token_data.start  = state.source;
-	token_data.line   = text.line;
-	token_data.column = text.column;
+	token_data.line   = state.line;
+	token_data.column = state.column;
 }
 
 auto khuneo::impl::info::pop_tokend(ast::node * n) -> void
