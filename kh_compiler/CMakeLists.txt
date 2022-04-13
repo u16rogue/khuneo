@@ -21,6 +21,9 @@ add_library(
 
 	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/compiler/ast.hpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ast.cpp"
+ 
+	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/compiler/info.hpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/info.cpp"
 )
 
 target_link_libraries(

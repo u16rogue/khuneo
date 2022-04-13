@@ -2,6 +2,8 @@
 
 namespace khuneo
 {
+	using hash_t = unsigned long;
+
 	/*
 	* Represents a string that is enforced as compile time
 	* string literal, constructor is marked as consteval to
@@ -14,7 +16,7 @@ namespace khuneo
 	* These template parameters can be automatically be inferred by
 	* simply constructing an instance of it
 	*/
-	template <typename T, int sz>
+	template <int sz>
 	struct string_literal
 	{
 		/*
@@ -33,9 +35,7 @@ namespace khuneo
 		* here and serves no advantage other than an abstraction to string_literal::match
 		*/
 
-		using type = T;
-
-		consteval string_literal(const T (&_str)[sz])
+		consteval string_literal(const char (&_str)[sz])
 		{
 			for (int i = 0; i < sz; ++i)
 			{
@@ -44,11 +44,11 @@ namespace khuneo
 			}
 		}
 
-		T            str[sz] { 0 }; // TODO: maybe we shouldn't include the null terminator anymore since its unecessary with what and how we're using this
-		const int    length  { sz - 1 };
-		unsigned int hash    { 0x811c9dc5 }; // fnv1a hashed
+		char      str[sz] { 0 }; // TODO: maybe we shouldn't include the null terminator anymore since its unecessary with what and how we're using this
+		const int length  { sz - 1 };
+		hash_t    hash    { 0x811c9dc5 }; // fnv1a hashed
 
-		auto match(const T * other) const noexcept -> bool
+		auto match(const char * other) const noexcept -> bool
 		{
 			for (int i = 0; i < length; ++i)
 			{
@@ -62,7 +62,7 @@ namespace khuneo
 			return false;
 		}
 
-		auto operator==(const T * const rhs) const noexcept -> bool
+		auto operator==(const char * const rhs) const noexcept -> bool
 		{
 			return match(rhs);
 		}
