@@ -39,7 +39,7 @@ namespace khuneo::parser
 		return basic_parse
 		<
 			lexer::expr_moduleexport,
-			//lexer::importexpr,
+			lexer::expr_endstatement,
 			custom_tokens...
 		>(info);
 	}

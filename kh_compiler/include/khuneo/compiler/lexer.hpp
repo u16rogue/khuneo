@@ -241,13 +241,13 @@ namespace khuneo::impl::lexer
 
 	using h_gulp_whitespace = h_gulp_char< h_spacingchars >;
 
-	using identifier = kh_and
+	using symbol = kh_and
 	<
 		begin_token,
 		h_match_AZaz_$,
 		forward_source<1>,
 		h_gulp_char<h_match_AZaz_$09>,
-		insert_token<"IDENTIFIER">
+		insert_token<"SYMBOL">
 	>;
 }
 
@@ -257,14 +257,22 @@ namespace khuneo::lexer
 
 	// --------------------------------------------------------------------------------------------------------------------------------------------------------
 
+	using expr_endstatement = impl::lexer::kh_and
+	<
+		impl::lexer::streq<";">,
+		impl::lexer::begin_token,
+		impl::lexer::forward_source<1>,
+		impl::lexer::insert_token<"END_STATEMENT">
+	>;
+
 	using expr_moduleexport = impl::lexer::kh_and
 	<
 		impl::lexer::streq<"export as ">,
 		impl::lexer::begin_token,
-		impl::lexer::insert_token<"EXPORT_MODULE">,
 		impl::lexer::forward_source<>,
+		impl::lexer::insert_token<"EXPORT_MODULE">,
 		impl::lexer::h_gulp_whitespace,
-		impl::lexer::identifier,
+		impl::lexer::symbol,
 		impl::lexer::h_gulp_whitespace,
 		impl::lexer::streq<";">,
 		impl::lexer::forward_source<1>
