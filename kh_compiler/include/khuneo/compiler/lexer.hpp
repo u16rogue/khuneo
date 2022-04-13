@@ -100,9 +100,10 @@ namespace khuneo::impl::lexer
 						++info->state.line;
 						break;
 					default:
-						++info->state.source;
-						break;
+						++info->state.column;
 				};
+
+				++info->state.source;
 			}
 
 			return true;
@@ -178,6 +179,8 @@ namespace khuneo::impl::lexer
 	/*
 	* Inserts a new node and updates the node
 	* with information pushed by begin_token
+	* 
+	* ! pops the info stack
 	*/
 	template <khuneo::string_literal tok>
 	struct insert_token
@@ -189,9 +192,14 @@ namespace khuneo::impl::lexer
 				return false;
 			
 			// set info
+			const auto & stack = info->top();
 			n->tok_id   = tok.hash;
 			n->tok_name = tok.str;
-			info->pop_tokend(n);
+			n->start    = stack.basic_state.start;
+			n->end      = info->state.source;
+			n->line     = stack.basic_state.line;
+			n->column   = stack.basic_state.column;
+			info->pop();
 
 			info->state.node->link_forward(n);
 
@@ -206,12 +214,14 @@ namespace khuneo::impl::lexer
 	* Pushes the current context to be used
 	* by insert_token, this is used for referencing
 	* like the start and end of the token
+	* 
+	* ! pushes to the info stack
 	*/
 	struct begin_token
 	{
 		static auto run(impl::info * info) -> bool
 		{
-			info->push_tokend();
+			info->push(info_stack_type::BASIC_STATE);
 			return true;
 		}
 	};
