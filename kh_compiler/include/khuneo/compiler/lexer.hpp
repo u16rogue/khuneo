@@ -77,12 +77,7 @@ namespace khuneo::impl::lexer
 	{
 		static auto run(impl::info * info) -> bool
 		{
-			int _value = [&]() -> int {
-				if constexpr (offset != 0)
-					return offset;
-				else
-					return info->request.value;
-			}();
+			int _value = offset != 0 ? offset : info->request.value;
 
 			const char * next = info->state.source + _value;
 			if (next - 1 >= info->ctx.end)
@@ -167,12 +162,55 @@ namespace khuneo::impl::lexer
 		}
 	};
 
+	/*
+	* Matches an encapsulated block determined by
+	* the <begin> and <end> delimeters. This expression
+	* returns true when its able to match both begin and end,
+	* and will modify the state's response to a value that
+	* represents the length of the entiree encapsulation block
+	* starting from the <begin> delimeter up to the <end>
+	* 
+	* ! Modifies response
+	* 
+	* ? Maybe this should take expressions instead of a string_literal
+	*/
 	template <khuneo::string_literal begin, khuneo::string_literal end>
 	struct encapsulate
 	{
 		static auto run(impl::info * info) -> bool
 		{
-			return true;
+			const char * current = info->state.source;
+			if (info->check_current_overflow(begin.length) || !begin.match(current))
+				return false;
+
+			++current; // advance the current since we already matched it
+			int scope = 0;
+
+			while (!info->check_overflow(current))
+			{
+				// increment the scope
+				if (begin.match(current))
+				{
+					++scope;
+					++current;
+					continue;
+				}
+
+				if (end.match(current))
+				{
+					if (scope == 0)
+					{
+						info->response.value = current - info->state.source + 1;
+						return true;
+					}
+
+					--scope;
+				}
+
+				++current;
+			}
+
+			return false;
 		}
 	};
 
@@ -243,8 +281,8 @@ namespace khuneo::impl::lexer
 
 	using symbol = kh_and
 	<
-		begin_token,
 		h_match_AZaz_$,
+		begin_token,
 		forward_source<1>,
 		h_gulp_char<h_match_AZaz_$09>,
 		insert_token<"SYMBOL">
@@ -254,34 +292,4 @@ namespace khuneo::impl::lexer
 namespace khuneo::lexer
 {
 	
-
-	// --------------------------------------------------------------------------------------------------------------------------------------------------------
-
-	using expr_endstatement = impl::lexer::kh_and
-	<
-		impl::lexer::streq<";">,
-		impl::lexer::begin_token,
-		impl::lexer::forward_source<1>,
-		impl::lexer::insert_token<"END_STATEMENT">
-	>;
-
-	using expr_moduleexport = impl::lexer::kh_and
-	<
-		impl::lexer::streq<"export as ">,
-		impl::lexer::begin_token,
-		impl::lexer::forward_source<>,
-		impl::lexer::insert_token<"EXPORT_MODULE">,
-		impl::lexer::h_gulp_whitespace,
-		impl::lexer::symbol,
-		impl::lexer::h_gulp_whitespace,
-		impl::lexer::streq<";">,
-		impl::lexer::forward_source<1>
-	>;
-
-	using importexpr = impl::lexer::kh_and
-	<
-		impl::lexer::streq<"import ">,
-		impl::lexer::forward_source<>,
-		impl::lexer::h_gulp_whitespace
-	>;
 }
