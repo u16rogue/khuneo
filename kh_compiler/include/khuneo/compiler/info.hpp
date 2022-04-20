@@ -98,6 +98,8 @@ namespace khuneo::impl
 		auto check_overflow(const char * c) -> bool; // Bound checking
 		auto check_current_overflow(const int & diff) -> bool; // Bound checking
 
+		auto generate_exception(const char * message) -> void;
+
 	private:
 		int              stack_counter = 0;
 		info_stack_entry stack[16]     = {};

@@ -227,16 +227,37 @@ namespace khuneo::impl::lexer
 		{
 			ast::node * n = (ast::node *)info->ctx.allocator(sizeof(ast::node));
 			if (!n)
+			{
+				info->generate_exception("Memory allocation failed when trying to insert a token");
 				return false;
-			
+			}
+
+			// Find a basic state
+			info_stack_entry * stack = nullptr;
+			int sp = info->stack_count();
+			while (sp)
+			{
+				auto & s = info->stack_indexed(sp);
+				if (s.type == info_stack_type::BASIC_STATE)
+				{
+					stack = &s;
+					break;
+				}
+			}
+
+			if (!stack)
+			{
+				info->generate_exception("insert_token did not find a BASIC_STATE to use");
+				return false;
+			}
+
 			// set info
-			const auto & stack = info->top();
 			n->tok_id   = tok.hash;
 			n->tok_name = tok.str;
-			n->start    = stack.basic_state.start;
+			n->start    = stack->basic_state.start;
 			n->end      = info->state.source;
-			n->line     = stack.basic_state.line;
-			n->column   = stack.basic_state.column;
+			n->line     = stack->basic_state.line;
+			n->column   = stack->basic_state.column;
 			info->pop();
 
 			info->state.node->link_forward(n);
@@ -264,6 +285,39 @@ namespace khuneo::impl::lexer
 		}
 	};
 
+	/*
+	* Pushes an exception into the info
+	* stack, if an expression fails and
+	* an exception is left in the stack
+	* the parser will halt and will throw
+	* the latest exception pushed
+	* 
+	* ! pushes to the info stack
+	*/
+	template <khuneo::string_literal msg>
+	struct push_exception
+	{
+		static auto run(impl::info * info) -> bool
+		{
+			info->push(info_stack_type::EXCEPTION, (void *)msg.str);
+			return true;
+		}
+	};
+
+	/*
+	* Pops the top of an info stack
+	* 
+	* ! pops the info stack
+	*/
+	struct pop
+	{
+		static auto run(impl::info * info) -> bool
+		{
+			info->pop();
+			return true;
+		}
+	};
+
 	// Helpers 
 
 	template <typename condition>
@@ -281,11 +335,13 @@ namespace khuneo::impl::lexer
 
 	using symbol = kh_and
 	<
+		push_exception<"Expected a symbol/identifier">,
 		h_match_AZaz_$,
 		begin_token,
 		forward_source<1>,
 		h_gulp_char<h_match_AZaz_$09>,
-		insert_token<"SYMBOL">
+		insert_token<"SYMBOL">,
+		pop
 	>;
 }
 

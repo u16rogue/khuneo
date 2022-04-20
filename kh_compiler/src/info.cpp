@@ -10,6 +10,11 @@ auto khuneo::impl::info::check_current_overflow(const int & diff) -> bool
 	return check_overflow(state.source + diff);
 }
 
+auto khuneo::impl::info::generate_exception(const char * message) -> void
+{
+	push(info_stack_type::EXCEPTION, (void *)message);
+}
+
 auto khuneo::impl::info::top() -> info_stack_entry &
 {
 	return stack[stack_counter];
