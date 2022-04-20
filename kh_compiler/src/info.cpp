@@ -48,6 +48,7 @@ auto khuneo::impl::info::push(info_stack_type type, void * extra_data) -> bool
 			entry.exception.message = reinterpret_cast<const char *>(extra_data);
 			entry.exception.line    = state.line;
 			entry.exception.column  = state.column;
+			break;
 		}
 		default:
 		{

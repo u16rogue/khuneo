@@ -24,6 +24,7 @@ namespace khuneo::impl::parser
 		lexer::h_gulp_whitespace,
 		lexer::symbol,
 		lexer::h_gulp_whitespace,
+		lexer::push_exception<"'export as' expected a property encapsulation '{' followed by a '}' or an end of statement ';'">,
 		lexer::kh_or<
 			expr_endstatement,
 			lexer::kh_and<
@@ -32,7 +33,8 @@ namespace khuneo::impl::parser
 				lexer::forward_source<>,
 				lexer::insert_token<"EXPORT_PROPERTIES">
 			>
-		>
+		>,
+		lexer::pop
 	>;
 
 	using comment_line = void;
