@@ -3,6 +3,16 @@
 #include <khuneo/defs.hpp>
 #include <khuneo/compiler/ast.hpp>
 
+namespace khuneo
+{
+	struct compiler_exception
+	{
+		const char * message;
+		int line;
+		int column;
+	};
+}
+
 namespace khuneo::impl
 {
 	struct info;
@@ -40,12 +50,7 @@ namespace khuneo::impl
 				int column;
 			} basic_state;
 
-			struct
-			{
-				const char * message;
-				int line;
-				int column;
-			} exception;
+			khuneo::compiler_exception exception;
 
 			int number;
 		};
