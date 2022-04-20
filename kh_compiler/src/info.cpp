@@ -35,8 +35,14 @@ auto khuneo::impl::info::push(info_stack_type type, void * extra_data) -> bool
 		}
 		case info_stack_type::NUMBER:
 		{
-			entry.number = *(int*)&extra_data;
+			entry.number = *reinterpret_cast<int*>(&extra_data);
 			break;
+		}
+		case info_stack_type::EXCEPTION:
+		{
+			entry.exception.message = reinterpret_cast<const char *>(extra_data);
+			entry.exception.line    = state.line;
+			entry.exception.column  = state.column;
 		}
 		default:
 		{
@@ -53,8 +59,9 @@ auto khuneo::impl::info::pop() -> bool
 {
 	stack[stack_counter] = {};
 
-	if (stack_counter != 0)
-		--stack_counter;
+	if (stack_counter == 0)
+		return false;
 
+	--stack_counter;
 	return true;
 }

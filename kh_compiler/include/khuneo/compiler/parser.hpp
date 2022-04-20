@@ -24,13 +24,14 @@ namespace khuneo::impl::parser
 		lexer::h_gulp_whitespace,
 		lexer::symbol,
 		lexer::h_gulp_whitespace,
-		lexer::kh_or<expr_endstatement,
-					 lexer::kh_and<
-						 lexer::encapsulate<"{", "}">,
-						 lexer::begin_token,
-						 lexer::forward_source<>,
-						 lexer::insert_token<"EXPORT_PROPERTIES">
-					 >
+		lexer::kh_or<
+			expr_endstatement,
+			lexer::kh_and<
+				lexer::encapsulate<"{", "}">,
+				lexer::begin_token,
+				lexer::forward_source<>,
+				lexer::insert_token<"EXPORT_PROPERTIES">
+			>
 		>
 	>;
 

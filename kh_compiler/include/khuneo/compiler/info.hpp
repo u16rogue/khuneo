@@ -11,9 +11,19 @@ namespace khuneo::impl
 
 	enum class info_stack_type
 	{
+		// No stack type defined
 		UNDEFINED,
+
+		// Stores the <info> basic state, basic in a sense that it keeps
+		// simple information that's only needed for its purpose
 		BASIC_STATE,
-		NUMBER
+
+		// Stores a signed integer passed from the extradata parameter of a push
+		NUMBER,
+
+		// Stores the current exception handler if a rule set fails the most recent
+		// exception pushed into the stack is used.
+		EXCEPTION
 	};
 
 	struct info_stack_entry
@@ -29,6 +39,13 @@ namespace khuneo::impl
 				int line;
 				int column;
 			} basic_state;
+
+			struct
+			{
+				const char * message;
+				int line;
+				int column;
+			} exception;
 
 			int number;
 		};
