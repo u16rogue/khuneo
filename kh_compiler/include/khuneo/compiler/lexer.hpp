@@ -291,5 +291,4 @@ namespace khuneo::impl::lexer
 
 namespace khuneo::lexer
 {
-	
 }

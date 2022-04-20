@@ -18,6 +18,7 @@ namespace khuneo::impl
 	struct info;
 
 	using fnparser_t = bool(*)(info *);
+	using fn_parser_except_t = void(*)(khuneo::compiler_exception *);
 
 	enum class info_stack_type
 	{
@@ -61,12 +62,13 @@ namespace khuneo::impl
 		// Should be considered const and not be modified
 		struct
 		{
-			const char *   start;
-			const char *   end;
-			ast::node *    root_node;
-			int            tab_space { 4 };
-			kh_allocator_t allocator; // WARNING: ALLOCATOR MUST ALLOCATE A NULLED BUFFER!
-			fnparser_t     parser;
+			const char *       start;
+			const char *       end;
+			ast::node *        root_node;
+			int                tab_space { 4 };
+			kh_allocator_t     allocator; // WARNING: ALLOCATOR MUST ALLOCATE A NULLED BUFFER!
+			fn_parser_except_t parser_exception;
+			fnparser_t         parser;
 		} ctx;
 
 
@@ -103,5 +105,7 @@ namespace khuneo::impl
 		auto top() -> info_stack_entry &;
 		auto push(info_stack_type type, void * extra_data = nullptr) -> bool;
 		auto pop() -> bool;
+		auto stack_count() -> int;
+		auto stack_indexed(int i) -> info_stack_entry &;
 	};
 }

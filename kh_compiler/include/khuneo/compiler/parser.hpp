@@ -54,10 +54,41 @@ namespace khuneo::parser
 
 		while (!info->check_current_overflow(0))
 		{
-			if ((rules::run(info) || ...))
-				continue;
+			// If statement expects a catastrophic failure, true = fail, false = success
+			if (([&]() -> bool
+				{
+					// for every rule run it and check if it fails, if there's
+					// an exception on the stack, that means it wasn't a clean failure
+					// which should indicate a compilation error
+					if (!rules::run(info))
+					{
+						// look for an exception
+						int sp = info->stack_count();
+						while (sp)
+						{
+							auto & s = info->stack_indexed(sp);
+							if (s.type == impl::info_stack_type::EXCEPTION)
+							{
+								// send the exception
+								if (info->ctx.parser_exception)
+									info->ctx.parser_exception(&s.exception);
+								return true;
+							}
+							--sp;
+						}
+					}
 
-			// maybe we should fail instead
+					// flush the stack
+					while (info->pop());
+
+					return false;
+				}() || ...)
+			)
+			{
+				return false; // Catastrophic failure was met, exit the parser
+			}
+			
+			// move on to the next if there were no exceptions
 			impl::lexer::forward_source<1>::run(info);
 		}
 

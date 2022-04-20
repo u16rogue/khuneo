@@ -65,3 +65,13 @@ auto khuneo::impl::info::pop() -> bool
 	--stack_counter;
 	return true;
 }
+
+auto khuneo::impl::info::stack_count() -> int
+{
+	return stack_counter;
+}
+
+auto khuneo::impl::info::stack_indexed(int i) -> info_stack_entry &
+{
+	return stack[i];
+}
