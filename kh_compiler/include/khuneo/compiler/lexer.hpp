@@ -226,7 +226,7 @@ namespace khuneo::impl::lexer
 		static auto run(impl::info * info) -> bool
 		{
 			// Find a basic state
-			info_stack_entry * stack = info->find_recent(impl::info_stack_type::BASIC_STATE);
+			info_stack_entry * stack = info->stack_find_recent(impl::info_stack_type::BASIC_STATE);
 			if (!stack)
 			{
 				info->generate_exception("pop_token_next did not find a BASIC_STATE to use");
@@ -278,7 +278,7 @@ namespace khuneo::impl::lexer
 	{
 		static auto run(impl::info * info) -> bool
 		{
-			info->push(info_stack_type::BASIC_STATE);
+			info->stack_push(info_stack_type::BASIC_STATE);
 			return true;
 		}
 	};
@@ -297,7 +297,7 @@ namespace khuneo::impl::lexer
 	{
 		static auto run(impl::info * info) -> bool
 		{
-			info->push(info_stack_type::EXCEPTION, (void *)msg.str);
+			info->stack_push(info_stack_type::EXCEPTION, (void *)msg.str);
 			return true;
 		}
 	};
@@ -311,7 +311,7 @@ namespace khuneo::impl::lexer
 	{
 		static auto run(impl::info * info) -> bool
 		{
-			info->pop();
+			info->stack_pop();
 			return true;
 		}
 	};

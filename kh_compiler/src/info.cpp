@@ -12,7 +12,7 @@ auto khuneo::impl::info::check_current_overflow(const int & diff) -> bool
 
 auto khuneo::impl::info::generate_exception(const char * message) -> void
 {
-	push(info_stack_type::EXCEPTION, (void *)message);
+	stack_push(info_stack_type::EXCEPTION, (void *)message);
 }
 
 auto khuneo::impl::info::h_allocate_node() -> ast::node *
@@ -27,12 +27,12 @@ auto khuneo::impl::info::h_allocate_node() -> ast::node *
 	return n;
 }
 
-auto khuneo::impl::info::top() -> info_stack_entry &
+auto khuneo::impl::info::stack_top() -> info_stack_entry &
 {
 	return stack[stack_counter];
 }
 
-auto khuneo::impl::info::push(info_stack_type type, void * extra_data) -> bool
+auto khuneo::impl::info::stack_push(info_stack_type type, void * extra_data) -> bool
 {
 	if (type == info_stack_type::UNDEFINED || stack_counter + 1 == sizeof(stack) / sizeof(stack[0]))
 		return false;
@@ -64,7 +64,7 @@ auto khuneo::impl::info::push(info_stack_type type, void * extra_data) -> bool
 		}
 		default:
 		{
-			pop();
+			stack_pop();
 			return false;
 			break;
 		}
@@ -73,7 +73,7 @@ auto khuneo::impl::info::push(info_stack_type type, void * extra_data) -> bool
 	return true;
 }
 
-auto khuneo::impl::info::pop() -> bool
+auto khuneo::impl::info::stack_pop() -> bool
 {
 	stack[stack_counter] = {};
 
@@ -94,7 +94,7 @@ auto khuneo::impl::info::stack_indexed(int i) -> info_stack_entry &
 	return stack[i];
 }
 
-auto khuneo::impl::info::find_recent(info_stack_type type) -> info_stack_entry *
+auto khuneo::impl::info::stack_find_recent(info_stack_type type) -> info_stack_entry *
 {
 	int s = stack_counter;
 	while (s)

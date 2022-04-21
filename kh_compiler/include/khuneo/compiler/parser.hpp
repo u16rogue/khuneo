@@ -49,6 +49,17 @@ namespace khuneo::impl::parser
 			lexer::h_gulp_whitespace,
 			lexer::symbol,
 			lexer::h_gulp_whitespace,
+			lexer::kh_if<
+				lexer::streq<"as">,
+				lexer::push_basic_state,
+				lexer::forward_source<>,
+				lexer::pop_token_next<"IMPORT_ALIAS">,
+				lexer::start_child,
+					lexer::h_gulp_whitespace,
+					lexer::symbol,
+					lexer::h_gulp_whitespace,
+				lexer::end_child
+			>,
 			lexer::push_exception<"'import' expected a property encapsulation '{' followed by a '}' or an end of statement ';'">,
 			lexer::kh_or<
 				expr_endstatement,
@@ -73,6 +84,11 @@ namespace khuneo::impl::parser
 	<
 		lexer::streq<"/*">,
 		lexer::kh_while<lexer::negate<lexer::streq<"*/">>, lexer::forward_source<1>>
+	>;
+
+	using rule_function = lexer::kh_and
+	<
+
 	>;
 }
 
@@ -100,7 +116,7 @@ namespace khuneo::parser
 					if (!rules::run(info))
 					{
 						// look for an exception
-						auto * ex = info->find_recent(impl::info_stack_type::EXCEPTION);
+						auto * ex = info->stack_find_recent(impl::info_stack_type::EXCEPTION);
 						if (ex)
 						{
 							// send the exception
@@ -111,7 +127,7 @@ namespace khuneo::parser
 					}
 
 					// flush the stack
-					while (info->pop());
+					while (info->stack_pop());
 
 					return false;
 				}() || ...)

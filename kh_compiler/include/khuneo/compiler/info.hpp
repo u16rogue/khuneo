@@ -105,11 +105,11 @@ namespace khuneo::impl
 		int              stack_counter = 0;
 		info_stack_entry stack[16]     = {};
 	public:
-		auto top() -> info_stack_entry &;
-		auto push(info_stack_type type, void * extra_data = nullptr) -> bool;
-		auto pop() -> bool;
+		auto stack_top() -> info_stack_entry &;
+		auto stack_push(info_stack_type type, void * extra_data = nullptr) -> bool;
+		auto stack_pop() -> bool;
 		auto stack_count() -> int;
 		auto stack_indexed(int i) -> info_stack_entry &;
-		auto find_recent(info_stack_type type) -> info_stack_entry *;
+		auto stack_find_recent(info_stack_type type) -> info_stack_entry *;
 	};
 }
