@@ -63,8 +63,17 @@ namespace khuneo::impl::parser
 		lexer::end_child
 	>;
 
-	using comment_line = void;
-	using comment_encap = void;
+	using comment_line = lexer::kh_and
+	<
+		lexer::streq<"//">,
+		lexer::kh_while<lexer::negate<lexer::streq<"\n">>, lexer::forward_source<1>>
+	>;
+
+	using comment_multi = lexer::kh_and
+	<
+		lexer::streq<"/*">,
+		lexer::kh_while<lexer::negate<lexer::streq<"*/">>, lexer::forward_source<1>>
+	>;
 }
 
 namespace khuneo::parser
@@ -125,6 +134,8 @@ namespace khuneo::parser
 		<
 			impl::parser::rule_moduleexport,
 			impl::parser::rule_moduleimport,
+			impl::parser::comment_line,
+			impl::parser::comment_multi,
 			custom_rules...
 		>(info);
 	}

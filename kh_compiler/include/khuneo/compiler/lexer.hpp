@@ -381,6 +381,18 @@ namespace khuneo::impl::lexer
 		}
 	};
 
+	/*
+	* Negates an expression
+	*/
+	template <typename expr>
+	struct negate
+	{
+		static auto run(impl::info * info) -> bool
+		{
+			return !expr::run(info);
+		}
+	};
+
 	// Helpers 
 
 	template <typename condition>
