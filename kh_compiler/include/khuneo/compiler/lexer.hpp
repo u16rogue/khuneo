@@ -225,30 +225,33 @@ namespace khuneo::impl::lexer
 	{
 		static auto run(impl::info * info) -> bool
 		{
-			ast::node * n = (ast::node *)info->ctx.allocator(sizeof(ast::node));
-			if (!n)
-			{
-				info->generate_exception("Memory allocation failed when trying to insert a token");
-				return false;
-			}
-
 			// Find a basic state
-			info_stack_entry * stack = nullptr;
-			int sp = info->stack_count();
-			while (sp)
-			{
-				auto & s = info->stack_indexed(sp);
-				if (s.type == info_stack_type::BASIC_STATE)
-				{
-					stack = &s;
-					break;
-				}
-			}
-
+			info_stack_entry * stack = info->find_recent(impl::info_stack_type::BASIC_STATE);
 			if (!stack)
 			{
 				info->generate_exception("insert_token did not find a BASIC_STATE to use");
 				return false;
+			}
+
+			ast::node * n = nullptr;
+
+			if (info->state.node->occupied)
+			{
+				n = (ast::node *)info->ctx.allocator(sizeof(ast::node));
+				if (!n)
+				{
+					info->generate_exception("Memory allocation failed when trying to insert a token");
+					return false;
+				}
+
+				info->state.node->link_forward(n);
+
+				// update state
+				info->state.node = n;
+			}
+			else
+			{
+				n = info->state.node;
 			}
 
 			// set info
@@ -258,12 +261,7 @@ namespace khuneo::impl::lexer
 			n->end      = info->state.source;
 			n->line     = stack->basic_state.line;
 			n->column   = stack->basic_state.column;
-			info->pop();
-
-			info->state.node->link_forward(n);
-
-			// update state
-			info->state.node = n;
+			n->occupied = true;
 
 			return true;
 		}
@@ -316,6 +314,11 @@ namespace khuneo::impl::lexer
 			info->pop();
 			return true;
 		}
+	};
+
+	struct insert_child
+	{
+
 	};
 
 	// Helpers 

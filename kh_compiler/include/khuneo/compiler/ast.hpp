@@ -4,6 +4,9 @@ namespace khuneo::ast
 {
 	struct node
 	{
+		// Indicates whether this node is occupied or not
+		bool occupied;
+
 		node * next;
 		node * prev;
 

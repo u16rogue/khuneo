@@ -109,5 +109,6 @@ namespace khuneo::impl
 		auto pop() -> bool;
 		auto stack_count() -> int;
 		auto stack_indexed(int i) -> info_stack_entry &;
+		auto find_recent(info_stack_type type) -> info_stack_entry *;
 	};
 }

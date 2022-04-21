@@ -65,18 +65,13 @@ namespace khuneo::parser
 					if (!rules::run(info))
 					{
 						// look for an exception
-						int sp = info->stack_count();
-						while (sp)
+						auto * ex = info->find_recent(impl::info_stack_type::EXCEPTION);
+						if (ex)
 						{
-							auto & s = info->stack_indexed(sp);
-							if (s.type == impl::info_stack_type::EXCEPTION)
-							{
-								// send the exception
-								if (info->ctx.parser_exception)
-									info->ctx.parser_exception(&s.exception);
-								return true;
-							}
-							--sp;
+							// send the exception
+							if (info->ctx.parser_exception)
+								info->ctx.parser_exception(&ex->exception);
+							return true;
 						}
 					}
 

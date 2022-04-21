@@ -81,3 +81,16 @@ auto khuneo::impl::info::stack_indexed(int i) -> info_stack_entry &
 {
 	return stack[i];
 }
+
+auto khuneo::impl::info::find_recent(info_stack_type type) -> info_stack_entry *
+{
+	int s = stack_counter;
+	while (s)
+	{
+		if (stack[s].type == type)
+			return &stack[s];
+		--s;
+	}
+
+	return nullptr;
+}
