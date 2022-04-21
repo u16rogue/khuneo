@@ -27,6 +27,13 @@ namespace khuneo::ast
 		* as the next node. This returns
 		* a pointer to itself (this).
 		*/
-		auto link_forward(node * n) -> node *;
+		auto link_next(node * n) -> node *;
+
+		/*
+		* Links the node [n] to this node
+		* as a child node. This returns a
+		* pointer to itself.
+		*/
+		auto link_child(node * n) -> node *;
 	};
 }

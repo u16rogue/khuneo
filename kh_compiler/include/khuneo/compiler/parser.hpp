@@ -10,31 +10,57 @@ namespace khuneo::impl::parser
 	using expr_endstatement = lexer::kh_and
 	<
 		lexer::streq<";">,
-		lexer::begin_token,
+		lexer::push_basic_state,
 		lexer::forward_source<1>,
-		lexer::insert_token<"END_STATEMENT">
+		lexer::pop_token_next<"END_STATEMENT">
 	>;
 
-	using expr_moduleexport = lexer::kh_and
+	using rule_moduleexport = lexer::kh_and
 	<
 		lexer::streq<"export as ">,
-		lexer::begin_token,
+		lexer::push_basic_state,
 		lexer::forward_source<>,
-		lexer::insert_token<"EXPORT_MODULE">,
-		lexer::h_gulp_whitespace,
-		lexer::symbol,
-		lexer::h_gulp_whitespace,
-		lexer::push_exception<"'export as' expected a property encapsulation '{' followed by a '}' or an end of statement ';'">,
-		lexer::kh_or<
-			expr_endstatement,
-			lexer::kh_and<
-				lexer::encapsulate<"{", "}">,
-				lexer::begin_token,
-				lexer::forward_source<>,
-				lexer::insert_token<"EXPORT_PROPERTIES">
-			>
-		>,
-		lexer::pop
+		lexer::pop_token_next<"EXPORT_MODULE">,
+		lexer::start_child,
+			lexer::h_gulp_whitespace,
+			lexer::symbol,
+			lexer::h_gulp_whitespace,
+			lexer::push_exception<"'export as' expected a property encapsulation '{' followed by a '}' or an end of statement ';'">,
+			lexer::kh_or<
+				expr_endstatement,
+				lexer::kh_and<
+					lexer::encapsulate<"{", "}">,
+					lexer::push_basic_state,
+					lexer::forward_source<>,
+					lexer::pop_token_next<"EXPORT_PROPERTIES">
+				>
+			>,
+			lexer::pop,
+		lexer::end_child
+	>;
+
+	using rule_moduleimport = lexer::kh_and
+	<
+		lexer::streq<"import ">,
+		lexer::push_basic_state,
+		lexer::forward_source<>,
+		lexer::pop_token_next<"IMPORT_MODULE">,
+		lexer::start_child,
+			lexer::h_gulp_whitespace,
+			lexer::symbol,
+			lexer::h_gulp_whitespace,
+			lexer::push_exception<"'import' expected a property encapsulation '{' followed by a '}' or an end of statement ';'">,
+			lexer::kh_or<
+				expr_endstatement,
+				lexer::kh_and<
+					lexer::encapsulate<"{", "}">,
+					lexer::push_basic_state,
+					lexer::forward_source<>,
+					lexer::pop_token_next<"IMPORT_PROPERTIES">
+				>
+			>,
+			lexer::pop,
+		lexer::end_child
 	>;
 
 	using comment_line = void;
@@ -97,7 +123,8 @@ namespace khuneo::parser
 	{
 		return basic_parse
 		<
-			impl::parser::expr_moduleexport,
+			impl::parser::rule_moduleexport,
+			impl::parser::rule_moduleimport,
 			custom_rules...
 		>(info);
 	}

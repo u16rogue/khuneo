@@ -99,6 +99,7 @@ namespace khuneo::impl
 		auto check_current_overflow(const int & diff) -> bool; // Bound checking
 
 		auto generate_exception(const char * message) -> void;
+		auto h_allocate_node() -> ast::node *;
 
 	private:
 		int              stack_counter = 0;

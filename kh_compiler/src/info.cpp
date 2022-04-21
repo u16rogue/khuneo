@@ -15,6 +15,18 @@ auto khuneo::impl::info::generate_exception(const char * message) -> void
 	push(info_stack_type::EXCEPTION, (void *)message);
 }
 
+auto khuneo::impl::info::h_allocate_node() -> ast::node *
+{
+	ast::node * n = (ast::node *)ctx.allocator(sizeof(ast::node));
+	if (n)
+	{
+		*n = {};
+		n->occupied = false;
+	}
+
+	return n;
+}
+
 auto khuneo::impl::info::top() -> info_stack_entry &
 {
 	return stack[stack_counter];

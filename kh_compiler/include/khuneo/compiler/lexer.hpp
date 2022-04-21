@@ -216,12 +216,12 @@ namespace khuneo::impl::lexer
 
 	/*
 	* Inserts a new node and updates the node
-	* with information pushed by begin_token
+	* with information pushed by push_basic_state
 	* 
 	* ! pops the info stack
 	*/
 	template <khuneo::string_literal tok>
-	struct insert_token
+	struct pop_token_next
 	{
 		static auto run(impl::info * info) -> bool
 		{
@@ -229,7 +229,7 @@ namespace khuneo::impl::lexer
 			info_stack_entry * stack = info->find_recent(impl::info_stack_type::BASIC_STATE);
 			if (!stack)
 			{
-				info->generate_exception("insert_token did not find a BASIC_STATE to use");
+				info->generate_exception("pop_token_next did not find a BASIC_STATE to use");
 				return false;
 			}
 
@@ -237,14 +237,14 @@ namespace khuneo::impl::lexer
 
 			if (info->state.node->occupied)
 			{
-				n = (ast::node *)info->ctx.allocator(sizeof(ast::node));
+				n = info->h_allocate_node();
 				if (!n)
 				{
 					info->generate_exception("Memory allocation failed when trying to insert a token");
 					return false;
 				}
 
-				info->state.node->link_forward(n);
+				info->state.node->link_next(n);
 
 				// update state
 				info->state.node = n;
@@ -269,12 +269,12 @@ namespace khuneo::impl::lexer
 
 	/*
 	* Pushes the current context to be used
-	* by insert_token, this is used for referencing
+	* by pop_token_next, this is used for referencing
 	* like the start and end of the token
 	* 
 	* ! pushes to the info stack
 	*/
-	struct begin_token
+	struct push_basic_state
 	{
 		static auto run(impl::info * info) -> bool
 		{
@@ -316,9 +316,69 @@ namespace khuneo::impl::lexer
 		}
 	};
 
-	struct insert_child
+	/*
+	* Creates a child node on the current
+	* node and changes the state's node to
+	* the child's group
+	*/
+	struct start_child
 	{
+		static auto run(impl::info * info) -> bool
+		{
+			if (!info->state.node->occupied)
+			{
+				info->generate_exception("Creating child node on an unoccupied node!");
+				return false;
+			}
 
+			if (auto * c = info->state.node->child; c)
+			{
+				info->state.node->link_child(c);
+				info->state.node = c;
+				return true;
+			}
+
+			ast::node * n = info->h_allocate_node();
+			if (!n)
+			{
+				info->generate_exception("Failed to allocate memory when creating a new child node");
+				return false;
+			}
+
+			info->state.node->link_child(n);
+			info->state.node = n;
+
+			return true;
+		}
+	};
+
+	/*
+	* Exits the current child node and reverts
+	* back to the child's parent node group
+	*/
+	struct end_child
+	{
+		static auto run(impl::info * info) -> bool
+		{
+			ast::node * n = info->state.node;
+
+			do
+			{
+				if (n->parent)
+				{
+					info->state.node = n->parent;
+					return true;
+				}
+
+				if (!n->prev)
+					break;
+
+				n = n->prev;
+			} while(n);
+
+			info->generate_exception("end_child is unable to look for a parent node to go back to");
+			return false;
+		}
 	};
 
 	// Helpers 
@@ -340,10 +400,10 @@ namespace khuneo::impl::lexer
 	<
 		push_exception<"Expected a symbol/identifier">,
 		h_match_AZaz_$,
-		begin_token,
+		push_basic_state,
 		forward_source<1>,
 		h_gulp_char<h_match_AZaz_$09>,
-		insert_token<"SYMBOL">,
+		pop_token_next<"SYMBOL">,
 		pop
 	>;
 }
