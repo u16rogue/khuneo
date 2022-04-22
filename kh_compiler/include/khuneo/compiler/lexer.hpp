@@ -407,17 +407,6 @@ namespace khuneo::impl::lexer
 	using h_match_AZaz_$09 = kh_or< h_match_AZaz_$,      rangechar<'0', '9'> >;
 
 	using h_gulp_whitespace = h_gulp_char< h_spacingchars >;
-
-	using symbol = kh_and
-	<
-		push_exception<"Expected a symbol/identifier">,
-		h_match_AZaz_$,
-		push_basic_state,
-		forward_source<1>,
-		h_gulp_char<h_match_AZaz_$09>,
-		pop_token_next<"SYMBOL">,
-		pop
-	>;
 }
 
 namespace khuneo::lexer

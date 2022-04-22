@@ -6,6 +6,17 @@
 namespace khuneo::impl::parser
 {
 	// Implements the parser rules
+	template <khuneo::string_literal name = "SYMBOL">
+	using symbol = lexer::kh_and
+	<
+		lexer::push_exception<"Expected a symbol/identifier">,
+		lexer::h_match_AZaz_$,
+		lexer::push_basic_state,
+		lexer::forward_source<1>,
+		lexer::h_gulp_char<lexer::h_match_AZaz_$09>,
+		lexer::pop_token_next<name>,
+		lexer::pop
+	>;
 
 	using expr_endstatement = lexer::kh_and
 	<
@@ -23,7 +34,7 @@ namespace khuneo::impl::parser
 		lexer::pop_token_next<"EXPORT_MODULE">,
 		lexer::start_child,
 			lexer::h_gulp_whitespace,
-			lexer::symbol,
+			symbol<>,
 			lexer::h_gulp_whitespace,
 			lexer::push_exception<"'export as' expected a property encapsulation '{' followed by a '}' or an end of statement ';'">,
 			lexer::kh_or<
@@ -31,8 +42,8 @@ namespace khuneo::impl::parser
 				lexer::kh_and<
 					lexer::encapsulate<"{", "}">,
 					lexer::push_basic_state,
-					lexer::forward_source<>,
-					lexer::pop_token_next<"EXPORT_PROPERTIES">
+					lexer::forward_source<>,	
+					lexer::pop_token_next<"EXPORT_PROPERTIES">	
 				>
 			>,
 			lexer::pop,
@@ -47,7 +58,7 @@ namespace khuneo::impl::parser
 		lexer::pop_token_next<"IMPORT_MODULE">,
 		lexer::start_child,
 			lexer::h_gulp_whitespace,
-			lexer::symbol,
+			symbol<>,
 			lexer::h_gulp_whitespace,
 			lexer::kh_if<
 				lexer::streq<"as">,
@@ -56,7 +67,7 @@ namespace khuneo::impl::parser
 				lexer::pop_token_next<"IMPORT_ALIAS">,
 				lexer::start_child,
 					lexer::h_gulp_whitespace,
-					lexer::symbol,
+					symbol<>,
 					lexer::h_gulp_whitespace,
 				lexer::end_child
 			>,
@@ -88,7 +99,34 @@ namespace khuneo::impl::parser
 
 	using rule_function = lexer::kh_and
 	<
-
+		lexer::streq<"fn ">,
+		lexer::push_basic_state,
+		lexer::forward_source<>,
+		lexer::pop_token_next<"FUNCTION">,
+		lexer::h_gulp_whitespace,
+		lexer::start_child,
+			symbol<>,
+			lexer::h_gulp_whitespace,
+			lexer::push_exception<"Missing function parameter encapsulation '(' and ')'">,
+			lexer::encapsulate<"(", ")">,
+			lexer::push_basic_state,
+			lexer::forward_source<>,
+			lexer::pop_token_next<"FUNCTION_ARGS">,
+			lexer::pop,
+			lexer::h_gulp_whitespace,
+			lexer::kh_if<lexer::streq<":">,
+				lexer::forward_source<1>,
+				lexer::h_gulp_whitespace,
+				symbol<"TYPE">,
+				lexer::h_gulp_whitespace
+			>,
+			lexer::push_exception<"Missing function body">,
+			lexer::encapsulate<"{", "}">,
+			lexer::push_basic_state,
+			lexer::forward_source<>,
+			lexer::pop_token_next<"BLOCK">,
+			lexer::pop,
+		lexer::end_child
 	>;
 }
 
@@ -135,9 +173,22 @@ namespace khuneo::parser
 			{
 				return false; // Catastrophic failure was met, exit the parser
 			}
-			
-			// move on to the next if there were no exceptions
-			impl::lexer::forward_source<1>::run(info);
+		
+			if (impl::lexer::h_spacingchars::run(info))
+			{
+				impl::lexer::forward_source<>::run(info);
+				continue;
+			}
+
+			if (info->ctx.parser_exception)
+			{
+				khuneo::compiler_exception ce {};
+				ce.column = info->state.column;
+				ce.line   = info->state.line;
+				ce.message = "Could not identify token";
+				info->ctx.parser_exception(&ce);
+				return false;
+			}
 		}
 
 		return true;
@@ -148,10 +199,12 @@ namespace khuneo::parser
 	{
 		return basic_parse
 		<
+			impl::parser::expr_endstatement,
 			impl::parser::rule_moduleexport,
 			impl::parser::rule_moduleimport,
 			impl::parser::comment_line,
 			impl::parser::comment_multi,
+			impl::parser::rule_function,
 			custom_rules...
 		>(info);
 	}

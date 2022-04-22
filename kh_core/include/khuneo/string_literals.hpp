@@ -9,7 +9,7 @@ namespace khuneo
 	* string literal, constructor is marked as consteval to
 	* enforce this which also allows us to use it as a template
 	* parameter.
-	* 
+	*	
 	* T  = string type
 	* sz = Size of string buffer (including the null terminator)
 	* 
