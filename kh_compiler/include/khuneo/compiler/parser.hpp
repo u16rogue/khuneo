@@ -142,53 +142,33 @@ namespace khuneo::parser
 			info->state.node = info->ctx.root_node;
 
 		info->ctx.parser = basic_parse<rules...>;
-
+		
+		// continue running while we're not at the end of the buffer
 		while (!info->check_current_overflow(0))
 		{
-			// If statement expects a catastrophic failure, true = fail, false = success
-			if (([&]() -> bool
-				{
-					// for every rule run it and check if it fails, if there's
-					// an exception on the stack, that means it wasn't a clean failure
-					// which should indicate a compilation error
-					if (!rules::run(info))
-					{
-						// look for an exception
-						auto * ex = info->stack_find_recent(impl::info_stack_type::EXCEPTION);
-						if (ex)
-						{
-							// send the exception
-							if (info->ctx.parser_exception)
-								info->ctx.parser_exception(&ex->exception);
-							return true;
-						}
-					}
+			bool has_matched = ([&] {
+				return rules::run(info);
+			}() || ...);
 
-					// flush the stack
-					while (info->stack_pop());
+			if (has_matched)
+				continue;
 
-					return false;
-				}() || ...)
-			)
+			if (!has_matched && impl::lexer::h_spacingchars::run(info))
 			{
-				return false; // Catastrophic failure was met, exit the parser
-			}
-		
-			if (impl::lexer::h_spacingchars::run(info))
-			{
-				impl::lexer::forward_source<>::run(info);
+				impl::lexer::forward_source<1>::run(info);
 				continue;
 			}
 
+			info->generate_exception("Parser could not match any rule, expression, or token on the current source");
+			break;
+		}
+
+		impl::info_stack_entry * ce = info->stack_find_recent(impl::info_stack_type::EXCEPTION);
+		if (ce)
+		{
 			if (info->ctx.parser_exception)
-			{
-				khuneo::compiler_exception ce {};
-				ce.column = info->state.column;
-				ce.line   = info->state.line;
-				ce.message = "Could not identify token";
-				info->ctx.parser_exception(&ce);
-				return false;
-			}
+				info->ctx.parser_exception(&ce->exception);
+			return false;
 		}
 
 		return true;
@@ -204,7 +184,7 @@ namespace khuneo::parser
 			impl::parser::rule_moduleimport,
 			impl::parser::comment_line,
 			impl::parser::comment_multi,
-			impl::parser::rule_function,
+			impl::parser::rule_function,	
 			custom_rules...
 		>(info);
 	}
