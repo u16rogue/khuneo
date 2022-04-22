@@ -146,18 +146,31 @@ namespace khuneo::parser
 		// continue running while we're not at the end of the buffer
 		while (!info->check_current_overflow(0))
 		{
-			bool has_matched = ([&] {
-				return rules::run(info);
+			bool has_exception = false;
+			bool has_matched = ([&]
+			{
+				bool matched = rules::run(info);
+
+				if (!matched && info->stack_find_recent(impl::info_stack_type::EXCEPTION))
+				{
+					has_exception = true;
+					return true;
+				}
+
+				return matched;
 			}() || ...);
 
-			if (has_matched)
-				continue;
-
-			if (!has_matched && impl::lexer::h_spacingchars::run(info))
+			if (!has_exception)
 			{
-				impl::lexer::forward_source<1>::run(info);
-				continue;
-			}
+				if (has_matched)
+					continue;
+
+				if (impl::lexer::h_spacingchars::run(info))
+				{
+					impl::lexer::forward_source<1>::run(info);
+					continue;
+				}
+			}	
 
 			info->generate_exception("Parser could not match any rule, expression, or token on the current source");
 			break;

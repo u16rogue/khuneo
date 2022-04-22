@@ -5,8 +5,10 @@
 
 namespace khuneo
 {
+	namespace impl { struct info; }
 	struct compiler_exception
 	{
+		impl::info * info_instance;
 		const char * message;
 		int line;
 		int column;

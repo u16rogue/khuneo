@@ -57,6 +57,7 @@ auto khuneo::impl::info::stack_push(info_stack_type type, void * extra_data) -> 
 		}
 		case info_stack_type::EXCEPTION:
 		{
+			entry.exception.info_instance = this;
 			entry.exception.message = reinterpret_cast<const char *>(extra_data);
 			entry.exception.line    = state.line;
 			entry.exception.column  = state.column;
