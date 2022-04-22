@@ -157,6 +157,9 @@ namespace khuneo::parser
 					return true;
 				}
 
+				// flush the stack
+				while (info->stack_pop());
+
 				return matched;
 			}() || ...);
 
