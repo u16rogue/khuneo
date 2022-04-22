@@ -172,7 +172,9 @@ namespace khuneo::parser
 				}
 			}	
 
-			info->generate_exception("Parser could not match any rule, expression, or token on the current source");
+			if (!has_exception)
+				info->generate_exception("Parser could not match any rule, expression, or token on the current source");
+
 			break;
 		}
 
