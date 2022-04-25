@@ -393,6 +393,49 @@ namespace khuneo::impl::lexer
 		}
 	};
 
+	/*
+	* Runs a parser on the current node
+	* if no parser is provided a recursive
+	* parser is used.
+	*/
+	template <auto parser = nullptr> 
+	struct parse_child
+	{
+		static auto run(impl::info * info) -> bool
+		{
+
+			impl::info i {};
+			i.ctx.allocator = info->ctx.allocator;
+			i.ctx.start     = info->state.node->start;
+			i.ctx.end       = info->state.node->end;
+			i.ctx.parser_exception = info->ctx.parser_exception;
+			i.ctx.tab_space = info->ctx.tab_space;
+			i.state.line    = info->state.node->line;
+			i.state.column  = info->state.node->column;
+
+			// create a new child node
+			auto * pnode = info->h_allocate_node();
+			if (!pnode)
+			{
+				info->generate_exception("Failed to allocate node for parsing a child node");
+				return false;
+			}
+			
+			// set the child's root node as the newly created one
+			i.ctx.root_node = pnode;
+
+			// link the new node as a child to our main current node
+			info->state.node->link_child(pnode);
+
+			if constexpr (!parser)
+				return info->ctx.parser(i);
+			else
+				return parser(i);
+
+			return false;
+		}	
+	};
+
 	// Helpers 
 
 	template <typename condition>

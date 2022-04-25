@@ -122,6 +122,7 @@ namespace khuneo::impl::parser
 			>,
 			lexer::push_exception<"Missing function body">,
 			lexer::encapsulate<"{", "}">,
+			lexer::parse_child<>,
 			lexer::push_basic_state,
 			lexer::forward_source<>,
 			lexer::pop_token_next<"BLOCK">,
