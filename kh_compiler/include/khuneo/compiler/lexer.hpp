@@ -395,18 +395,16 @@ namespace khuneo::impl::lexer
 
 	/*
 	* Runs a parser on the current node
-	* if no parser is provided a recursive
-	* parser is used. The offset value is used
-	* to skip the number of characters when applying
-	* the <start> and <end> value of the node that's being
-	* parsed.
+	* The offset value is used to skip the number of
+	* characters when applying the <start> and <end>
+	* value of the node that's being parsed.
 	* 
 	* ! default offset value is 1.
 	*	-> in cases of "(foo)" the default value will treat it
 	*      as "foo" skipping over the opening and closing
 	*      parenthesis.
 	*/
-	template <auto parser = nullptr, int offset = 1> 
+	template <int offset = 1> 
 	struct parse_child
 	{
 		static auto run(impl::info * info) -> bool
@@ -434,13 +432,8 @@ namespace khuneo::impl::lexer
 
 			// link the new node as a child to our main current node
 			info->state.node->link_child(pnode);
-
-			if constexpr (!parser)
-				return info->ctx.parser(&i);
-			else
-				return parser(&i);
-
-			return false;
+			
+			return info->ctx.parser(&i);
 		}	
 	};
 

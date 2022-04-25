@@ -14,6 +14,7 @@ option(KH_TESTS "Compiles the test executable that verifies that khuneo is worki
 option(KH_INCLUDE_COMPILER "Includes the compiler component to khuneo." ON)
 
 add_subdirectory("kh_core")
+add_subdirectory("kh_runtime")
 
 add_library(
 	${PROJECT_NAME}
@@ -26,6 +27,7 @@ target_link_libraries(
 	${PROJECT_NAME}
 	PUBLIC
 	KH_CORE
+	KH_RUNTIME
 )
 
 if (KH_INCLUDE_COMPILER)
