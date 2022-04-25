@@ -121,14 +121,27 @@ namespace khuneo::impl::parser
 				lexer::h_gulp_whitespace
 			>,
 			lexer::push_exception<"Missing function body">,
-			lexer::encapsulate<"{", "}">,
-			lexer::parse_child<>,
+			lexer::encapsulate<"{", "}">,	
 			lexer::push_basic_state,
 			lexer::forward_source<>,
 			lexer::pop_token_next<"BLOCK">,
+			lexer::parse_child<>,
 			lexer::pop,
 		lexer::end_child
 	>;
+
+	#if 0
+	using rule_returnkw = lexer::kh_and
+	<
+		lexer::streq<"return ">,
+		lexer::push_basic_state,
+		lexer::forward_source<>,
+		lexer::pop_token_next<"FUNCTION_RETURN">
+		lexer::start_child,
+				
+		lexer::end_child
+	>;
+	#endif
 
 	using rule_annotation = lexer::kh_and<
 		lexer::streq<"@">,
@@ -179,14 +192,18 @@ namespace khuneo::parser
 				if (has_matched)
 					continue;
 
-				if (impl::lexer::h_spacingchars::run(info))
+				switch (*info->state.source)	
 				{
-					impl::lexer::forward_source<1>::run(info);
-					continue;
-				}
+					case ' ':
+					case '\n':
+					case '\t':
+					case '\r':
+						impl::lexer::forward_source<1>::run(info);
+						continue;
+				}	
 			}	
 
-			if (!has_exception)
+			if (!has_exception && info->state.source + 1 < info->ctx.end)
 				info->generate_exception("Parser could not match any rule, expression, or token on the current source");
 
 			break;
