@@ -128,6 +128,16 @@ namespace khuneo::impl::parser
 			lexer::pop,
 		lexer::end_child
 	>;
+
+	using rule_annotation = lexer::kh_and<
+		lexer::streq<"@">,
+		lexer::push_basic_state,
+		lexer::forward_source<>,
+		lexer::pop_token_next<"ANNOTATION">,
+		lexer::start_child,
+			symbol<>,
+		lexer::end_child
+	>;
 }
 
 namespace khuneo::parser
@@ -142,7 +152,7 @@ namespace khuneo::parser
 			info->state.node = info->ctx.root_node;
 
 		info->ctx.parser = basic_parse<rules...>;
-		
+ 	
 		// continue running while we're not at the end of the buffer
 		while (!info->check_current_overflow(0))
 		{
@@ -203,6 +213,7 @@ namespace khuneo::parser
 			impl::parser::comment_line,
 			impl::parser::comment_multi,
 			impl::parser::rule_function,	
+			impl::parser::rule_annotation,
 			custom_rules...
 		>(info);
 	}
