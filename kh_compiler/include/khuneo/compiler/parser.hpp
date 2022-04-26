@@ -18,12 +18,31 @@ namespace khuneo::impl::parser
 		lexer::pop
 	>;
 
+	using comma_separator = lexer::kh_and<
+		lexer::push_basic_state,
+		lexer::kh_while<lexer::forward_source<1>,
+			lexer::kh_if< lexer::streq<",">,
+				lexer::pop_token_next<"COMMA_SEPARATED_GROUP">,
+				lexer::forward_source<1>,
+				lexer::push_basic_state
+			>
+		>,
+		lexer::pop_token_next<"COMMA_SEPARATED_GROUP">
+	>;
+
 	using expr_endstatement = lexer::kh_and
 	<
 		lexer::streq<";">,
 		lexer::push_basic_state,
 		lexer::forward_source<1>,
 		lexer::pop_token_next<"END_STATEMENT">
+	>;
+
+
+	using rule_symbol_assignment = lexer::kh_and
+	<
+		lexer::streq<"=">
+
 	>;
 
 	using rule_moduleexport = lexer::kh_and
@@ -43,7 +62,8 @@ namespace khuneo::impl::parser
 					lexer::encapsulate<"{", "}">,
 					lexer::push_basic_state,
 					lexer::forward_source<>,	
-					lexer::pop_token_next<"EXPORT_PROPERTIES">	
+					lexer::pop_token_next<"EXPORT_PROPERTIES">,
+					lexer::parse_child<1, comma_separator>
 				>
 			>,
 			lexer::pop,
@@ -224,7 +244,7 @@ namespace khuneo::parser
 	auto parse(impl::info * info) -> bool
 	{
 		return basic_parse
-		<
+		<	
 			impl::parser::expr_endstatement,
 			impl::parser::rule_moduleexport,
 			impl::parser::rule_moduleimport,
