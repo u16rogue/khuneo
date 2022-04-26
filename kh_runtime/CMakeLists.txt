@@ -11,10 +11,10 @@ project(
 add_library(
 	${PROJECT_NAME}	
 
-	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/vm.hpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/runtime/vm.hpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/vm.cpp"
 	
-	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/kh_module.hpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/runtime/kh_module.hpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/kh_module.cpp"
 )
 
