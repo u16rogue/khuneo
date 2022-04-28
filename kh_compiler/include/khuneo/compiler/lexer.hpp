@@ -72,14 +72,14 @@ namespace khuneo::impl::lexer
 	* ! Modifies current state
 	* ! Modifies the text's line and column
 	*/
-	template <int offset = 0>
+	template <int offset = 0, int additive = 0>
 	struct forward_source
 	{
 		static auto run(impl::info * info) -> bool
 		{
 			int _value = offset != 0 ? offset : info->request.value;
 
-			const char * next = info->state.source + _value;
+			const char * next = info->state.source + (_value + additive);
 			if (next - 1 >= info->ctx.end)
 				return false;
 
@@ -412,7 +412,6 @@ namespace khuneo::impl::lexer
 	{
 		static auto run(impl::info * info) -> bool
 		{
-
 			impl::info i {};
 			i.ctx.allocator = info->ctx.allocator;
 			i.ctx.start     = info->state.node->start + offset;
@@ -443,6 +442,18 @@ namespace khuneo::impl::lexer
 			else
 				return (expressions::run(&i) && ...);
 		}	
+	};
+
+	/*
+	* Executes a lambda procedure
+	*/
+	template <auto lambda>
+	struct proc
+	{
+		static auto run(impl::info * info) -> bool
+		{
+			return lambda(info);
+		}
 	};
 
 	// Helpers 

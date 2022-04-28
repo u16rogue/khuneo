@@ -18,13 +18,30 @@ namespace khuneo::impl::parser
 		lexer::pop
 	>;
 
-	using comma_separator = lexer::kh_and<
+	using group_parenthesis = lexer::encapsulate<"(", ")">;
+	using group_brackets    = lexer::encapsulate<"[", "]">;
+	using group_curlybrace  = lexer::encapsulate<"{", "}">;
+
+	using group_either = lexer::kh_or
+	<
+		group_parenthesis,
+		group_brackets,
+		group_curlybrace
+	>;
+	
+	using comma_separator = lexer::kh_and
+	<
 		lexer::push_basic_state,
-		lexer::kh_while<lexer::forward_source<1>,
-			lexer::kh_if< lexer::streq<",">,
-				lexer::pop_token_next<"COMMA_SEPARATED_GROUP">,
-				lexer::forward_source<1>,
-				lexer::push_basic_state
+		lexer::kh_while<lexer::forward_source<1>,	
+			lexer::kh_or<
+				lexer::kh_and< group_either,
+					lexer::forward_source<0, -1>
+				>,
+				lexer::kh_if< lexer::streq<",">,
+					lexer::pop_token_next<"COMMA_SEPARATED_GROUP">,
+					lexer::forward_source<1>,
+					lexer::push_basic_state
+				>	
 			>
 		>,
 		lexer::pop_token_next<"COMMA_SEPARATED_GROUP">
@@ -128,7 +145,7 @@ namespace khuneo::impl::parser
 			symbol<>,
 			lexer::h_gulp_whitespace,
 			lexer::push_exception<"Missing function parameter encapsulation '(' and ')'">,
-			lexer::encapsulate<"(", ")">,
+			group_parenthesis,
 			lexer::push_basic_state,
 			lexer::forward_source<>,
 			lexer::pop_token_next<"FUNCTION_ARGS">,
@@ -141,7 +158,7 @@ namespace khuneo::impl::parser
 				lexer::h_gulp_whitespace
 			>,
 			lexer::push_exception<"Missing function body">,
-			lexer::encapsulate<"{", "}">,	
+			group_curlybrace,	
 			lexer::push_basic_state,
 			lexer::forward_source<>,
 			lexer::pop_token_next<"BLOCK">,
