@@ -55,13 +55,6 @@ namespace khuneo::impl::parser
 		lexer::pop_token_next<"END_STATEMENT">
 	>;
 
-
-	using rule_symbol_assignment = lexer::kh_and
-	<
-		lexer::streq<"=">
-
-	>;
-
 	using rule_moduleexport = lexer::kh_and
 	<
 		lexer::streq<"export as ">,
