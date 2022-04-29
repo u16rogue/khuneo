@@ -17,7 +17,7 @@ auto khuneo::impl::info::generate_exception(const char * message) -> void
 
 auto khuneo::impl::info::h_allocate_node() -> ast::node *
 {
-	ast::node * n = (ast::node *)ctx.allocator(sizeof(ast::node));
+	ast::node * n = reinterpret_cast<ast::node *>(ctx.kh_alloc(sizeof(ast::node)));
 	if (n)
 	{
 		*n = {};

@@ -70,7 +70,7 @@ namespace khuneo::impl
 			const char *       end;
 			ast::node *        root_node;
 			int                tab_space { 4 };
-			kh_allocator_t     allocator; // WARNING: ALLOCATOR MUST ALLOCATE A NULLED BUFFER!
+			kh_allocator_t     kh_alloc; // WARNING: ALLOCATOR MUST ALLOCATE A NULLED BUFFER!
 			fn_parser_except_t parser_exception;
 			fnparser_t         parser;
 		} ctx;

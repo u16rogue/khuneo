@@ -413,7 +413,7 @@ namespace khuneo::impl::lexer
 		static auto run(impl::info * info) -> bool
 		{
 			impl::info i {};
-			i.ctx.allocator = info->ctx.allocator;
+			i.ctx.kh_alloc = info->ctx.kh_alloc;
 			i.ctx.start     = info->state.node->start + offset;
 			i.ctx.end       = info->state.node->end - offset;
 			i.ctx.parser_exception = info->ctx.parser_exception;
