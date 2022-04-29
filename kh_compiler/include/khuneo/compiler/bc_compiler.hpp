@@ -11,5 +11,5 @@ namespace khuneo::compiler
 
 	};
 
-	auto bc_compiler() -> bool;
+	auto bc_compiler(bccomp_info * pbcci) -> bool;
 }
