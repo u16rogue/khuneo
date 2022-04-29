@@ -3,10 +3,12 @@
 #include <khuneo/defs.hpp>
 #include <khuneo/compiler/ast.hpp>
 
+// TODO: upon finalizing instead of having an allocator pointer, use template instead
+
 namespace khuneo
 {
 	namespace impl { struct info; }
-	struct compiler_exception
+	struct parser_exception
 	{
 		impl::info * info_instance;
 		const char * message;
@@ -20,7 +22,7 @@ namespace khuneo::impl
 	struct info;
 
 	using fnparser_t = bool(*)(info *);
-	using fn_parser_except_t = void(*)(khuneo::compiler_exception *);
+	using fn_parser_except_t = void(*)(khuneo::parser_exception *);
 
 	enum class info_stack_type
 	{
@@ -53,7 +55,7 @@ namespace khuneo::impl
 				int column;
 			} basic_state;
 
-			khuneo::compiler_exception exception;
+			khuneo::parser_exception exception;
 
 			int number;
 		};

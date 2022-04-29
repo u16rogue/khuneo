@@ -2,6 +2,15 @@
 
 namespace khuneo::ast
 {
+
+	/*
+	* Notes:
+	*	> Possibly just use an integer to determine
+	*	  the size of the entire block instead of a
+	*     start and end pointer, this way we save
+	*     something like 4 bytes depending on the platform
+	*/
+
 	struct node
 	{
 		// Indicates whether this node is occupied or not
