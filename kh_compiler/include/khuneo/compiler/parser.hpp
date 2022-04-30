@@ -3,10 +3,32 @@
 #include <khuneo/compiler/ast.hpp>
 #include <khuneo/compiler/lexer.hpp>
 
+#define KHUNEO_DEF_TOKEN(n) \
+	constexpr khuneo::string_literal n = #n 
+
+// Not really necessary but this is nicer to have all of the available tokens in one place
+// works well with code completion
+namespace khuneo::impl::toks
+{
+	KHUNEO_DEF_TOKEN(SYMBOL);
+	KHUNEO_DEF_TOKEN(COMMA_SEPARATED_GROUP);
+	KHUNEO_DEF_TOKEN(END_STATEMENT);
+	KHUNEO_DEF_TOKEN(EXPORT_PROPERTIES);
+	KHUNEO_DEF_TOKEN(EXPORT_MODULE);
+	KHUNEO_DEF_TOKEN(IMPORT_PROPERTIES);
+	KHUNEO_DEF_TOKEN(IMPORT_ALIAS);
+	KHUNEO_DEF_TOKEN(IMPORT_MODULE);
+	KHUNEO_DEF_TOKEN(FUNCTION);
+	KHUNEO_DEF_TOKEN(FUNCTION_ARGS);
+	KHUNEO_DEF_TOKEN(BLOCK);
+	KHUNEO_DEF_TOKEN(TYPE);
+	KHUNEO_DEF_TOKEN(ANNOTATION);
+};
+
 namespace khuneo::impl::parser
 {
 	// Implements the parser rules
-	template <khuneo::string_literal name = "SYMBOL">
+	template <khuneo::string_literal name = toks::SYMBOL>
 	using symbol = lexer::kh_and
 	<
 		lexer::push_exception<"Expected a symbol/identifier">,
@@ -38,13 +60,13 @@ namespace khuneo::impl::parser
 					lexer::forward_source<0, -1>
 				>,
 				lexer::kh_if< lexer::streq<",">,
-					lexer::pop_token_next<"COMMA_SEPARATED_GROUP">,
+					lexer::pop_token_next<toks::COMMA_SEPARATED_GROUP>,
 					lexer::forward_source<1>,
 					lexer::push_basic_state
 				>	
 			>
 		>,
-		lexer::pop_token_next<"COMMA_SEPARATED_GROUP">
+		lexer::pop_token_next<toks::COMMA_SEPARATED_GROUP>
 	>;
 
 	using expr_endstatement = lexer::kh_and
@@ -52,7 +74,7 @@ namespace khuneo::impl::parser
 		lexer::streq<";">,
 		lexer::push_basic_state,
 		lexer::forward_source<1>,
-		lexer::pop_token_next<"END_STATEMENT">
+		lexer::pop_token_next<toks::END_STATEMENT>
 	>;
 
 	using rule_moduleexport = lexer::kh_and
@@ -60,7 +82,7 @@ namespace khuneo::impl::parser
 		lexer::streq<"export as ">,
 		lexer::push_basic_state,
 		lexer::forward_source<>,
-		lexer::pop_token_next<"EXPORT_MODULE">,
+		lexer::pop_token_next<toks::EXPORT_MODULE>,
 		lexer::start_child,
 			lexer::h_gulp_whitespace,
 			symbol<>,
@@ -72,7 +94,7 @@ namespace khuneo::impl::parser
 					lexer::encapsulate<"{", "}">,
 					lexer::push_basic_state,
 					lexer::forward_source<>,	
-					lexer::pop_token_next<"EXPORT_PROPERTIES">,
+					lexer::pop_token_next<toks::EXPORT_PROPERTIES>,
 					lexer::parse_child<1, comma_separator>
 				>
 			>,
@@ -85,7 +107,7 @@ namespace khuneo::impl::parser
 		lexer::streq<"import ">,
 		lexer::push_basic_state,
 		lexer::forward_source<>,
-		lexer::pop_token_next<"IMPORT_MODULE">,
+		lexer::pop_token_next<toks::IMPORT_MODULE>,
 		lexer::start_child,
 			lexer::h_gulp_whitespace,
 			symbol<>,
@@ -94,7 +116,7 @@ namespace khuneo::impl::parser
 				lexer::streq<"as">,
 				lexer::push_basic_state,
 				lexer::forward_source<>,
-				lexer::pop_token_next<"IMPORT_ALIAS">,
+				lexer::pop_token_next<toks::IMPORT_ALIAS>,
 				lexer::start_child,
 					lexer::h_gulp_whitespace,
 					symbol<>,
@@ -108,7 +130,7 @@ namespace khuneo::impl::parser
 					lexer::encapsulate<"{", "}">,
 					lexer::push_basic_state,
 					lexer::forward_source<>,
-					lexer::pop_token_next<"IMPORT_PROPERTIES">
+					lexer::pop_token_next<toks::IMPORT_PROPERTIES>
 				>
 			>,
 			lexer::pop,
@@ -132,7 +154,7 @@ namespace khuneo::impl::parser
 		lexer::streq<"fn ">,
 		lexer::push_basic_state,
 		lexer::forward_source<>,
-		lexer::pop_token_next<"FUNCTION">,
+		lexer::pop_token_next<toks::FUNCTION>,
 		lexer::h_gulp_whitespace,
 		lexer::start_child,
 			symbol<>,
@@ -141,20 +163,20 @@ namespace khuneo::impl::parser
 			group_parenthesis,
 			lexer::push_basic_state,
 			lexer::forward_source<>,
-			lexer::pop_token_next<"FUNCTION_ARGS">,
+			lexer::pop_token_next<toks::FUNCTION_ARGS>,
 			lexer::pop,
 			lexer::h_gulp_whitespace,
 			lexer::kh_if<lexer::streq<":">,
 				lexer::forward_source<1>,
 				lexer::h_gulp_whitespace,
-				symbol<"TYPE">,
+				symbol<toks::TYPE>,
 				lexer::h_gulp_whitespace
 			>,
 			lexer::push_exception<"Missing function body">,
 			group_curlybrace,	
 			lexer::push_basic_state,
 			lexer::forward_source<>,
-			lexer::pop_token_next<"BLOCK">,
+			lexer::pop_token_next<toks::BLOCK>,
 			lexer::parse_child<>,
 			lexer::pop,
 		lexer::end_child
@@ -177,7 +199,7 @@ namespace khuneo::impl::parser
 		lexer::streq<"@">,
 		lexer::push_basic_state,
 		lexer::forward_source<>,
-		lexer::pop_token_next<"ANNOTATION">,
+		lexer::pop_token_next<toks::ANNOTATION>,
 		lexer::start_child,
 			symbol<>,
 		lexer::end_child
