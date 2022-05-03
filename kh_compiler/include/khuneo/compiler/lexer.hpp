@@ -150,13 +150,14 @@ namespace khuneo::impl::lexer
 	* condition results to true. This will always
 	* return true regardless.
 	*/
-	template <typename condition, typename expression>
+	template <typename condition, typename expression = void>
 	struct kh_while
 	{
 		static auto run(impl::info * info) -> bool
 		{
 			while (condition::run(info))
-				expression::run(info);
+				if constexpr (requires { expression::run(nullptr); })
+					expression::run(info);
 
 			return true;
 		}

@@ -14,8 +14,8 @@ namespace khuneo::impl::vm
 				unsigned char reserved : 4;
 				unsigned char operand_size1 : 2;
 				unsigned char operand_size0 : 2;
-			}
-		}
+			};
+		};
 	};
 	static_assert(sizeof(op_descriptor) == 1, "khuneo::impl::vm::op_descriptor was expected to have the size of 1 byte");
 
@@ -37,7 +37,7 @@ namespace khuneo::impl::vm
 
 		_LAST_ITEM
 	};
-	static_assert(opcodes::_FIRST_ITEM == 0 && ~opcodes::_LAST_ITEM & FLAG_OPCODE_IS_EXTENDED, "Either Opcode ID is invalid or an enumerator has an unintentional extended bit!"); // the last item check is not ideal.
+	static_assert((int)opcodes::_FIRST_ITEM == 0 && ~(int)opcodes::_LAST_ITEM & FLAG_OPCODE_IS_EXTENDED, "Either Opcode ID is invalid or an enumerator has an unintentional extended bit!"); // the last item check is not ideal.
 
 }
 

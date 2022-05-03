@@ -52,6 +52,25 @@ namespace khuneo::impl::parser
 		group_curlybrace
 	>;
 	
+	using expr_assignment = lexer::kh_and
+	<
+		lexer::streq<"=">,
+		lexer::forward_source<>,
+		lexer::h_gulp_whitespace,
+		lexer::push_basic_state,
+		lexer::kh_while<lexer::kh_and<lexer::negate<lexer::streq<";">>, lexer::forward_source<1>>>,
+		lexer::pop_token_next<"ASSIGNMENT_EXPR">
+	>;
+
+	using parse_child_sym_assignment = lexer::parse_child<0, lexer::kh_and
+	<
+		lexer::forward_source<1, -1>, // causes the parser to end if we're at the end of the block 1 + -1 cause forward source to not move but still run a bound check
+		lexer::h_gulp_whitespace,
+		symbol<>,
+		lexer::h_gulp_whitespace,
+		expr_assignment
+	>>;
+
 	using comma_separator = lexer::kh_and
 	<
 		lexer::push_basic_state,
@@ -62,14 +81,16 @@ namespace khuneo::impl::parser
 				>,
 				lexer::kh_if< lexer::streq<",">,
 					lexer::pop_token_next<toks::COMMA_SEPARATED_GROUP>,
+					parse_child_sym_assignment, 
 					lexer::forward_source<1>,
 					lexer::push_basic_state
 				>	
 			>
 		>,
-		lexer::pop_token_next<toks::COMMA_SEPARATED_GROUP>
+		lexer::pop_token_next<toks::COMMA_SEPARATED_GROUP>,
+		parse_child_sym_assignment
 	>;
-
+	
 	using expr_endstatement = lexer::kh_and
 	<
 		lexer::streq<";">,
