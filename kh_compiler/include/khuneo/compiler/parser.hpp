@@ -10,6 +10,7 @@
 // works well with code completion
 namespace khuneo::impl::toks
 {
+	KHUNEO_DEF_TOKEN(ROOT_NODE);
 	KHUNEO_DEF_TOKEN(SYMBOL);
 	KHUNEO_DEF_TOKEN(COMMA_SEPARATED_GROUP);
 	KHUNEO_DEF_TOKEN(END_STATEMENT);
