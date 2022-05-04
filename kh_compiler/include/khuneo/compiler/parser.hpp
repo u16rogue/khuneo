@@ -71,7 +71,7 @@ namespace khuneo::impl::parser
 		lexer::h_gulp_whitespace,
 		symbol<>,
 		lexer::h_gulp_whitespace,
-		expr_assignment
+		lexer::kh_if<lexer::streq<"=">, expr_assignment>
 	>>;
 
 	using comma_separator = lexer::kh_or<
