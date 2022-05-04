@@ -106,6 +106,19 @@ namespace khuneo::impl::lexer
 	};
 
 	/*
+	* Checks the current source
+	* if it goes over the end
+	*/
+	template <int offset>
+	struct check_end
+	{
+		static auto run(impl::info * info) -> bool
+		{
+			return info->state.source + offset >= info->ctx.end;
+		}
+	};
+
+	/*
 	* Evaluates its expressions if <condition> returns
 	* true. If the <condition> is not met kh_if will
 	* return true without evaluating
@@ -189,14 +202,6 @@ namespace khuneo::impl::lexer
 
 			while (!info->check_overflow(current))
 			{
-				// increment the scope
-				if (begin.match(current))
-				{
-					++scope;
-					++current;
-					continue;
-				}
-
 				if (end.match(current))
 				{
 					if (scope == 0)
@@ -207,6 +212,14 @@ namespace khuneo::impl::lexer
 
 					--scope;
 				}
+
+				// increment the scope
+				if (begin.match(current))
+				{
+					++scope;
+					++current;
+					continue;
+				}	
 
 				++current;
 			}
@@ -460,7 +473,7 @@ namespace khuneo::impl::lexer
 	// Helpers 
 
 	template <typename condition>
-	using h_gulp_char = kh_while<condition, forward_source<1>>;
+	using h_gulp_char = kh_while<kh_and<condition, forward_source<1>>>;
 
 	template <typename condition>
 	using h_gulp = kh_while<condition, forward_source<>>;

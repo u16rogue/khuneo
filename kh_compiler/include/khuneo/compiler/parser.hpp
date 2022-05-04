@@ -41,15 +41,19 @@ namespace khuneo::impl::parser
 		lexer::pop
 	>;
 
-	using group_parenthesis = lexer::encapsulate<"(", ")">;
-	using group_brackets    = lexer::encapsulate<"[", "]">;
-	using group_curlybrace  = lexer::encapsulate<"{", "}">;
+	using group_parenthesis  = lexer::encapsulate<"(", ")">;
+	using group_brackets     = lexer::encapsulate<"[", "]">;
+	using group_curlybrace   = lexer::encapsulate<"{", "}">;
+	using group_double_quote = lexer::encapsulate<"\"", "\"">;
+	using group_singlequote  = lexer::encapsulate<"'", "'">;
 
 	using group_either = lexer::kh_or
 	<
 		group_parenthesis,
 		group_brackets,
-		group_curlybrace
+		group_curlybrace,
+		group_double_quote,
+		group_singlequote
 	>;
 	
 	using expr_assignment = lexer::kh_and
@@ -64,31 +68,40 @@ namespace khuneo::impl::parser
 
 	using parse_child_sym_assignment = lexer::parse_child<0, lexer::kh_and
 	<
-		lexer::forward_source<1, -1>, // causes the parser to end if we're at the end of the block 1 + -1 cause forward source to not move but still run a bound check
 		lexer::h_gulp_whitespace,
 		symbol<>,
 		lexer::h_gulp_whitespace,
 		expr_assignment
 	>>;
 
-	using comma_separator = lexer::kh_and
-	<
-		lexer::push_basic_state,
-		lexer::kh_while<lexer::forward_source<1>,	
-			lexer::kh_or<
-				lexer::kh_and< group_either,
-					lexer::forward_source<0, -1>
-				>,
-				lexer::kh_if< lexer::streq<",">,
-					lexer::pop_token_next<toks::COMMA_SEPARATED_GROUP>,
-					parse_child_sym_assignment, 
-					lexer::forward_source<1>,
-					lexer::push_basic_state
-				>	
-			>
+	using comma_separator = lexer::kh_or<
+		// This checks if the encapsulation actually has something
+		// this will cause a short circuit causing the main comma
+		// separator to not run
+		lexer::kh_and
+		<
+			lexer::h_gulp_whitespace,
+			lexer::check_end<1>
 		>,
-		lexer::pop_token_next<toks::COMMA_SEPARATED_GROUP>,
-		parse_child_sym_assignment
+		lexer::kh_and
+		<	
+			lexer::push_basic_state,
+			lexer::kh_while<lexer::forward_source<1>,	
+				lexer::kh_or<
+					lexer::kh_and< group_either,
+						lexer::forward_source<0, -1>
+					>,
+					lexer::kh_if< lexer::streq<",">,
+						lexer::pop_token_next<toks::COMMA_SEPARATED_GROUP>,
+						parse_child_sym_assignment, 
+						lexer::forward_source<1>,
+						lexer::push_basic_state
+					>	
+				>
+			>,
+			lexer::pop_token_next<toks::COMMA_SEPARATED_GROUP>,
+			parse_child_sym_assignment
+		>
 	>;
 	
 	using expr_endstatement = lexer::kh_and
