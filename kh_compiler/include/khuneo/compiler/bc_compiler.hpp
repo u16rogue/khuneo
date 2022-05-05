@@ -5,8 +5,15 @@
 
 namespace khuneo
 {
+	enum class bc_compiler_exception_type
+	{
+		WARNING,
+		FATAL
+	};
+
 	struct bc_compiler_exception
 	{
+		bc_compiler_exception_type type;
 		ast::node * node;
 		const char * message;
 	};
@@ -21,9 +28,10 @@ namespace khuneo::compiler
 		ast::node * ast_root_node;
 		kh_allocator_t kh_alloc;
 		kh_deallocator_t kh_free;
-		kh_bytecode_t * bc_buffer;
 		fn_bccomp_except_t bc_except;
-		int bc_buffer_size;
+		kh_bytecode_t * bc_buffer;
+		kh_bytecode_t * bc_current;
+		kh_bytecode_t * bc_end;
 	};
 
 	auto bc_compile(bccomp_info * pbcci) -> bool;

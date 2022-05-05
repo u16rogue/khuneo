@@ -2,10 +2,10 @@
 
 auto khuneo::vm::vm_execute(vm_context * ctx) -> bool
 {
-	if (!ctx->current)
-		ctx->current = ctx->start;
+	if (!ctx->registers.ip.v_p)
+		ctx->registers.ip.v_p = ctx->start;
 
-	while (ctx->current != ctx->end)
+	while (ctx->registers.ip.v_p != ctx->end)
 	{
 		
 	}

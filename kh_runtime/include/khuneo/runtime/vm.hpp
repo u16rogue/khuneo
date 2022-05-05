@@ -4,6 +4,22 @@
 namespace khuneo::impl::vm
 {
 	constexpr khuneo::kh_bytecode_t FLAG_OPCODE_IS_EXTENDED = 0x80;	
+	
+	enum class op_type : kh_bytecode_t
+	{
+		SYMBOL        = 0b00,
+		REGISTER      = 0b01,
+		INTERMIDIATE  = 0b10,
+		STACK         = 0b11
+	};
+
+	enum class op_size : kh_bytecode_t
+	{
+		ONE   = 0b00,
+		TWO   = 0b01,
+		FOUR  = 0b10,
+		EIGHT = 0b11
+	};
 
 	struct op_descriptor
 	{
@@ -11,13 +27,23 @@ namespace khuneo::impl::vm
 		{	
 			struct
 			{
+				op_type destination_type : 2; // This should never be an immediate
+				op_type source_type : 2;
+				unsigned char reserved : 2;
+				op_size source_size : 2;
+			} op_set;
+
+			struct
+			{
 				unsigned char reserved : 4;
-				unsigned char operand_size1 : 2;
-				unsigned char operand_size0 : 2;
+
+				// [opcode] [operand0], [operand1]
+				unsigned char operand0 : 2;
+				unsigned char operand1 : 2;
 			};
 		};
 	};
-	static_assert(sizeof(op_descriptor) == 1, "khuneo::impl::vm::op_descriptor was expected to have the size of 1 byte");
+	static_assert(sizeof(op_descriptor) == 1, "khuneo::impl::vm::op_descriptor was expected to have the size of 1 byte");	
 
 	enum class opcodes : kh_bytecode_t
 	{
@@ -34,6 +60,22 @@ namespace khuneo::impl::vm
 		* [opcode 1b] [32 bit xxh hash]	
 		*/
 		DEFINE,
+	
+		/*
+		* Copy
+		* 
+		* Copies a value from source to destination
+		*
+		* [opcode 1b] [descriptor] [destination], [source]
+		*/
+		COPY,
+
+		/*
+		* Jump Relative
+		* 
+		* [opcode 1b] [descriptor] [destination]
+		*/
+		JMP,
 
 		_LAST_ITEM
 	};
@@ -49,10 +91,35 @@ namespace khuneo::vm
 
 	};
 
+	struct vm_register
+	{
+		// Value
+		union
+		{
+			unsigned char * v_p;
+		};
+	};
+
 	struct vm_context
 	{
+		// Why 16 (0x10)? with this we can index 2 registers in a single byte eg. COPY IP, RESULT will only use up 3 bytes
+		// where we use the third byte's upper nibble to index the destination register and the and the lower nibble for the source register 
+		static constexpr int nregisters = 0x10; 
+
+		union
+		{
+			struct
+			{
+				vm_register ip; // instruction pointer
+				vm_register result; // Result register
+			};
+
+			vm_register ireg[nregisters];
+		} registers;
+
+		static_assert(sizeof(registers) == sizeof(vm_register) * nregisters, "Virtual machine register count is invalid!");
+
 		kh_bytecode_t * start;
-		kh_bytecode_t * current;
 		kh_bytecode_t * end;
 	};
 
