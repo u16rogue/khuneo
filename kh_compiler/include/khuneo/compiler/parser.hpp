@@ -263,7 +263,7 @@ namespace khuneo::parser
 			bool has_exception = false;
 			bool has_matched = ([&]
 			{
-				bool matched = rules::run(info);
+				bool matched = rules::parse(info);
 
 				if (!matched && info->stack_find_recent(impl::info_stack_type::EXCEPTION))
 				{
@@ -288,7 +288,7 @@ namespace khuneo::parser
 					case '\n':
 					case '\t':
 					case '\r':
-						impl::lexer::forward_source<1>::run(info);
+						impl::lexer::forward_source<1>::parse(info);
 						continue;
 				}	
 			}	
