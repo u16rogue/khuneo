@@ -27,6 +27,9 @@ add_library(
 
 	"${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/compiler/bc_compiler.hpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/bc_compiler.cpp"
+
+	 "${CMAKE_CURRENT_SOURCE_DIR}/include/khuneo/compiler/lang_impl.hpp"
+	 "${CMAKE_CURRENT_SOURCE_DIR}/src/lang_impl.cpp"
 )
 
 target_link_libraries(
