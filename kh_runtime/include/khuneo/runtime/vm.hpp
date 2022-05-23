@@ -21,6 +21,12 @@ namespace khuneo::impl::vm
 		EIGHT = 0b11
 	};
 
+	enum class op_jmp_type : kh_bytecode_t
+	{
+		ABSOLUTE = 0,
+		RELATIVE = 1
+	};
+
 	struct op_descriptor
 	{
 		union
@@ -32,6 +38,14 @@ namespace khuneo::impl::vm
 				unsigned char reserved : 2;
 				op_size source_size : 2;
 			} op_set;
+
+			struct
+			{
+				op_type displacement_source : 2;
+				op_jmp_type jump_type : 1;
+				unsigned char reserved : 3;
+				op_size displacement_size : 2; // Will only be used if displacement_source is INTERMIDIATE
+			} op_jmp;
 
 			struct
 			{
@@ -71,7 +85,7 @@ namespace khuneo::impl::vm
 		COPY,
 
 		/*
-		* Jump Relative
+		* Jump
 		* 
 		* [opcode 1b] [descriptor] [destination]
 		*/
@@ -103,7 +117,7 @@ namespace khuneo::vm
 	struct vm_context
 	{
 		// Why 16 (0x10)? with this we can index 2 registers in a single byte eg. COPY IP, RESULT will only use up 3 bytes
-		// where we use the third byte's upper nibble to index the destination register and the and the lower nibble for the source register 
+		// where we use the third byte's upper nibble to index the destination register and the lower nibble for the source register 
 		static constexpr int nregisters = 0x10; 
 
 		union

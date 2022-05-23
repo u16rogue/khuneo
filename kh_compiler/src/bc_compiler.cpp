@@ -30,10 +30,8 @@ static auto bcc_get_node_content(char (&buffer)[sz], khuneo::ast::node * n) -> i
 }
 
 // TODO: should grow based off what we insert
-static auto bcc_grow(khuneo::compiler::bccomp_info * b) -> bool
+static auto bcc_grow(khuneo::compiler::bccomp_info * b, int grow_size = 16) -> bool
 {
-	constexpr int grow_size = 18;
-
 	int index  = b->bc_buffer - b->bc_current;
 	int old_size = (b->bc_end - b->bc_buffer);
 	int new_size =  old_size + grow_size;
@@ -45,7 +43,7 @@ static auto bcc_grow(khuneo::compiler::bccomp_info * b) -> bool
 		return false;
 	}
 
-	for (int i = 0; i < new_size - grow_size; ++i)	
+	for (int i = 0; i < old_size; ++i)	
 		buffer[i] = b->bc_buffer[i];
 
 	b->kh_free(b->bc_buffer, old_size);
@@ -56,12 +54,19 @@ static auto bcc_grow(khuneo::compiler::bccomp_info * b) -> bool
 	return true;
 }
 
+// Automatically resizes the buffer if it requires more space
 static auto bcc_auto_resize(khuneo::compiler::bccomp_info * b, int num) -> bool
 {
+	int best_size = num;
+
+	// Allocate at 16 byte blocks interval so we wont have to re-allocate too much
+	if (best_size % 16)
+		best_size += 16 - best_size % 16;
+
 	const int res_size = b->bc_end - b->bc_buffer;
 	const int index = b->bc_current - b->bc_buffer;
-	if (index + num >= res_size)
-		return bcc_grow(b);
+	if (index + num >= res_size) // We should only re alloc if the current buffer is unfit
+		return bcc_grow(b, best_size);
 
 	return true;
 }
@@ -137,9 +142,10 @@ auto compile_ast_export(khuneo::compiler::bccomp_info * pbcci, khuneo::ast::node
 	// The parser also already guarantees that the current node should be an export properties if the previous
 	// check didnt fail
 
-	while (n)
+	khuneo::ast::node * property_group = n->child;
+	while (property_group)
 	{
-		if (!tok_cmp(toks::COMMA_SEPARATED_GROUP, n))
+		if (!tok_cmp(toks::COMMA_SEPARATED_GROUP, property_group))
 		{
 			bcc_except(pbcci, n, true, "Export property expected an entry");
 			return false;
@@ -148,7 +154,7 @@ auto compile_ast_export(khuneo::compiler::bccomp_info * pbcci, khuneo::ast::node
 		khuneo::ast::node * prop_sym = n->child;
 
 
-		n = n->next;
+		property_group  = property_group->next;
 	}
 
 	return true;

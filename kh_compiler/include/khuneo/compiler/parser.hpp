@@ -3,6 +3,9 @@
 #include <khuneo/compiler/ast.hpp>
 #include <khuneo/compiler/lexer.hpp>
 
+// TODO: get rid of X_PROPRTIES and just use a unified BLOCK or something similar
+// TODO: create a token alias for encapsulation in the context of a parser
+
 #define KHUNEO_DEF_TOKEN(n) \
 	constexpr khuneo::string_literal n = #n 
 
