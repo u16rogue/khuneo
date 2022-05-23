@@ -1,21 +1,21 @@
 #include <khuneo/compiler/info.hpp>
 
-auto khuneo::impl::info::check_overflow(const char * c) -> bool
+auto khuneo::impl::parser::info::check_overflow(const char * c) -> bool
 {
 	return c >= ctx.end;
 }
 
-auto khuneo::impl::info::check_current_overflow(const int & diff) -> bool
+auto khuneo::impl::parser::info::check_current_overflow(const int & diff) -> bool
 {
 	return check_overflow(state.source + diff);
 }
 
-auto khuneo::impl::info::generate_exception(const char * message) -> void
+auto khuneo::impl::parser::info::generate_exception(const char * message) -> void
 {
 	stack_push(info_stack_type::EXCEPTION, (void *)message);
 }
 
-auto khuneo::impl::info::h_allocate_node() -> ast::node *
+auto khuneo::impl::parser::info::h_allocate_node() -> ast::node *
 {
 	ast::node * n = reinterpret_cast<ast::node *>(ctx.kh_alloc(sizeof(ast::node)));
 	if (n)
@@ -27,12 +27,12 @@ auto khuneo::impl::info::h_allocate_node() -> ast::node *
 	return n;
 }
 
-auto khuneo::impl::info::stack_top() -> info_stack_entry &
+auto khuneo::impl::parser::info::stack_top() -> info_stack_entry &
 {
 	return stack[stack_counter];
 }
 
-auto khuneo::impl::info::stack_push(info_stack_type type, void * extra_data) -> bool
+auto khuneo::impl::parser::info::stack_push(info_stack_type type, void * extra_data) -> bool
 {
 	if (type == info_stack_type::UNDEFINED || stack_counter + 1 == sizeof(stack) / sizeof(stack[0]))
 		return false;
@@ -74,7 +74,7 @@ auto khuneo::impl::info::stack_push(info_stack_type type, void * extra_data) -> 
 	return true;
 }
 
-auto khuneo::impl::info::stack_pop() -> bool
+auto khuneo::impl::parser::info::stack_pop() -> bool
 {
 	stack[stack_counter] = {};
 
@@ -85,17 +85,17 @@ auto khuneo::impl::info::stack_pop() -> bool
 	return true;
 }
 
-auto khuneo::impl::info::stack_count() -> int
+auto khuneo::impl::parser::info::stack_count() -> int
 {
 	return stack_counter;
 }
 
-auto khuneo::impl::info::stack_indexed(int i) -> info_stack_entry &
+auto khuneo::impl::parser::info::stack_indexed(int i) -> info_stack_entry &
 {
 	return stack[i];
 }
 
-auto khuneo::impl::info::stack_find_recent(info_stack_type type) -> info_stack_entry *
+auto khuneo::impl::parser::info::stack_find_recent(info_stack_type type) -> info_stack_entry *
 {
 	int s = stack_counter;
 	while (s)

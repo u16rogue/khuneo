@@ -7,7 +7,7 @@
 namespace khuneo::parser
 {
 	template <typename... rules>
-	auto basic_parse(impl::info * info) -> bool
+	auto basic_parse(impl::parser::info * info) -> bool
 	{
 		if (!info->state.source)
 			info->state.source = info->ctx.start;
@@ -29,7 +29,7 @@ namespace khuneo::parser
 
 				bool matched = rules::parse(info);
 
-				if (!matched && info->stack_find_recent(impl::info_stack_type::EXCEPTION))
+				if (!matched && info->stack_find_recent(impl::parser::info_stack_type::EXCEPTION))
 				{
 					has_exception = true;
 					return true;
@@ -63,7 +63,7 @@ namespace khuneo::parser
 			break;
 		}
 
-		impl::info_stack_entry * ce = info->stack_find_recent(impl::info_stack_type::EXCEPTION);
+		impl::parser::info_stack_entry * ce = info->stack_find_recent(impl::parser::info_stack_type::EXCEPTION);
 		if (ce)
 		{
 			if (info->ctx.parser_exception)
@@ -75,7 +75,7 @@ namespace khuneo::parser
 	}
 
 	template <typename... custom_rules>
-	auto parse(impl::info * info) -> bool
+	auto parse(impl::parser::info * info) -> bool
 	{
 		return basic_parse
 		<	

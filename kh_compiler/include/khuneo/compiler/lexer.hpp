@@ -17,7 +17,7 @@ namespace khuneo::impl::lexer
 	template <khuneo::string_literal... delims>
 	struct streq
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
 			if ((([&]() -> bool
 			{
@@ -48,7 +48,7 @@ namespace khuneo::impl::lexer
 	template <char start, char end>
 	struct rangechar
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
 			if (info->check_current_overflow(0))
 				return false;
@@ -75,7 +75,7 @@ namespace khuneo::impl::lexer
 	template <int offset = 0, int additive = 0>
 	struct forward_source
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
 			int _value = offset != 0 ? offset : info->request.value;
 
@@ -112,7 +112,7 @@ namespace khuneo::impl::lexer
 	template <int offset>
 	struct check_end
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
 			return info->state.source + offset >= info->ctx.end;
 		}
@@ -126,7 +126,7 @@ namespace khuneo::impl::lexer
 	template <typename condition, typename... expressions>
 	struct kh_if
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
 			return !condition::parse(info) || (expressions::parse(info) && ...);
 		}
@@ -139,7 +139,7 @@ namespace khuneo::impl::lexer
 	template <typename... expressions>
 	struct kh_and
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
 			return (expressions::parse(info) && ...);
 		}
@@ -152,7 +152,7 @@ namespace khuneo::impl::lexer
 	template <typename... expressions>
 	struct kh_or
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
 			return (expressions::parse(info) || ...);
 		}
@@ -166,7 +166,7 @@ namespace khuneo::impl::lexer
 	template <typename condition, typename expression = void>
 	struct kh_while
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
 			while (condition::parse(info))
 				if constexpr (requires { expression::parse(nullptr); })
@@ -191,7 +191,7 @@ namespace khuneo::impl::lexer
 	template <khuneo::string_literal begin, khuneo::string_literal end>
 	struct encapsulate
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
 			const char * current = info->state.source;
 			if (info->check_current_overflow(begin.length) || !begin.match(current))
@@ -237,10 +237,10 @@ namespace khuneo::impl::lexer
 	template <khuneo::string_literal tok>
 	struct pop_token_next
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
 			// Find a basic state
-			info_stack_entry * stack = info->stack_find_recent(impl::info_stack_type::BASIC_STATE);
+			impl::parser::info_stack_entry * stack = info->stack_find_recent(impl::parser::info_stack_type::BASIC_STATE);
 			if (!stack)
 			{
 				info->generate_exception("pop_token_next did not find a BASIC_STATE to use");
@@ -290,9 +290,9 @@ namespace khuneo::impl::lexer
 	*/
 	struct push_basic_state
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
-			info->stack_push(info_stack_type::BASIC_STATE);
+			info->stack_push(impl::parser::info_stack_type::BASIC_STATE);
 			return true;
 		}
 	};
@@ -309,9 +309,9 @@ namespace khuneo::impl::lexer
 	template <khuneo::string_literal msg>
 	struct push_exception
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
-			info->stack_push(info_stack_type::EXCEPTION, (void *)msg.str);
+			info->stack_push(impl::parser::info_stack_type::EXCEPTION, (void *)msg.str);
 			return true;
 		}
 	};
@@ -323,7 +323,7 @@ namespace khuneo::impl::lexer
 	*/
 	struct pop
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
 			info->stack_pop();
 			return true;
@@ -337,7 +337,7 @@ namespace khuneo::impl::lexer
 	*/
 	struct start_child
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
 			if (!info->state.node->occupied)
 			{
@@ -372,7 +372,7 @@ namespace khuneo::impl::lexer
 	*/
 	struct end_child
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
 			ast::node * n = info->state.node;
 
@@ -401,7 +401,7 @@ namespace khuneo::impl::lexer
 	template <typename expr>
 	struct negate
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
 			return !expr::parse(info);
 		}
@@ -424,9 +424,9 @@ namespace khuneo::impl::lexer
 	template <int offset = 1, typename... expressions> 
 	struct parse_child
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
-			impl::info i {};
+			impl::parser::info i {};
 			i.ctx.kh_alloc = info->ctx.kh_alloc;
 			i.ctx.start     = info->state.node->start + offset;
 			i.ctx.end       = info->state.node->end - offset;
@@ -464,7 +464,7 @@ namespace khuneo::impl::lexer
 	template <auto lambda>
 	struct proc
 	{
-		static auto parse(impl::info * info) -> bool
+		static auto parse(impl::parser::info * info) -> bool
 		{
 			return lambda(info);
 		}

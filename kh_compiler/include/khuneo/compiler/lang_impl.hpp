@@ -35,7 +35,7 @@ namespace khuneo::impl::lang
 	template <khuneo::string_literal name = toks::SYMBOL>
 	struct symbol
 	{
-		static auto parse(impl::info * i) -> bool
+		static auto parse(impl::parser::info * i) -> bool
 		{
 			return lexer::kh_and
 			<
@@ -67,7 +67,7 @@ namespace khuneo::impl::lang
 	
 	struct expr_assignment
 	{
-		static auto parse(impl::info * i) -> bool
+		static auto parse(impl::parser::info * i) -> bool
 		{
 			return lexer::kh_and
 			<
@@ -83,7 +83,7 @@ namespace khuneo::impl::lang
 
 	struct parse_child_sym_assignment
 	{
-		static auto parse(impl::info * i) -> bool
+		static auto parse(impl::parser::info * i) -> bool
 		{
 			return lexer::parse_child<0, lexer::kh_and
 			<
@@ -97,7 +97,7 @@ namespace khuneo::impl::lang
 
 	struct comma_separator
 	{
-		static auto parse(impl::info * i) -> bool
+		static auto parse(impl::parser::info * i) -> bool
 		{
 			return lexer::kh_or<
 				// This checks if the encapsulation actually has something
@@ -133,7 +133,7 @@ namespace khuneo::impl::lang
 	
 	struct expr_endstatement
 	{
-		static auto parse(impl::info * i) -> bool
+		static auto parse(impl::parser::info * i) -> bool
 		{
 			return lexer::kh_and
 			<
@@ -147,7 +147,7 @@ namespace khuneo::impl::lang
 
 	struct rule_moduleexport 
 	{
-		static auto parse(impl::info * i) -> bool
+		static auto parse(impl::parser::info * i) -> bool
 		{
 			return lexer::kh_and
 			<
@@ -178,7 +178,7 @@ namespace khuneo::impl::lang
 
 	struct rule_moduleimport 
 	{
-		static auto parse(impl::info * i) -> bool
+		static auto parse(impl::parser::info * i) -> bool
 		{
 			return lexer::kh_and
 			<
@@ -231,7 +231,7 @@ namespace khuneo::impl::lang
 
 	struct rule_function
 	{
-		static auto parse(impl::info * i) -> bool
+		static auto parse(impl::parser::info * i) -> bool
 		{
 			return lexer::kh_and
 			<
@@ -283,7 +283,7 @@ namespace khuneo::impl::lang
 
 	struct rule_annotation
 	{
-		static auto parse(impl::info * i) -> bool
+		static auto parse(impl::parser::info * i) -> bool
 		{
 			return lexer::kh_and<
 				lexer::streq<"@">,

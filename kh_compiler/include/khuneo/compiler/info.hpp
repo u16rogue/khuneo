@@ -7,17 +7,17 @@
 
 namespace khuneo
 {
-	namespace impl { struct info; }
+	namespace impl::parser { struct info; }
 	struct parser_exception
 	{
-		impl::info * info_instance;
+		impl::parser::info * info_instance;
 		const char * message;
 		int line;
 		int column;
 	};
 }
 
-namespace khuneo::impl
+namespace khuneo::impl::parser
 {
 	struct info;
 
