@@ -171,7 +171,7 @@ auto khuneo::compiler::bc_compile(bccomp_info * pbcci) -> bool
 		return false;
 	
 	cnode = pbcci->ast_root_node;
-	if (!tok_cmp(toks::ROOT_NODE, cnode) || !cnode->next)
+	if (!tok_cmp(toks::ROOT_NODE, cnode))
 	{
 		bcc_except(pbcci, cnode, true, "Invalid root node!");
 		return false;
