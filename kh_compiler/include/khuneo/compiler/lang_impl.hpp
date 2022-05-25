@@ -226,7 +226,14 @@ namespace khuneo::impl::lang
 	using comment_multi = lexer::kh_and
 	<
 		lexer::streq<"/*">,
-		lexer::kh_while<lexer::negate<lexer::streq<"*/">>, lexer::forward_source<1>>
+		lexer::forward_source<2>,
+		lexer::kh_while<
+			lexer::kh_and<
+				lexer::negate<lexer::streq<"*/">>,
+				lexer::negate<lexer::check_end<0>>
+			>,
+			lexer::forward_source<1>
+		>
 	>;
 
 	struct rule_function
