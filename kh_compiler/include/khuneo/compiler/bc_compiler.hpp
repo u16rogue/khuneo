@@ -1,38 +1,30 @@
 #pragma once
 
-#include <khuneo/defs.hpp>
-#include <khuneo/compiler/ast.hpp>
-
-namespace khuneo
-{
-	enum class bc_compiler_exception_type
-	{
-		WARNING,
-		FATAL
-	};
-
-	struct bc_compiler_exception
-	{
-		bc_compiler_exception_type type;
-		ast::node * node;
-		const char * message;
-	};
-}
+#include <khuneo/compiler/info.hpp>
+#include <khuneo/compiler/lang_impl.hpp>
 
 namespace khuneo::compiler
 {
-	using fn_bccomp_except_t = void(*)(khuneo::bc_compiler_exception *); 
-	
-	struct bccomp_info
+	template <typename... rules>
+	auto bc_compile_basic(impl::compiler::bccomp_info * pbcci) -> bool
 	{
-		ast::node * ast_root_node;
-		kh_allocator_t kh_alloc;
-		kh_deallocator_t kh_free;
-		fn_bccomp_except_t bc_except;
-		kh_bytecode_t * bc_buffer;
-		kh_bytecode_t * bc_current;
-		kh_bytecode_t * bc_end;
-	};
+		ast::node * cnode = nullptr; // current node 	
 
-	auto bc_compile(bccomp_info * pbcci) -> bool;
+		if (!pbcci || !pbcci->kh_alloc || !pbcci->kh_free || !pbcci->ast_root_node)
+			return false;	
+
+		
+
+		return true;
+	}
+
+
+	template <typename... custom_rules>
+	auto bc_compile(impl::compiler::bccomp_info * pbcci) -> bool
+	{
+		return bc_compile_basic<
+			impl::lang::rule_moduleexport,
+			custom_rules...	
+		>(pbcci);
+	}
 }

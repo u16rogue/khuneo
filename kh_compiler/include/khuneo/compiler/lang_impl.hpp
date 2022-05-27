@@ -2,6 +2,7 @@
 
 #include <khuneo/compiler/ast.hpp>
 #include <khuneo/compiler/lexer.hpp>
+#include <khuneo/runtime/vm.hpp>
 
 // TODO: get rid of X_PROPRTIES and just use a unified BLOCK or something similar
 // TODO: create a token alias for encapsulation in the context of a parser
@@ -33,22 +34,16 @@ namespace khuneo::impl::lang
 {
 	// Implements the parser rules
 	template <khuneo::string_literal name = toks::SYMBOL>
-	struct symbol
-	{
-		static auto parse(impl::parser::info * i) -> bool
-		{
-			return lexer::kh_and
-			<
-				lexer::push_exception<"Expected a symbol/identifier">,
-				lexer::h_match_AZaz_$,
-				lexer::push_basic_state,
-				lexer::forward_source<1>,
-				lexer::h_gulp_char<lexer::h_match_AZaz_$09>,
-				lexer::pop_token_next<name>,
-				lexer::pop
-			>::parse(i);
-		}
-	};
+	using symbol = lexer::kh_and
+	<
+		lexer::push_exception<"Expected a symbol/identifier">,
+		lexer::h_match_AZaz_$,
+		lexer::push_basic_state,
+		lexer::forward_source<1>,
+		lexer::h_gulp_char<lexer::h_match_AZaz_$09>,
+		lexer::pop_token_next<name>,
+		lexer::pop
+	>;
 
 	using group_parenthesis  = lexer::encapsulate<"(", ")">;
 	using group_brackets     = lexer::encapsulate<"[", "]">;
@@ -81,69 +76,52 @@ namespace khuneo::impl::lang
 		}
 	};
 
-	struct parse_child_sym_assignment
-	{
-		static auto parse(impl::parser::info * i) -> bool
-		{
-			return lexer::parse_child<0, lexer::kh_and
-			<
-				lexer::h_gulp_whitespace,
-				symbol<>,
-				lexer::h_gulp_whitespace,
-				lexer::kh_if<lexer::streq<"=">, expr_assignment>
-			>>::parse(i);
-		}
-	};
+	using parse_child_sym_assignment = lexer::parse_child<0, lexer::kh_and
+	<
+		lexer::h_gulp_whitespace,
+		symbol<>,
+		lexer::h_gulp_whitespace,
+		lexer::kh_if<lexer::streq<"=">, expr_assignment>
+	>>;
 
-	struct comma_separator
-	{
-		static auto parse(impl::parser::info * i) -> bool
-		{
-			return lexer::kh_or<
-				// This checks if the encapsulation actually has something
-				// this will cause a short circuit causing the main comma
-				// separator to not run
-				lexer::kh_and
-				<
-					lexer::h_gulp_whitespace,
-					lexer::check_end<1>
-				>,
-				lexer::kh_and
-				<	
-					lexer::push_basic_state,
-					lexer::kh_while<lexer::forward_source<1>,	
-						lexer::kh_or<
-							lexer::kh_and< group_either,
-								lexer::forward_source<0, -1>
-							>,
-							lexer::kh_if< lexer::streq<",">,
-								lexer::pop_token_next<toks::COMMA_SEPARATED_GROUP>,
-								parse_child_sym_assignment, 
-								lexer::forward_source<1>,
-								lexer::push_basic_state
-							>	
-						>
+	using comma_separator = lexer::kh_or
+	<
+		// This checks if the encapsulation actually has something
+		// this will cause a short circuit causing the main comma
+		// separator to not run
+		lexer::kh_and
+		<
+			lexer::h_gulp_whitespace,
+			lexer::check_end<1>
+		>,
+		lexer::kh_and
+		<	
+			lexer::push_basic_state,
+			lexer::kh_while<lexer::forward_source<1>,	
+				lexer::kh_or<
+					lexer::kh_and< group_either,
+						lexer::forward_source<0, -1>
 					>,
-					lexer::pop_token_next<toks::COMMA_SEPARATED_GROUP>,
-					parse_child_sym_assignment
+					lexer::kh_if< lexer::streq<",">,
+						lexer::pop_token_next<toks::COMMA_SEPARATED_GROUP>,
+						parse_child_sym_assignment, 
+						lexer::forward_source<1>,
+						lexer::push_basic_state
+					>	
 				>
-			>::parse(i);
-		}
-	};
+			>,
+			lexer::pop_token_next<toks::COMMA_SEPARATED_GROUP>,
+			parse_child_sym_assignment
+		>
+	>;
 	
-	struct expr_endstatement
-	{
-		static auto parse(impl::parser::info * i) -> bool
-		{
-			return lexer::kh_and
-			<
-				lexer::streq<";">,
-				lexer::push_basic_state,
-				lexer::forward_source<1>,
-				lexer::pop_token_next<toks::END_STATEMENT>
-			>::parse(i);
-		}
-	};
+	using expr_endstatement = lexer::kh_and
+	<
+		lexer::streq<";">,
+		lexer::push_basic_state,
+		lexer::forward_source<1>,
+		lexer::pop_token_next<toks::END_STATEMENT>
+	>;
 
 	struct rule_moduleexport 
 	{
@@ -174,6 +152,8 @@ namespace khuneo::impl::lang
 				lexer::end_child
 			>::parse(i);
 		}
+
+		static auto compile(impl::compiler::bccomp_info * i) -> bool;
 	};
 
 	struct rule_moduleimport 
