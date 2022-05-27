@@ -213,7 +213,8 @@ namespace khuneo::impl::lang
 				lexer::negate<lexer::check_end<0>>
 			>,
 			lexer::forward_source<1>
-		>
+		>,
+		lexer::forward_source<2>
 	>;
 
 	struct rule_function
