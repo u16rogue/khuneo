@@ -237,6 +237,10 @@ namespace khuneo::impl::lexer
 	template <khuneo::string_literal tok>
 	struct pop_token_next
 	{
+		// TODO: maybe implement where all token pops are just stored in the stack and only committed into
+		// AST nodes AFTER the parser rule completes it match so we dont have to spend allocating and wasting memory on parsing rules that would fail anyway
+		// and we can optimize by allocating a big chunk of contiguous nodes instead of allocating separately.
+
 		static auto parse(impl::parser::info * info) -> bool
 		{
 			// Find a basic state

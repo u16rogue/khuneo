@@ -4,7 +4,6 @@
 #include <khuneo/compiler/lexer.hpp>
 #include <khuneo/runtime/vm.hpp>
 
-// TODO: get rid of X_PROPRTIES and just use a unified BLOCK or something similar
 // TODO: create a token alias for encapsulation in the context of a parser
 
 #define KHUNEO_DEF_TOKEN(n) \
@@ -18,16 +17,14 @@ namespace khuneo::impl::toks
 	KHUNEO_DEF_TOKEN(SYMBOL);
 	KHUNEO_DEF_TOKEN(COMMA_SEPARATED_GROUP);
 	KHUNEO_DEF_TOKEN(END_STATEMENT);
-	KHUNEO_DEF_TOKEN(EXPORT_PROPERTIES);
 	KHUNEO_DEF_TOKEN(EXPORT_MODULE);
-	KHUNEO_DEF_TOKEN(IMPORT_PROPERTIES);
-	KHUNEO_DEF_TOKEN(IMPORT_ALIAS);
 	KHUNEO_DEF_TOKEN(IMPORT_MODULE);
 	KHUNEO_DEF_TOKEN(FUNCTION);
 	KHUNEO_DEF_TOKEN(FUNCTION_ARGS);
 	KHUNEO_DEF_TOKEN(BLOCK);
 	KHUNEO_DEF_TOKEN(TYPE);
 	KHUNEO_DEF_TOKEN(ANNOTATION);
+	KHUNEO_DEF_TOKEN(VARIABLE);
 };
 
 namespace khuneo::impl::lang
@@ -44,6 +41,8 @@ namespace khuneo::impl::lang
 		lexer::pop_token_next<name>,
 		lexer::pop
 	>;
+
+	
 
 	using group_parenthesis  = lexer::encapsulate<"(", ")">;
 	using group_brackets     = lexer::encapsulate<"[", "]">;
@@ -123,6 +122,36 @@ namespace khuneo::impl::lang
 		lexer::pop_token_next<toks::END_STATEMENT>
 	>;
 
+	struct rule_variable
+	{
+		static auto parse(impl::parser::info * i) -> bool
+		{
+			return lexer::kh_and
+			<
+				lexer::streq<"let ">,
+				lexer::push_basic_state,
+				lexer::forward_source<>,
+				lexer::pop_token_next<toks::VARIABLE>,
+				lexer::start_child,
+					lexer::h_gulp_whitespace,
+					symbol<>,
+					lexer::h_gulp_whitespace,
+					lexer::push_exception<"Expected assignment or end of statement">,
+					lexer::kh_or
+					<
+						expr_endstatement,
+						expr_assignment
+					>,
+				lexer::end_child
+			>::parse(i);
+		}
+
+		static auto compile(impl::compiler::bccomp_info * i) -> bool
+		{
+			return false;
+		}
+	};
+
 	struct rule_moduleexport 
 	{
 		static auto parse(impl::parser::info * i) -> bool
@@ -144,7 +173,7 @@ namespace khuneo::impl::lang
 							lexer::encapsulate<"{", "}">,
 							lexer::push_basic_state,
 							lexer::forward_source<>,	
-							lexer::pop_token_next<toks::EXPORT_PROPERTIES>,
+							lexer::pop_token_next<toks::BLOCK>,
 							lexer::parse_child<1, comma_separator>
 						>
 					>,
@@ -171,24 +200,19 @@ namespace khuneo::impl::lang
 					symbol<>,
 					lexer::h_gulp_whitespace,
 					lexer::kh_if<
-						lexer::streq<"as">,
-						lexer::push_basic_state,
+						lexer::streq<"as ">,
 						lexer::forward_source<>,
-						lexer::pop_token_next<toks::IMPORT_ALIAS>,
-						lexer::start_child,
-							lexer::h_gulp_whitespace,
-							symbol<>,
-							lexer::h_gulp_whitespace,
-						lexer::end_child
+						symbol<>
 					>,
 					lexer::push_exception<"'import' expected a property encapsulation '{' followed by a '}' or an end of statement ';'">,
 					lexer::kh_or<
 						expr_endstatement,
 						lexer::kh_and<
+							lexer::h_gulp_whitespace,
 							lexer::encapsulate<"{", "}">,
 							lexer::push_basic_state,
 							lexer::forward_source<>,
-							lexer::pop_token_next<toks::IMPORT_PROPERTIES>
+							lexer::pop_token_next<toks::BLOCK>
 						>
 					>,
 					lexer::pop,
@@ -284,4 +308,6 @@ namespace khuneo::impl::lang
 			>::parse(i);
 		}
 	};
+
+	// TODO: maybe have a single struct to stand as a type that loads all the language implementation
 }

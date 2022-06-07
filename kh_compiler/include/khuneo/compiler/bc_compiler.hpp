@@ -8,7 +8,7 @@ namespace khuneo::compiler
 	template <typename... rules>
 	auto bc_compile_basic(impl::compiler::bccomp_info * pbcci) -> bool
 	{
-		if (!pbcci || !pbcci->kh_alloc || !pbcci->kh_free || !pbcci->ast_root_node)
+		if (!pbcci || !pbcci->kh_alloc || !pbcci->kh_dealloc || !pbcci->ast_root_node)
 			return false;
 
 		if (!pbcci->current_node)
@@ -50,6 +50,7 @@ namespace khuneo::compiler
 	{
 		return bc_compile_basic<
 			impl::lang::rule_moduleexport,
+			impl::lang::rule_moduleimport,
 			custom_rules...	
 		>(pbcci);
 	}

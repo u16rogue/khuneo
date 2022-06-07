@@ -86,6 +86,7 @@ namespace khuneo::parser
 			impl::lang::comment_multi,
 			impl::lang::rule_function,	
 			impl::lang::rule_annotation,
+			impl::lang::rule_variable,
 			custom_rules...
 		>(info);
 	}

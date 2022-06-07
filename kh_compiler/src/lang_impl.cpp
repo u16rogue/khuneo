@@ -5,6 +5,8 @@
 #include <khuneo/compiler/parser.hpp>
 #include <khuneo/string_literals.hpp>
 
+// TODO: rewrite to generic container
+
 static auto bcc_except(khuneo::impl::compiler::bccomp_info * b, khuneo::ast::node * n, bool fatal, const char * msg) -> void
 {
 	if (!b->bc_except)

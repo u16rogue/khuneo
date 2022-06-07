@@ -40,7 +40,7 @@ namespace khuneo::impl::compiler
 		ast::node * ast_root_node;
 		ast::node * current_node;
 		kh_allocator_t kh_alloc;
-		kh_deallocator_t kh_free;
+		kh_deallocator_t kh_dealloc;
 		fn_bccomp_except_t bc_except;
 		kh_bytecode_t * bc_buffer;
 		kh_bytecode_t * bc_current;
