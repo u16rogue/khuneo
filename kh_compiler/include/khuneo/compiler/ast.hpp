@@ -28,6 +28,7 @@ namespace khuneo::ast
 		int line;
 		int column;
 
+		// TODO: maybe replace this with indexes, takes too much memory
 		const char * start;
 		const char * end;
 		

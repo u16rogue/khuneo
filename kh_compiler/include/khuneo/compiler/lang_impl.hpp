@@ -30,10 +30,10 @@ namespace khuneo::impl::toks
 namespace khuneo::impl::lang
 {
 	// Implements the parser rules
-	template <khuneo::string_literal name = toks::SYMBOL>
+	template <khuneo::string_literal name = toks::SYMBOL, khuneo::string_literal ex_msg = "Expected a symbol/identifier">
 	using symbol = lexer::kh_and
 	<
-		lexer::push_exception<"Expected a symbol/identifier">,
+		lexer::push_exception<ex_msg>,
 		lexer::h_match_AZaz_$,
 		lexer::push_basic_state,
 		lexer::forward_source<1>,
@@ -41,6 +41,8 @@ namespace khuneo::impl::lang
 		lexer::pop_token_next<name>,
 		lexer::pop
 	>;
+
+	using type = symbol<toks::TYPE, "Expected a type name">;
 
 	
 
@@ -135,6 +137,11 @@ namespace khuneo::impl::lang
 				lexer::start_child,
 					lexer::h_gulp_whitespace,
 					symbol<>,
+					lexer::kh_if<lexer::streq<":">,
+						lexer::forward_source<>,
+						lexer::h_gulp_whitespace,
+						type
+					>,
 					lexer::h_gulp_whitespace,
 					lexer::push_exception<"Expected assignment or end of statement">,
 					lexer::kh_or
