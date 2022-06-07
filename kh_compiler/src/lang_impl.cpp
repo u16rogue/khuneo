@@ -47,7 +47,7 @@ static auto bcc_grow(khuneo::impl::compiler::bccomp_info * b, int grow_size = 16
 	for (int i = 0; i < old_size; ++i)	
 		buffer[i] = b->bc_buffer[i];
 
-	b->kh_free(b->bc_buffer, old_size);
+	b->kh_dealloc(b->bc_buffer, old_size);
 	b->bc_buffer  = buffer;
 	b->bc_current = &buffer[index];
 	b->bc_end     = &buffer[new_size];
@@ -58,18 +58,17 @@ static auto bcc_grow(khuneo::impl::compiler::bccomp_info * b, int grow_size = 16
 // Automatically resizes the buffer if it requires more space
 static auto bcc_auto_resize(khuneo::impl::compiler::bccomp_info * b, int num) -> bool
 {
-	int best_size = num;
+	const int res_size = b->bc_end - b->bc_buffer;
+	const int index = b->bc_current - b->bc_buffer;
+	if (index + 1 + num < res_size) // We should only re alloc if the current buffer is unfit
+		return true;
 
+	int best_size = num;
 	// Allocate at 16 byte blocks interval so we wont have to re-allocate too much
 	if (best_size % 16)
 		best_size += 16 - best_size % 16;
-
-	const int res_size = b->bc_end - b->bc_buffer;
-	const int index = b->bc_current - b->bc_buffer;
-	if (index + num >= res_size) // We should only re alloc if the current buffer is unfit
-		return bcc_grow(b, best_size);
-
-	return true;
+	
+	return bcc_grow(b, best_size);
 }
 
 template <typename... vargs_t>
