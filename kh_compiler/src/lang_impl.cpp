@@ -7,6 +7,8 @@
 
 // TODO: rewrite to generic container
 
+static const char * const BCC_MSG_APPEND_FAIL = "Failed to append bytes to executable buffer";
+
 static auto bcc_except(khuneo::impl::compiler::bccomp_info * b, khuneo::ast::node * n, bool fatal, const char * msg) -> void
 {
 	if (!b->bc_except)
@@ -35,7 +37,7 @@ static auto bcc_get_node_content(char (&buffer)[sz], khuneo::ast::node * n) -> i
 // TODO: should grow based off what we insert
 static auto bcc_grow(khuneo::impl::compiler::bccomp_info * b, int grow_size = 16) -> bool
 {
-	int index  = b->bc_buffer - b->bc_current;
+	int index    = b->bc_current - b->bc_buffer;
 	int old_size = (b->bc_end - b->bc_buffer);
 	int new_size =  old_size + grow_size;
 
@@ -76,11 +78,14 @@ static auto bcc_auto_resize(khuneo::impl::compiler::bccomp_info * b, int num) ->
 template <typename... vargs_t>
 static auto bcc_append_bytes(khuneo::impl::compiler::bccomp_info * b, vargs_t... vargs) -> bool
 {
+	// TODO: resize check should take in account of string from the beginning
+	// POSSIBLE BUG: pass long string -> process non string -> process string -> re alloc based off string, chances that string might match &/mod the prev alloc -> process the rest of the non string -> no more memory -> oob
 	if (!bcc_auto_resize(b, (sizeof(vargs) + ...)))
 		return false;
 	
 	([&]
 	{
+		// TODO: we should seriously compare types here...
 		if constexpr (sizeof(vargs) == 1)
 		{
 			*b->bc_current = *reinterpret_cast<unsigned char *>(&vargs);
@@ -91,8 +96,19 @@ static auto bcc_append_bytes(khuneo::impl::compiler::bccomp_info * b, vargs_t...
 			*reinterpret_cast<khuneo::xxh::xxh32 *>(b->bc_current) = vargs;
 			b->bc_current += sizeof(khuneo::xxh::xxh32);
 		}
+		else if constexpr (requires { /*const char * v = vargs;*/ ((void(*)(const char *))0)(vargs); })
+		{
+			int len = 0;
+			while (vargs[++len]);
+			bcc_auto_resize(b, len + 1);
+			// Do not include the null terminator, its up to the caller if they want to append it themselves
+			for (int i = 0; i < len; ++i)
+				b->bc_current[i] = vargs[i];
+			b->bc_current += len;
+		}
 		else
 		{
+			// TODO: this can be determined at compile time... which we should.
 			bcc_except(b, nullptr, true, "Could not determine type to append bytes into");	
 			return false;
 		}
@@ -122,10 +138,13 @@ auto khuneo::impl::lang::rule_moduleexport::compile(impl::compiler::bccomp_info 
 	n = n->child;
 
 	// The parser already guarantees that the child is a symbol, no need to check.
-	khuneo::impl::vm::op_descriptor descriptor {};
-	descriptor.op_set.destination_type = khuneo::impl::vm::op_type::SYMBOL;
-	descriptor.op_set.source_type      = khuneo::impl::vm::op_type::INTERMIDIATE;
-	descriptor.op_set.source_size      = khuneo::impl::vm::op_size::FOUR;
+	khuneo::impl::vm::op_descriptor copy_descriptor {};
+	copy_descriptor.op_copy.destination_type = khuneo::impl::vm::op_type::SYMBOL;
+	copy_descriptor.op_copy.source_type      = khuneo::impl::vm::op_type::INTERMIDIATE;
+	copy_descriptor.op_copy.source_size      = khuneo::impl::vm::op_size::FOUR;
+
+	khuneo::impl::vm::op_descriptor define_descriptor {};
+	define_descriptor.op_define.mode = khuneo::impl::vm::op_define_mode::HASH;
 
 	constexpr auto h_id_modulename = khuneo::xxh::hash32_cv("__modulename__");
 	
@@ -134,9 +153,9 @@ auto khuneo::impl::lang::rule_moduleexport::compile(impl::compiler::bccomp_info 
 
 	if (!tok_cmp(toks::SYMBOL, n) || !bcc_append_bytes(i, 
 					 khuneo::impl::vm::opcodes::DEFINE, h_id_modulename,
-					 khuneo::impl::vm::opcodes::COPY, descriptor, h_id_modulename, khuneo::xxh::hash32(sz_buffer, len)
+					 khuneo::impl::vm::opcodes::COPY, copy_descriptor, h_id_modulename, khuneo::xxh::hash32(sz_buffer, len)
 	)) {
-		bcc_except(i, n, true, "Failed to compile export symbol");
+		bcc_except(i, n, true, BCC_MSG_APPEND_FAIL);
 		return false;
 	}
 
@@ -158,6 +177,42 @@ auto khuneo::impl::lang::rule_moduleexport::compile(impl::compiler::bccomp_info 
 		
 		khuneo::ast::node * prop_sym = n->child;
 		property_group  = property_group->next;
+	}
+
+	return true;
+}
+
+auto khuneo::impl::lang::rule_variable::compile(impl::compiler::bccomp_info * i) -> bool
+{
+	if (!tok_cmp(toks::VARIABLE, i->current_node))
+		return false;
+
+	ast::node * n = i->current_node->child;
+
+	/*
+	khuneo::impl::vm::op_descriptor jmp_next_descriptor {};
+	jmp_next_descriptor.op_jmp.jump_type = khuneo::impl::vm::op_jmp_type::RELATIVE;
+	jmp_next_descriptor.op_jmp.displacement_source = khuneo::impl::vm::op_type::INTERMIDIATE;
+	jmp_next_descriptor.op_jmp.displacement_size = khuneo::impl::vm::op_size::ONE;
+	*/
+
+	khuneo::impl::vm::op_descriptor define_descriptor {};
+	define_descriptor.op_define.mode = khuneo::impl::vm::op_define_mode::STRING;
+
+	char sz_buffer[257];
+	unsigned int len = bcc_get_node_content(sz_buffer, n);
+	if (len > 255)
+	{
+		bcc_except(i, n, true, "Variable name too long, max limit is 255 characters.");
+		return false;
+	}
+
+	if (!bcc_append_bytes(i,
+		// khuneo::impl::vm::opcodes::JMP_NEXT, jmp_next_descriptor, static_cast<unsigned char>(len + 3), // JMP_NEXT REL <SYMBOL LENGTH>
+		khuneo::impl::vm::opcodes::DEFINE, define_descriptor, sz_buffer, static_cast<unsigned char>(0) /*<- Null terminator*/
+	)) {
+		bcc_except(i, n, true, BCC_MSG_APPEND_FAIL);
+		return false;
 	}
 
 	return true;

@@ -153,10 +153,7 @@ namespace khuneo::impl::lang
 			>::parse(i);
 		}
 
-		static auto compile(impl::compiler::bccomp_info * i) -> bool
-		{
-			return false;
-		}
+		static auto compile(impl::compiler::bccomp_info * i) -> bool;
 	};
 
 	struct rule_moduleexport 

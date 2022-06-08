@@ -51,6 +51,7 @@ namespace khuneo::compiler
 		return bc_compile_basic<
 			impl::lang::rule_moduleexport,
 			impl::lang::rule_moduleimport,
+			impl::lang::rule_variable,
 			custom_rules...	
 		>(pbcci);
 	}

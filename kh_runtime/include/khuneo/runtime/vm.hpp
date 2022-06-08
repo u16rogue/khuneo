@@ -27,30 +27,48 @@ namespace khuneo::impl::vm
 		RELATIVE = 1
 	};
 
+	enum class op_define_mode : kh_bytecode_t
+	{
+		HASH,
+		STRING,
+	};
+
+	enum class op_define_level : kh_bytecode_t
+	{
+		GLOBAL,
+		SCOPE
+	};
+
 	struct op_descriptor
 	{
 		union
 		{	
 			struct
 			{
-				op_type destination_type : 2; // This should never be an immediate
-				op_type source_type : 2;
-				unsigned char reserved : 2;
-				op_size source_size : 2;
-			} op_set;
+				op_type       destination_type : 2; // This should never be an immediate
+				op_type       source_type      : 2;
+				unsigned char reserved         : 2;
+				op_size       source_size      : 2;
+			} op_copy;
 
 			struct
 			{
-				op_type displacement_source : 2;
-				op_jmp_type jump_type : 1;
-				unsigned char reserved : 3;
-				op_size displacement_size : 2; // Will only be used if displacement_source is INTERMIDIATE
+				op_type       displacement_source : 2;
+				op_jmp_type   jump_type           : 1;
+				unsigned char reserved            : 3;
+				op_size       displacement_size   : 2; // Will only be used if displacement_source is INTERMIDIATE
 			} op_jmp;
 
 			struct
 			{
-				unsigned char reserved : 4;
+				op_define_mode mode    : 1;
+				op_define_level level  : 1;
+				unsigned char reserved : 6;
+			} op_define;
 
+			struct
+			{
+				unsigned char reserved : 4;
 				// [opcode] [operand0], [operand1]
 				unsigned char operand0 : 2;
 				unsigned char operand1 : 2;
@@ -71,9 +89,9 @@ namespace khuneo::impl::vm
 		* 
 		* Creates a new symbol
 		*  
-		* [opcode 1b] [32 bit xxh hash]	
+		* [opcode 1b] [32 bit xxh hash / null terminated string]	
 		*/
-		DEFINE,
+		DEFINE = 0x3,
 	
 		/*
 		* Copy
@@ -82,14 +100,23 @@ namespace khuneo::impl::vm
 		*
 		* [opcode 1b] [descriptor] [destination], [source]
 		*/
-		COPY,
+		COPY = 0x4,
 
 		/*
 		* Jump
-		* 
+		* Changes the flow of execution unconditionally.
 		* [opcode 1b] [descriptor] [destination]
 		*/
-		JMP,
+		JMP = 0x5,
+
+		/*
+		* Jump Next
+		* Changes the flow of execution unconditionally after executing the next instruction.
+		* by setting the JN flag to 1 ~~~~~~
+		* NOTE: Displacement is estimated at the site of execution!
+		* [opcode 1b] [descriptor] [destination]
+		*/
+		JMP_NEXT = 0x6,
 
 		_LAST_ITEM
 	};
@@ -111,6 +138,8 @@ namespace khuneo::vm
 		union
 		{
 			unsigned char * v_p;
+			unsigned char   v_u8;
+			unsigned int    v_u32;
 		};
 	};
 
