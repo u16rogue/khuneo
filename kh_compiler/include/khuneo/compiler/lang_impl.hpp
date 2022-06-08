@@ -147,7 +147,7 @@ namespace khuneo::impl::lang
 					lexer::kh_or
 					<
 						expr_endstatement,
-						expr_assignment
+						lexer::kh_and<expr_assignment, expr_endstatement>
 					>,
 				lexer::end_child
 			>::parse(i);
@@ -194,8 +194,7 @@ namespace khuneo::impl::lang
 
 	struct rule_moduleimport 
 	{
-		static auto parse(impl::parser::info * i) -> bool
-		{
+		static auto parse(impl::parser::info * i) -> bool {
 			return lexer::kh_and
 			<
 				lexer::streq<"import ">,
