@@ -39,6 +39,12 @@ namespace khuneo::impl::vm
 		SCOPE
 	};
 
+	enum class op_define_type : kh_bytecode_t
+	{
+		SYMBOL,
+		TYPE
+	};
+
 	struct op_descriptor
 	{
 		union
@@ -63,7 +69,8 @@ namespace khuneo::impl::vm
 			{
 				op_define_mode mode    : 1;
 				op_define_level level  : 1;
-				unsigned char reserved : 6;
+				op_define_type  type   : 1;
+				unsigned char reserved : 5;
 			} op_define;
 
 			struct
@@ -91,7 +98,16 @@ namespace khuneo::impl::vm
 		*  
 		* [opcode 1b] [32 bit xxh hash / null terminated string]	
 		*/
-		DEFINE = 0x3,
+		DEFINE,
+
+		/*
+		* Set Type
+		*
+		* Sets the type of a symbol
+		* 
+		* [opcode] [descriptor] [symbol hash] [type hash]
+		*/
+		SET_TYPE,
 	
 		/*
 		* Copy
@@ -100,14 +116,14 @@ namespace khuneo::impl::vm
 		*
 		* [opcode 1b] [descriptor] [destination], [source]
 		*/
-		COPY = 0x4,
+		COPY,
 
 		/*
 		* Jump
 		* Changes the flow of execution unconditionally.
 		* [opcode 1b] [descriptor] [destination]
 		*/
-		JMP = 0x5,
+		JMP,
 
 		/*
 		* Jump Next
@@ -116,7 +132,7 @@ namespace khuneo::impl::vm
 		* NOTE: Displacement is estimated at the site of execution!
 		* [opcode 1b] [descriptor] [destination]
 		*/
-		JMP_NEXT = 0x6,
+		JMP_NEXT,
 
 		_LAST_ITEM
 	};

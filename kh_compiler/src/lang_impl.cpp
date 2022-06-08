@@ -145,6 +145,7 @@ auto khuneo::impl::lang::rule_moduleexport::compile(impl::compiler::bccomp_info 
 
 	khuneo::impl::vm::op_descriptor define_descriptor {};
 	define_descriptor.op_define.mode = khuneo::impl::vm::op_define_mode::HASH;
+	define_descriptor.op_define.type = khuneo::impl::vm::op_define_type::SYMBOL;
 
 	constexpr auto h_id_modulename = khuneo::xxh::hash32_cv("__modulename__");
 	
@@ -198,6 +199,7 @@ auto khuneo::impl::lang::rule_variable::compile(impl::compiler::bccomp_info * i)
 
 	khuneo::impl::vm::op_descriptor define_descriptor {};
 	define_descriptor.op_define.mode = khuneo::impl::vm::op_define_mode::STRING;
+	define_descriptor.op_define.type = khuneo::impl::vm::op_define_type::SYMBOL;
 
 	char sz_buffer[257];
 	unsigned int len = bcc_get_node_content(sz_buffer, n);
