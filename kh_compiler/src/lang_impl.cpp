@@ -202,16 +202,17 @@ auto khuneo::impl::lang::rule_variable::compile(impl::compiler::bccomp_info * i)
 	define_descriptor.op_define.type = khuneo::impl::vm::op_define_type::SYMBOL;
 
 	char sz_buffer[257];
-	unsigned int len = bcc_get_node_content(sz_buffer, n);
-	if (len > 255)
+	int len = bcc_get_node_content(sz_buffer, n);
+	// NOTE: this limitation will be kept despite no longer requiring a JMP_NEXT instruction just incase i change my mind or something else comes up, who would need >127 length variable names anyway?
+	if (len > 0x7F) // This magic number is the maximum value for a signed single byte data type since all bits are set except the most significant bit which denotes negative
 	{
-		bcc_except(i, n, true, "Variable name too long, max limit is 255 characters.");
+		bcc_except(i, n, true, "Variable name too long, max limit is 127 characters.");
 		return false;
 	}
 
 	if (!bcc_append_bytes(i,
-		// khuneo::impl::vm::opcodes::JMP_NEXT, jmp_next_descriptor, static_cast<unsigned char>(len + 3), // JMP_NEXT REL <SYMBOL LENGTH>
-		khuneo::impl::vm::opcodes::DEFINE, define_descriptor, sz_buffer, static_cast<unsigned char>(0) /*<- Null terminator*/
+		// khuneo::impl::vm::opcodes::JMP_NEXT, jmp_next_descriptor, static_cast<char>(len + 3), // JMP_NEXT REL <SYMBOL LENGTH>
+		khuneo::impl::vm::opcodes::DEFINE, define_descriptor, sz_buffer, static_cast<char>(0) /*<- Null terminator*/
 	)) {
 		bcc_except(i, n, true, BCC_MSG_APPEND_FAIL);
 		return false;
