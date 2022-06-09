@@ -67,10 +67,11 @@ namespace khuneo::impl::vm
 
 			struct
 			{
-				op_define_mode mode    : 1;
-				op_define_level level  : 1;
-				op_define_type  type   : 1;
-				unsigned char reserved : 5;
+				op_define_mode  mode               : 1;
+				op_define_level level              : 1;
+				op_define_type  type               : 1;
+				bool            load_to_result_reg : 1; // After defining load it to the VM's result register
+				unsigned char   reserved           : 4;
 			} op_define;
 
 			struct

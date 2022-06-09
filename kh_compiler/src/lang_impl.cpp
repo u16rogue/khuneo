@@ -201,6 +201,17 @@ auto khuneo::impl::lang::rule_variable::compile(impl::compiler::bccomp_info * i)
 	define_descriptor.op_define.mode = khuneo::impl::vm::op_define_mode::STRING;
 	define_descriptor.op_define.type = khuneo::impl::vm::op_define_type::SYMBOL;
 
+	// Look for a ASSIGNMENT_EXPR or TYPE node, if so set the load_to_result_reg flag in the descriptor
+	// this way when we need to load values into it we dont have to spend look up since its already accessible
+	for (ast::node * f = n; f && !tok_cmp(toks::END_STATEMENT, f); f = f->next)
+	{
+		if (tok_cmp(toks::TYPE, f) || tok_cmp(toks::ASSIGNMENT_EXPR, f))
+		{
+			define_descriptor.op_define.load_to_result_reg = true;
+			break;
+		}
+	}
+
 	char sz_buffer[257];
 	int len = bcc_get_node_content(sz_buffer, n);
 	// NOTE: this limitation will be kept despite no longer requiring a JMP_NEXT instruction just incase i change my mind or something else comes up, who would need >127 length variable names anyway?

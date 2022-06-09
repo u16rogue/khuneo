@@ -25,6 +25,7 @@ namespace khuneo::impl::toks
 	KHUNEO_DEF_TOKEN(TYPE);
 	KHUNEO_DEF_TOKEN(ANNOTATION);
 	KHUNEO_DEF_TOKEN(VARIABLE);
+	KHUNEO_DEF_TOKEN(ASSIGNMENT_EXPR);
 };
 
 namespace khuneo::impl::lang
@@ -72,7 +73,7 @@ namespace khuneo::impl::lang
 				lexer::h_gulp_whitespace,
 				lexer::push_basic_state,
 				lexer::kh_while<lexer::kh_and<lexer::negate<lexer::streq<";">>, lexer::forward_source<1>>>,
-				lexer::pop_token_next<"ASSIGNMENT_EXPR">
+				lexer::pop_token_next<toks::ASSIGNMENT_EXPR>
 			>::parse(i);
 		}
 	};
