@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.18)
 option(KH_LOCAL_TEST "Local test project" OFF)
 
 add_subdirectory("kh_core/")
+add_subdirectory("kh_compiler/")
 
 project(
     khuneo
@@ -28,6 +29,7 @@ target_link_libraries(
     ${PROJECT_NAME}
     PUBLIC
     khuneo_core
+    khuneo_compiler
 )
 
 set_target_properties(
