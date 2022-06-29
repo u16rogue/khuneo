@@ -1,6 +1,6 @@
 #pragma once
 
-#include <khuneo/kh_core/utf8.hpp>
+#include <khuneo/core/utf8.hpp>
 
 namespace khuneo::lexer::details
 {
@@ -23,10 +23,10 @@ namespace khuneo::lexer::details
 	};
 
 	constexpr char valid_tokens[] = {
-		'"', '#',                                               // 34 - 35
-		'%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', // 37- 47
-		':', ';', '<', '=', '>', '?', '@',                      // 58 - 64
-		'[', '\\', ']', '^',                                    // 91 - 94
+		'"', '#',                                               // 34  - 35
+		'%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', // 37  - 47
+		':', ';', '<', '=', '>', '?', '@',                      // 58  - 64
+		'[', '\\', ']', '^',                                    // 91  - 94
 		'{', '|', '}', '~'                                      // 123 - 126
 	};
 
@@ -35,7 +35,7 @@ namespace khuneo::lexer::details
 	constexpr auto is_valid_token(char c) -> bool
 	{
 		constexpr auto inbetween = [](char c, int low, int high) { return c >= low && c <= high; };
-		return c == 34 || c == 35 || inbetween(c, 37, 47) || inbetween(c, 58, 64) || inbetween(c, 91, 94) || inbetween(c, 123, 126); 
+		return c == '"' || c == '#' || inbetween(c, '%', '/') || inbetween(c, ':', '@') || inbetween(c, '[', '^') || inbetween(c, '{', '~'); 
 	}
 
 	// Classifies a special symbol referring to a reserved keyword

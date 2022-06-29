@@ -2,7 +2,7 @@
 
 // Based off https://github.com/Cyan4973/xxHash/issues/496
 
-#include <khuneo/kh_core/defs.hpp>
+#include <khuneo/core/defs.hpp>
 
 namespace khuneo::hash::details
 {
