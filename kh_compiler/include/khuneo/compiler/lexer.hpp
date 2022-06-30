@@ -1,6 +1,11 @@
 #pragma once
 
 #include <khuneo/core/utf8.hpp>
+#include <khuneo/core/metapp.hpp>
+
+namespace khuneo::lexer
+{
+};
 
 namespace khuneo::lexer::details
 {
@@ -66,14 +71,32 @@ namespace khuneo::lexer::details
 		"do",
 		"if",
 		"elif",
-		"else"
+		"else",
+		"defer"
+	};
+
+	struct wording_tracking_cont
+	{
+		khuneo::u32 line;
+		khuneo::u32 column;
+		khuneo::u8  tab_space_count;
+	};
+
+	struct default_lexer_impl
+	{
+		static constexpr bool enable_wording_track = true;
+		using allocator = khuneo::details::kh_allocator<>;
+		//auto lexer_msg_recv(msg_callback_info<enable_wording_track> * mi) -> void { };
 	};
 }
 
 namespace khuneo::lexer
 {
-	struct token_node
+	template <bool enable_wording_track = true>
+	struct token_node : metapp::extend_struct_if<enable_wording_track, details::wording_tracking_cont>
 	{
+		enum { FLAG_IS_TRACKING = enable_wording_track };
+
 		bool occupied;
 		
 		union
@@ -81,9 +104,6 @@ namespace khuneo::lexer
 			khuneo::u32  rsource; // Relative source - offset to the matched token
 			char token;
 		} value;
-
-		khuneo::u32 line;
-		khuneo::u32 column;
 
 		khuneo::u32 rlast;
 		khuneo::u32 size;
@@ -116,80 +136,89 @@ namespace khuneo::lexer
 
 	constexpr auto is_msg_fatal(msg m) -> bool { return khuneo::u8(m) & khuneo::u8(msg::FATAL_FLAG); };
 
-	struct run_info;
-	struct run_state;
+	template <typename token_node_t> struct run_info;
+	template <bool enable_wording_track>	struct run_state;
 
+	template <bool enable_wording_track = true>
 	struct msg_callback_info
 	{
 		bool        ignore;
 		msg         message;
-		run_info  * info;
-		run_state * state;
+		run_info<token_node<enable_wording_track>> * info;
+		run_state<enable_wording_track> * state;
 	};
-	using msg_callback_fn_t = void(*)(msg_callback_info *); 
 
 	// -----------------------------------------------------------------
 
-	struct run_state
+	template <bool enable_wording_track = true>
+	struct run_state : metapp::extend_struct_if<enable_wording_track, details::wording_tracking_cont>
 	{
-		bool abort;
+		enum { FLAG_IS_TRACKING = enable_wording_track };
 
+		bool abort;
 		const char * current;
-		khuneo::u32 line;
-		khuneo::u32 column;
-		token_node * current_token;
+		token_node<enable_wording_track> * current_token;
 	};
 
-	struct run_info 
+	template <typename token_node_t>
+	struct run_info
 	{
 		const char * start;
 		const char * end;
-
-		khuneo::u8   tab_space_count;
-
-		msg_callback_fn_t msgcb;
-		token_node *      tokens;
+		token_node_t *    tokens;
 	};
 
-	template <typename allocator = khuneo::details::kh_allocator<>>
-	auto run(run_info * i, run_state * s = nullptr) -> bool
+	template <typename impl = details::default_lexer_impl>
+	auto run(run_info<token_node<impl::enable_wording_track>> * i, run_state<impl::enable_wording_track> * s = nullptr) -> bool
 	{
+		constexpr bool word_tracking = impl::enable_wording_track; 
+		using allocator = impl::allocator; // metapp::type_if<requires { impl::allocator::alloc(0); }, impl::allocator, details::default_lexer_impl::allocator>::type;
+		using state_t   = run_state<word_tracking>;
+		using token_node_t = token_node<word_tracking>; 
+
 		// Internal state if no state is provided (for recursion)
-		run_state _s;
+		state_t _s;
 		if (!s)
 		{
 			s = &_s;
-			s->column        = 0;
-			s->line          = 0;
 			s->current       = i->start;
 			s->current_token = i->tokens;
 			s->abort         = false;
+
+			if constexpr (word_tracking)
+			{
+				s->column = 0;
+				s->line   = 0;
+			}
 		}
 
 		/*
 		* Generates a lexer message
+		* Returns true if treated as fatal and returns false if it should be ignored 
 		*/
-		constexpr auto send_msg = [&](msg m) -> void 
+		auto send_msg = [&](msg m) -> bool 
 		{
-			if (!i->msgcb)
-				return false;
-
-			msg_callback_info mi;
-			mi.info    = i;
-			mi.ignore  = false;
-			mi.message = m;
-			mi.state   = s;
-
-			i->msgcb(&mi);
-
-			if (is_msg_fatal(mi.message))
+			if constexpr (requires { impl::lexer_msg_recv(nullptr); })
 			{
-				s->abort = true;
-				return;
+				msg_callback_info mi;
+				mi.info = i;
+				mi.ignore = false;
+				mi.message = m;
+				mi.state = s;
+
+				impl::lexer_msg_recv(&mi);
+
+				if (is_msg_fatal(mi.message))
+				{
+					s->abort = true;
+					return true;
+				}
+
+				s->abort = !mi.ignore;
+				return s->abort;
 			}
 
-			s->abort = !mi.ignore;
-			return;
+			return false;
 		};
 
 		/*
@@ -199,13 +228,13 @@ namespace khuneo::lexer
 		*  ! Will automatically append itself to state, linking it into the list and replacing current with itself
 		*  ! If it encounters an unoccupied node instead of allocating a new node it will instead re initialize that node and re use it
 		*/
-		constexpr auto extend_tail = [&]() -> token_node *
+		constexpr auto extend_tail = [&]() -> token_node_t *
 		{
-			token_node * n = nullptr;
+			token_node_t * n = nullptr;
 			if (!s->current_token // If there is no token
 			||  s->current_token && s->current_token->occupied && !s->current_token->next_token // If there is a token but its already occupied and there is no next
 			) {
-				n = allocator::talloc<token_node>();
+				n = allocator::talloc<token_node_t>();
 				if (!n)
 				{
 					send_msg(msg::F_ALLOC_FAIL);
@@ -235,10 +264,14 @@ namespace khuneo::lexer
 			}
 
 			n->occupied   = true;
-			n->line       = s->line;
-			n->column     = s->column;
 			n->type       = details::token_type::UNDEFINED;
 			n->value      = 0;
+
+			if constexpr (word_tracking)
+			{
+				n->line       = s->line;
+				n->column     = s->column;
+			}
 
 			if (!s->current_token)
 			{
@@ -264,23 +297,29 @@ namespace khuneo::lexer
 			{
 				case '\0':
 				{
-					if (!send_msg(msg::W_SOURCE_NULL))
+					if (send_msg(msg::W_SOURCE_NULL))
+						return false;
 					break;
 				}
 				case '\r':
 				{
-					s->column = 0;
+					if constexpr (word_tracking)
+						s->column = 0;
 					break;
 				}
 				case '\n':
 				{
-					s->column = 0;
-					++s->line;
+					if constexpr (word_tracking)
+					{
+						s->column = 0;
+						++s->line;
+					}
 					break;
 				}
 				case '\t':
 				{
-					s->column += i->tab_space_count;
+					if constexpr (word_tracking)
+						s->column += i->tab_space_count;
 					break;
 				}
 				default:
@@ -333,7 +372,8 @@ namespace khuneo::lexer
 						else
 						{
 							int mlc_csz = khuneo::utf8::size(s->current);
-							++s->column;
+							if constexpr (word_tracking)
+								++s->column;
 							s->current += mlc_csz; 
 						}
 					}
@@ -341,7 +381,8 @@ namespace khuneo::lexer
 					if (*s->current == '*' && *(s->current + 1) == '/')
 					{
 						s->current += 2;
-						s->column  += 2;
+						if constexpr (word_tracking)
+							s->column += 2;
 					}
 
 					continue; // LOOP A
@@ -357,10 +398,11 @@ namespace khuneo::lexer
 				}
 			}
 
-			if (send_msg(msg::W_INVALID_TOKEN))
+			if (!send_msg(msg::W_INVALID_TOKEN))
 			{
 				++s->current;
-				++s->column;
+				if constexpr (word_tracking)
+					++s->column;
 				continue;
 			}
 
