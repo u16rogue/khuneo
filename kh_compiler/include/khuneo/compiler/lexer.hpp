@@ -5,7 +5,8 @@
 
 namespace khuneo::lexer
 {
-};
+	template <bool enable_wording_track> struct msg_callback_info;
+}
 
 namespace khuneo::lexer::details
 {
@@ -79,24 +80,26 @@ namespace khuneo::lexer::details
 	{
 		khuneo::u32 line;
 		khuneo::u32 column;
-		khuneo::u8  tab_space_count;
+	};
+
+	struct wording_tabspacing_cont
+	{
+		khuneo::u8 tab_space_count;
 	};
 
 	struct default_lexer_impl
 	{
 		static constexpr bool enable_wording_track = true;
 		using allocator = khuneo::details::kh_allocator<>;
-		//auto lexer_msg_recv(msg_callback_info<enable_wording_track> * mi) -> void { };
+		static auto lexer_msg_recv(msg_callback_info<enable_wording_track> * mi) -> void { };
 	};
 }
 
 namespace khuneo::lexer
 {
 	template <bool enable_wording_track = true>
-	struct token_node : metapp::extend_struct_if<enable_wording_track, details::wording_tracking_cont>
+	struct token_node : public metapp::extend_struct_if<enable_wording_track, details::wording_tracking_cont>
 	{
-		enum { FLAG_IS_TRACKING = enable_wording_track };
-
 		bool occupied;
 		
 		union
@@ -136,45 +139,43 @@ namespace khuneo::lexer
 
 	constexpr auto is_msg_fatal(msg m) -> bool { return khuneo::u8(m) & khuneo::u8(msg::FATAL_FLAG); };
 
-	template <typename token_node_t> struct run_info;
-	template <bool enable_wording_track>	struct run_state;
+	template <bool enable_wording_track> struct run_info;
+	template <bool enable_wording_track> struct run_state;
 
-	template <bool enable_wording_track = true>
+	template <bool enable_wording_track>
 	struct msg_callback_info
 	{
 		bool        ignore;
 		msg         message;
-		run_info<token_node<enable_wording_track>> * info;
+		run_info<enable_wording_track>  * info;
 		run_state<enable_wording_track> * state;
 	};
 
 	// -----------------------------------------------------------------
 
-	template <bool enable_wording_track = true>
-	struct run_state : metapp::extend_struct_if<enable_wording_track, details::wording_tracking_cont>
+	template <bool enable_wording_track>
+	struct run_state : public metapp::extend_struct_if<enable_wording_track, details::wording_tracking_cont>
 	{
-		enum { FLAG_IS_TRACKING = enable_wording_track };
-
 		bool abort;
 		const char * current;
 		token_node<enable_wording_track> * current_token;
 	};
 
-	template <typename token_node_t>
-	struct run_info
+	template <bool enable_wording_track>
+	struct run_info : public metapp::extend_struct_if<enable_wording_track, details::wording_tabspacing_cont>
 	{
 		const char * start;
 		const char * end;
-		token_node_t *    tokens;
+		token_node<enable_wording_track> * tokens;
 	};
 
 	template <typename impl = details::default_lexer_impl>
-	auto run(run_info<token_node<impl::enable_wording_track>> * i, run_state<impl::enable_wording_track> * s = nullptr) -> bool
+	auto run(run_info<impl::enable_wording_track> * i, run_state<impl::enable_wording_track> * s = nullptr) -> bool
 	{
 		constexpr bool word_tracking = impl::enable_wording_track; 
-		using allocator = impl::allocator; // metapp::type_if<requires { impl::allocator::alloc(0); }, impl::allocator, details::default_lexer_impl::allocator>::type;
-		using state_t   = run_state<word_tracking>;
-		using token_node_t = token_node<word_tracking>; 
+		using allocator              = typename impl::allocator; // metapp::type_if<requires { impl::allocator::alloc(0); }, impl::allocator, details::default_lexer_impl::allocator>::type;
+		using state_t                = run_state<word_tracking>;
+		using token_node_t           = token_node<word_tracking>; 
 
 		// Internal state if no state is provided (for recursion)
 		state_t _s;
@@ -198,9 +199,9 @@ namespace khuneo::lexer
 		*/
 		auto send_msg = [&](msg m) -> bool 
 		{
-			if constexpr (requires { impl::lexer_msg_recv(nullptr); })
+			if constexpr (requires { impl::lexer_msg_recv(0); })
 			{
-				msg_callback_info mi;
+				msg_callback_info<word_tracking> mi;
 				mi.info = i;
 				mi.ignore = false;
 				mi.message = m;
@@ -217,8 +218,8 @@ namespace khuneo::lexer
 				s->abort = !mi.ignore;
 				return s->abort;
 			}
-
-			return false;
+			else
+				return false;
 		};
 
 		/*
@@ -228,13 +229,13 @@ namespace khuneo::lexer
 		*  ! Will automatically append itself to state, linking it into the list and replacing current with itself
 		*  ! If it encounters an unoccupied node instead of allocating a new node it will instead re initialize that node and re use it
 		*/
-		constexpr auto extend_tail = [&]() -> token_node_t *
+		auto extend_tail = [&]() -> token_node_t *
 		{
 			token_node_t * n = nullptr;
 			if (!s->current_token // If there is no token
 			||  s->current_token && s->current_token->occupied && !s->current_token->next_token // If there is a token but its already occupied and there is no next
 			) {
-				n = allocator::talloc<token_node_t>();
+				n = allocator::template talloc<token_node_t>();
 				if (!n)
 				{
 					send_msg(msg::F_ALLOC_FAIL);
@@ -265,7 +266,7 @@ namespace khuneo::lexer
 
 			n->occupied   = true;
 			n->type       = details::token_type::UNDEFINED;
-			n->value      = 0;
+			n->value      = { 0 };
 
 			if constexpr (word_tracking)
 			{
@@ -288,10 +289,10 @@ namespace khuneo::lexer
 			return n;
 		};
 
-		constexpr auto is_end = [&](int offset = 0) -> bool { return s->current + offset == i->end; };
+		auto is_end = [&](int offset = 0) -> bool { return s->current + offset == i->end; };
 
 		// Processes wording characters such as NULL, \r, \n, and \t
-		constexpr auto process_wordings = [&](char c) -> bool
+		auto process_wordings = [&](char c) -> bool
 		{
 			switch (c)
 			{
@@ -319,7 +320,9 @@ namespace khuneo::lexer
 				case '\t':
 				{
 					if constexpr (word_tracking)
+					{
 						s->column += i->tab_space_count;
+					}
 					break;
 				}
 				default:
@@ -406,7 +409,7 @@ namespace khuneo::lexer
 				continue;
 			}
 
-			return nullptr;
+			return false;
 		}
 
 		if (s->abort)

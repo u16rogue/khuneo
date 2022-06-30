@@ -1,5 +1,7 @@
 #pragma once
 
+#include <khuneo/core/metapp.hpp>
+
 namespace khuneo
 {
 	#define KH_DEFPRIMT(bitsz, signed_t, unsigned_t) \
@@ -12,8 +14,6 @@ namespace khuneo
 	KH_DEFPRIMT(32, int, unsigned int)
 	KH_DEFPRIMT(64, long long, unsigned long long)
 	#undef KH_DEFPRIMT 
-
-	
 }
 
 namespace khuneo::details
@@ -28,21 +28,21 @@ namespace khuneo::details
 	*			alloc   - static void * _alloc(int size);
 	*			dealloc - static bool _dealloc(void * p, int size); 
 	*/
-	template <typename impl = void>
+	template <typename impl = metapp::details::invalid_type>
 	struct kh_allocator
 	{
 		static_assert(
-			sizeof(impl) == 0
+			metapp::is_t_invalid<impl>::VALUE
 		||  requires { impl::_alloc(0); }
 		,   "kh_allocator's implementation must provide a [static void * _alloc(int size)] implementation");
 
 		static_assert(
-			sizeof(impl) == 0
+			metapp::is_t_invalid<impl>::VALUE	
 		||  requires { impl::_dealloc(nullptr, 0); }
 		,   "kh_allocator's implementation must provide a [static bool _dealloc(void * p, int size)] implementation");
 
 		static_assert(
-			sizeof(impl) == 0
+			metapp::is_t_invalid<impl>::VALUE		
 		||  !(requires { impl::alloc(0); } && requires { impl::_dealloc(nullptr, 0); })
 		,   "kh_allocator's implementation should not override alloc and dealloc and should instead provide a _alloc and _dealloc implementation"
 		);

@@ -4,6 +4,8 @@ namespace khuneo::metapp::details
 {
 	struct empty_struct {};
 	class  empty_class {};
+
+	struct invalid_type { enum { KH_FLAG_IS_INVALID }; };
 }
 
 namespace khuneo::metapp
@@ -34,4 +36,11 @@ namespace khuneo::metapp
 	// Extends a structure based off an expression which allows to either enable or disable certain parts of a structure
 	template <bool expr, typename T>
 	struct extend_struct_if : public type_if<expr, T, details::empty_struct>::type {};
+
+	// -------------------------------------------------- 
+
+	// Checks if a type is an invalid khuneo type, this is only valid for
+	// types in the khuneo library
+	template <typename T>
+	struct is_t_invalid { enum { VALUE = requires { T::KH_FLAG_IS_INVALID; } }; };
 }
