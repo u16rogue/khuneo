@@ -5,7 +5,7 @@
 
 namespace khuneo::lexer
 {
-	template <bool enable_wording_track> struct msg_callback_info;
+	template <bool enable_sloc_track> struct msg_callback_info;
 }
 
 namespace khuneo::lexer::details
@@ -76,29 +76,29 @@ namespace khuneo::lexer::details
 		"defer"
 	};
 
-	struct wording_tracking_cont
+	struct sourceloc_tracking_cont
 	{
 		khuneo::u32 line;
 		khuneo::u32 column;
 	};
 
-	struct wording_tabspacing_cont
+	struct sourceloc_tabspacing_cont
 	{
 		khuneo::u8 tab_space_count;
 	};
 
 	struct default_lexer_impl
 	{
-		static constexpr bool enable_wording_track = true;
+		static constexpr bool enable_sloc_track = true;
 		using allocator = khuneo::details::kh_allocator<>;
-		static auto lexer_msg_recv(msg_callback_info<enable_wording_track> * mi) -> void { };
+		// static auto lexer_msg_recv(msg_callback_info<enable_sloc_track> * mi) -> void { };
 	};
 }
 
 namespace khuneo::lexer
 {
-	template <bool enable_wording_track = true>
-	struct token_node : public metapp::extend_struct_if<enable_wording_track, details::wording_tracking_cont>
+	template <bool enable_sloc_track = true>
+	struct token_node : public metapp::extend_struct_if<enable_sloc_track, details::sourceloc_tracking_cont>
 	{
 		bool occupied;
 		
@@ -108,7 +108,6 @@ namespace khuneo::lexer
 			char token;
 		} value;
 
-		khuneo::u32 rlast;
 		khuneo::u32 size;
 
 		details::token_type type;
@@ -126,7 +125,7 @@ namespace khuneo::lexer
 	enum class msg : khuneo::u8
 	{
 		W_SOURCE_NULL               = 0x7F & 1, // A null character was met in the source buffer before its end
-		W_TOKEN_NODE_REUSE_UNMARKED = 0x7F & 2, // A resused token list has a node that is still mark occupied, when reusing token nodes, all nodes next to current must be marked unoccupied, by ignoring this warning the lexer will force reuse that node which COULD lead to undefined behaviour
+		W_TOKEN_NODE_REUSE_UNMARKED = 0x7F & 2, // A reused token list has a node that is still mark occupied, when reusing token nodes, all nodes next to current must be marked unoccupied, by ignoring this warning the lexer will force reuse that node which COULD lead to undefined behaviour
 		W_INVALID_TOKEN             = 0x7F & 3, // Could not determine token
 
 		FATAL_FLAG     = 0x80,
@@ -139,43 +138,44 @@ namespace khuneo::lexer
 
 	constexpr auto is_msg_fatal(msg m) -> bool { return khuneo::u8(m) & khuneo::u8(msg::FATAL_FLAG); };
 
-	template <bool enable_wording_track> struct run_info;
-	template <bool enable_wording_track> struct run_state;
+	template <bool enable_sloc_track> struct run_info;
+	template <bool enable_sloc_track> struct run_state;
 
-	template <bool enable_wording_track>
+	template <bool enable_sloc_track>
 	struct msg_callback_info
 	{
-		bool        ignore;
-		msg         message;
-		run_info<enable_wording_track>  * info;
-		run_state<enable_wording_track> * state;
+		bool ignore;
+		msg  message;
+
+		run_info<enable_sloc_track>  * info;
+		run_state<enable_sloc_track> * state;
 	};
 
 	// -----------------------------------------------------------------
 
-	template <bool enable_wording_track>
-	struct run_state : public metapp::extend_struct_if<enable_wording_track, details::wording_tracking_cont>
+	template <bool enable_sloc_track>
+	struct run_state : public metapp::extend_struct_if<enable_sloc_track, details::sourceloc_tracking_cont>
 	{
 		bool abort;
 		const char * current;
-		token_node<enable_wording_track> * current_token;
+		token_node<enable_sloc_track> * current_token;
 	};
 
-	template <bool enable_wording_track>
-	struct run_info : public metapp::extend_struct_if<enable_wording_track, details::wording_tabspacing_cont>
+	template <bool enable_sloc_track>
+	struct run_info : public metapp::extend_struct_if<enable_sloc_track, details::sourceloc_tabspacing_cont>
 	{
 		const char * start;
 		const char * end;
-		token_node<enable_wording_track> * tokens;
+		token_node<enable_sloc_track> * tokens;
 	};
 
 	template <typename impl = details::default_lexer_impl>
-	auto run(run_info<impl::enable_wording_track> * i, run_state<impl::enable_wording_track> * s = nullptr) -> bool
+	auto run(run_info<impl::enable_sloc_track> * i, run_state<impl::enable_sloc_track> * s = nullptr) -> bool
 	{
-		constexpr bool word_tracking = impl::enable_wording_track; 
+		constexpr bool sloc_tracking = impl::enable_sloc_track; 
 		using allocator              = typename impl::allocator; // metapp::type_if<requires { impl::allocator::alloc(0); }, impl::allocator, details::default_lexer_impl::allocator>::type;
-		using state_t                = run_state<word_tracking>;
-		using token_node_t           = token_node<word_tracking>; 
+		using state_t                = run_state<sloc_tracking>;
+		using token_node_t           = token_node<sloc_tracking>; 
 
 		// Internal state if no state is provided (for recursion)
 		state_t _s;
@@ -186,7 +186,7 @@ namespace khuneo::lexer
 			s->current_token = i->tokens;
 			s->abort         = false;
 
-			if constexpr (word_tracking)
+			if constexpr (sloc_tracking)
 			{
 				s->column = 0;
 				s->line   = 0;
@@ -201,7 +201,7 @@ namespace khuneo::lexer
 		{
 			if constexpr (requires { impl::lexer_msg_recv(0); })
 			{
-				msg_callback_info<word_tracking> mi;
+				msg_callback_info<sloc_tracking> mi;
 				mi.info = i;
 				mi.ignore = false;
 				mi.message = m;
@@ -251,7 +251,7 @@ namespace khuneo::lexer
 			{
 				if (s->current_token->next_token->occupied)
 				{
-					if (!send_msg(msg::W_TOKEN_NODE_REUSE_UNMARKED))
+					if (send_msg(msg::W_TOKEN_NODE_REUSE_UNMARKED))
 						return nullptr;
 				}
 
@@ -268,7 +268,7 @@ namespace khuneo::lexer
 			n->type       = details::token_type::UNDEFINED;
 			n->value      = { 0 };
 
-			if constexpr (word_tracking)
+			if constexpr (sloc_tracking)
 			{
 				n->line       = s->line;
 				n->column     = s->column;
@@ -292,7 +292,7 @@ namespace khuneo::lexer
 		auto is_end = [&](int offset = 0) -> bool { return s->current + offset == i->end; };
 
 		// Processes wording characters such as NULL, \r, \n, and \t
-		auto process_wordings = [&](char c) -> bool
+		auto process_sloc_char = [&](char c) -> bool
 		{
 			switch (c)
 			{
@@ -304,13 +304,13 @@ namespace khuneo::lexer
 				}
 				case '\r':
 				{
-					if constexpr (word_tracking)
+					if constexpr (sloc_tracking)
 						s->column = 0;
 					break;
 				}
 				case '\n':
 				{
-					if constexpr (word_tracking)
+					if constexpr (sloc_tracking)
 					{
 						s->column = 0;
 						++s->line;
@@ -319,7 +319,7 @@ namespace khuneo::lexer
 				}
 				case '\t':
 				{
-					if constexpr (word_tracking)
+					if constexpr (sloc_tracking)
 					{
 						s->column += i->tab_space_count;
 					}
@@ -344,7 +344,7 @@ namespace khuneo::lexer
 
 			char cc = *s->current; // current character
 
-			if (csz == 1 && process_wordings(cc)) // no need to run check if its a utf8 character because all process_wordings matches are ascii
+			if (csz == 1 && process_sloc_char(cc)) // no need to run check if its a utf8 character because all process_wordings matches are ascii
 			{
 				++s->current;
 				continue; // LOOP A
@@ -370,12 +370,12 @@ namespace khuneo::lexer
 					s->current += 2;
 					while (!s->abort && !is_end() && !is_end(1) && *s->current != '*' && *(s->current + 1) != '/')
 					{
-						if (process_wordings(*s->current))
+						if (process_sloc_char(*s->current))
 							++s->current;
 						else
 						{
 							int mlc_csz = khuneo::utf8::size(s->current);
-							if constexpr (word_tracking)
+							if constexpr (sloc_tracking)
 								++s->column;
 							s->current += mlc_csz; 
 						}
@@ -384,7 +384,7 @@ namespace khuneo::lexer
 					if (*s->current == '*' && *(s->current + 1) == '/')
 					{
 						s->current += 2;
-						if constexpr (word_tracking)
+						if constexpr (sloc_tracking)
 							s->column += 2;
 					}
 
@@ -393,8 +393,16 @@ namespace khuneo::lexer
 			}
 			else
 			{
+				// TODO: maybe support utf8 tokens
 				if (details::is_valid_token(cc))
 				{
+					token_node_t * t = extend_tail();
+					if (!t)
+						break;
+
+					t->type = details::token_type::TOKEN;
+					t->value.token = cc;
+					t->size = 0;
 				}
 				else
 				{
@@ -404,7 +412,7 @@ namespace khuneo::lexer
 			if (!send_msg(msg::W_INVALID_TOKEN))
 			{
 				++s->current;
-				if constexpr (word_tracking)
+				if constexpr (sloc_tracking)
 					++s->column;
 				continue;
 			}
