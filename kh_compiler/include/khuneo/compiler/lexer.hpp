@@ -10,18 +10,12 @@ namespace khuneo::lexer
 
 namespace khuneo::lexer::details
 {
-	enum class id_type
-	{
-		UNDEFINED,
-		RESERVED,
-		NAME,
-	};
-
 	// Classifies a token
-	enum class token_type
+	enum class token_type : khuneo::u8
 	{
 		UNDEFINED,
-		IDENTIFIER, // id_type
+		NAME,
+		KEYWORD,
 		TOKEN,
 		NUMBER,
 		STRING,
@@ -38,14 +32,15 @@ namespace khuneo::lexer::details
 
 	constexpr int valid_tokens_count = sizeof(valid_tokens) / sizeof(valid_tokens[0]);
 
-	constexpr auto is_valid_token(char c) -> bool
+	constexpr auto is_valid_token(const char * s) -> bool
 	{
+		char c = s[0];
 		constexpr auto inbetween = [](char c, int low, int high) { return c >= low && c <= high; };
 		return c == '"' || c == '#' || inbetween(c, '%', '/') || inbetween(c, ':', '@') || inbetween(c, '[', '^') || inbetween(c, '{', '~'); 
 	}
 
 	// Classifies a special symbol referring to a reserved keyword
-	enum class reserved_kw
+	enum class reserved_kw : khuneo::u8
 	{
 		UNDEFINED,
 		LET,
@@ -58,7 +53,10 @@ namespace khuneo::lexer::details
 		DO,
 		IF,
 		ELIF,
-		ELSE
+		ELSE,
+		DEFER,
+		_INDEXER,
+		_COUNT = _INDEXER - 1
 	};
 
 	constexpr const char * const valid_keywords[] = {
@@ -75,6 +73,9 @@ namespace khuneo::lexer::details
 		"else",
 		"defer"
 	};
+
+	constexpr int valid_keywords_count = sizeof(valid_keywords) / sizeof(valid_keywords[0]);
+	static_assert(valid_keywords_count == int(reserved_kw::_COUNT), "khuneo::lexer::details::reserved_kw and khuneo::lexer::details::valid_keywords did not match its count.");
 
 	struct sourceloc_tracking_cont
 	{
@@ -106,6 +107,7 @@ namespace khuneo::lexer
 		{
 			khuneo::u32  rsource; // Relative source - offset to the matched token
 			char token;
+			details::reserved_kw keyword;
 		} value;
 
 		khuneo::u32 size;
@@ -177,27 +179,11 @@ namespace khuneo::lexer
 		using state_t                = run_state<sloc_tracking>;
 		using token_node_t           = token_node<sloc_tracking>; 
 
-		// Internal state if no state is provided (for recursion)
-		state_t _s;
-		if (!s)
-		{
-			s = &_s;
-			s->current       = i->start;
-			s->current_token = i->tokens;
-			s->abort         = false;
-
-			if constexpr (sloc_tracking)
-			{
-				s->column = 0;
-				s->line   = 0;
-			}
-		}
-
 		/*
 		* Generates a lexer message
 		* Returns true if treated as fatal and returns false if it should be ignored 
 		*/
-		auto send_msg = [&](msg m) -> bool 
+		constexpr auto send_msg = [&](msg m) -> bool 
 		{
 			if constexpr (requires { impl::lexer_msg_recv(0); })
 			{
@@ -270,8 +256,8 @@ namespace khuneo::lexer
 
 			if constexpr (sloc_tracking)
 			{
-				n->line       = s->line;
-				n->column     = s->column;
+				n->line   = s->line;
+				n->column = s->column;
 			}
 
 			if (!s->current_token)
@@ -289,6 +275,7 @@ namespace khuneo::lexer
 			return n;
 		};
 
+		auto is_end_v = [&](const char * p) -> bool { return p == i->end; };
 		auto is_end = [&](int offset = 0) -> bool { return s->current + offset == i->end; };
 
 		// Processes wording characters such as NULL, \r, \n, and \t
@@ -300,6 +287,12 @@ namespace khuneo::lexer
 				{
 					if (send_msg(msg::W_SOURCE_NULL))
 						return false;
+					break;
+				}
+				case ' ':
+				{
+					if constexpr (sloc_tracking)
+						++s->column;
 					break;
 				}
 				case '\r':
@@ -320,9 +313,7 @@ namespace khuneo::lexer
 				case '\t':
 				{
 					if constexpr (sloc_tracking)
-					{
 						s->column += i->tab_space_count;
-					}
 					break;
 				}
 				default:
@@ -331,6 +322,24 @@ namespace khuneo::lexer
 
 			return true;
 		};
+
+		// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+		// Internal state if no state is provided (for recursion)
+		state_t _s;
+		if (!s)
+		{
+			s = &_s;
+			s->current       = i->start;
+			s->current_token = i->tokens;
+			s->abort         = false;
+
+			if constexpr (sloc_tracking)
+			{
+				s->column = 0;
+				s->line   = 0;
+			}
+		}
 
 		while (!is_end() && !s->abort) // LOOP A
 		{
@@ -394,7 +403,8 @@ namespace khuneo::lexer
 			else
 			{
 				// TODO: maybe support utf8 tokens
-				if (details::is_valid_token(cc))
+				// Check if token
+				if (details::is_valid_token(s->current))
 				{
 					token_node_t * t = extend_tail();
 					if (!t)
@@ -402,11 +412,56 @@ namespace khuneo::lexer
 
 					t->type = details::token_type::TOKEN;
 					t->value.token = cc;
-					t->size = 0;
+					t->size = csz;
+
+					s->current += csz;
+					if constexpr (sloc_tracking)
+						++s->column;
+					continue;
 				}
-				else
+
+				bool matched = false;
+				// Check if reserved keyword
+				for (int ikw = 0; ikw < details::valid_keywords_count; ++ikw) // LOOP B
 				{
+					const char * c       = s->current;
+					const char * kw      = details::valid_keywords[ikw];
+
+					while (*kw && *c) // LOOP C
+					{
+						if (*kw != *c)
+							break;
+
+						++kw;
+						++c;
+
+						// Match!
+						if (*kw == '\0')
+						{
+							token_node_t * t = extend_tail();
+							if (!t)
+								break;
+
+							t->type = details::token_type::KEYWORD;
+							t->value.keyword = details::reserved_kw(ikw + 1 /*0 is UNDEFINED in enum*/);
+							t->size = kw - details::valid_keywords[ikw];
+							
+							if constexpr (sloc_tracking)
+								s->column += utf8::length(s->current, s->current + t->size);
+							s->current += t->size;
+							matched = true;
+							break; // LOOP C
+						}
+					}
+
+					if (matched)
+						break; // LOOP B
 				}
+
+				if (matched)
+					continue; // LOOP A (Reserve keyword match)
+
+				// Match symbol
 			}
 
 			if (!send_msg(msg::W_INVALID_TOKEN))

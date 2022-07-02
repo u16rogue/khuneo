@@ -2,10 +2,11 @@
 
 namespace khuneo::utf8
 {
-	constexpr auto size(const char * s) -> int
+	/*
+	* Calculates the size of a UTF-8 Character
+	*/
+	constexpr auto size(const char b) -> int
 	{
-		char b = *s;
-
 		if ((b & 0b11000000) == 0b00000000)
 			return 1;
 
@@ -21,5 +22,30 @@ namespace khuneo::utf8
 		}
 
 		return 0;
+	}
+
+	/*
+	* Calculates the size of a UTF-8 Character
+	*/
+	constexpr auto size(const char * s) -> int
+	{
+		return size(*s);	
+	}
+
+	/*
+	* Calculates the length of a UTF-8 string, if the parameter e is not
+	* provided it would instead check for null termination
+	*/
+	constexpr auto length(const char * s, const char * e = nullptr) -> int
+	{
+		int len = 0;
+		while ((e && s < e) || (!e && *s))
+		{
+			int cvl = size(s);
+			len += cvl;
+			s   += cvl;
+		}
+
+		return len;
 	}
 }
