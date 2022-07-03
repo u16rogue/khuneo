@@ -89,6 +89,4 @@ namespace khuneo::hash
 	{
 		return xxh32(str, sz - 1);
 	}
-
-	
 }

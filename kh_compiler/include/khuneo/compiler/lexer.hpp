@@ -14,7 +14,7 @@ namespace khuneo::lexer::details
 	enum class token_type : khuneo::u8
 	{
 		UNDEFINED,
-		NAME,
+		SYMBOL,
 		KEYWORD,
 		TOKEN,
 		NUMBER,
@@ -102,17 +102,21 @@ namespace khuneo::lexer
 	struct token_node : public metapp::extend_struct_if<enable_sloc_track, details::sourceloc_tracking_cont>
 	{
 		bool occupied;
-		
+		details::token_type type;
+
 		union
 		{
-			khuneo::u32  rsource; // Relative source - offset to the matched token
+			struct
+			{
+				khuneo::u32 rsource; // Relative source - offset to the matched token
+				khuneo::u32 size;
+			} symbol, string;
+
 			char token;
 			details::reserved_kw keyword;
+
 		} value;
 
-		khuneo::u32 size;
-
-		details::token_type type;
 		token_node * next_token;
 	};
 
@@ -126,6 +130,7 @@ namespace khuneo::lexer
 	*/
 	enum class msg : khuneo::u8
 	{
+		WARNING_MASK                = 0x7F,
 		W_SOURCE_NULL               = 0x7F & 1, // A null character was met in the source buffer before its end
 		W_TOKEN_NODE_REUSE_UNMARKED = 0x7F & 2, // A reused token list has a node that is still mark occupied, when reusing token nodes, all nodes next to current must be marked unoccupied, by ignoring this warning the lexer will force reuse that node which COULD lead to undefined behaviour
 		W_INVALID_TOKEN             = 0x7F & 3, // Could not determine token
@@ -412,7 +417,6 @@ namespace khuneo::lexer
 
 					t->type = details::token_type::TOKEN;
 					t->value.token = cc;
-					t->size = csz;
 
 					s->current += csz;
 					if constexpr (sloc_tracking)
@@ -424,8 +428,8 @@ namespace khuneo::lexer
 				// Check if reserved keyword
 				for (int ikw = 0; ikw < details::valid_keywords_count; ++ikw) // LOOP B
 				{
-					const char * c       = s->current;
-					const char * kw      = details::valid_keywords[ikw];
+					const char * c  = s->current;
+					const char * kw = details::valid_keywords[ikw];
 
 					while (*kw && *c) // LOOP C
 					{
@@ -444,11 +448,11 @@ namespace khuneo::lexer
 
 							t->type = details::token_type::KEYWORD;
 							t->value.keyword = details::reserved_kw(ikw + 1 /*0 is UNDEFINED in enum*/);
-							t->size = kw - details::valid_keywords[ikw];
+							int size = kw - details::valid_keywords[ikw];
 							
 							if constexpr (sloc_tracking)
-								s->column += utf8::length(s->current, s->current + t->size);
-							s->current += t->size;
+								s->column += utf8::length(s->current, s->current + size);
+							s->current += size;
 							matched = true;
 							break; // LOOP C
 						}

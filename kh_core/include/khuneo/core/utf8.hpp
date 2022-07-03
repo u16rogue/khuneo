@@ -29,7 +29,7 @@ namespace khuneo::utf8
 	*/
 	constexpr auto size(const char * s) -> int
 	{
-		return size(*s);	
+		return size(*s);
 	}
 
 	/*
