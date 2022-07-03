@@ -3,12 +3,12 @@
 #include <khuneo/core/utf8.hpp>
 #include <khuneo/core/metapp.hpp>
 
-namespace khuneo::lexer
+namespace khuneo::compiler::lexer
 {
 	template <bool enable_sloc_track> struct msg_callback_info;
 }
 
-namespace khuneo::lexer::details
+namespace khuneo::compiler::lexer::details
 {
 	// Classifies a token
 	enum class token_type : khuneo::u8
@@ -96,7 +96,7 @@ namespace khuneo::lexer::details
 	};
 }
 
-namespace khuneo::lexer
+namespace khuneo::compiler::lexer
 {
 	template <bool enable_sloc_track = true>
 	struct token_node : public metapp::extend_struct_if<enable_sloc_track, details::sourceloc_tracking_cont>
