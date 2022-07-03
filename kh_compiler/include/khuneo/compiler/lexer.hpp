@@ -13,7 +13,8 @@ namespace khuneo::compiler::lexer::details
 	// Classifies a token
 	enum class token_type : khuneo::u8
 	{
-		UNDEFINED,
+		UNOCCUPIED = 0,
+		UNDEFINED  = UNOCCUPIED,
 		SYMBOL,
 		KEYWORD,
 		TOKEN,
@@ -101,8 +102,7 @@ namespace khuneo::compiler::lexer
 	template <bool enable_sloc_track = true>
 	struct token_node : public metapp::extend_struct_if<enable_sloc_track, details::sourceloc_tracking_cont>
 	{
-		bool occupied;
-		details::token_type type;
+		details::token_type  type;
 
 		union
 		{
@@ -222,9 +222,11 @@ namespace khuneo::compiler::lexer
 		*/
 		auto extend_tail = [&]() -> token_node_t *
 		{
+			constexpr auto is_occupied = [](token_node_t * n) constexpr -> bool { return n->type != details::token_type::UNOCCUPIED; };
+
 			token_node_t * n = nullptr;
 			if (!s->current_token // If there is no token
-			||  s->current_token && s->current_token->occupied && !s->current_token->next_token // If there is a token but its already occupied and there is no next
+			||  s->current_token && is_occupied(s->current_token) && !s->current_token->next_token // If there is a token but its already occupied and there is no next
 			) {
 				n = allocator::template talloc<token_node_t>();
 				if (!n)
@@ -234,13 +236,13 @@ namespace khuneo::compiler::lexer
 				}
 				n->next_token = nullptr;
 			}
-			else if (s->current_token && !s->current_token->occupied) // If there is a token but its not occupied yet
+			else if (s->current_token && !is_occupied(s->current_token)) // If there is a token but its not occupied yet
 			{
 				n = s->current_token;
 			}
-			else if (s->current_token && s->current_token->occupied && s->current_token->next_token)
+			else if (s->current_token && is_occupied(s->current_token) && s->current_token->next_token)
 			{
-				if (s->current_token->next_token->occupied)
+				if (is_occupied(s->current_token->next_token))
 				{
 					if (send_msg(msg::W_TOKEN_NODE_REUSE_UNMARKED))
 						return nullptr;
@@ -255,8 +257,6 @@ namespace khuneo::compiler::lexer
 				return nullptr;
 			}
 
-			n->occupied   = true;
-			n->type       = details::token_type::UNDEFINED;
 			n->value      = { 0 };
 
 			if constexpr (sloc_tracking)
