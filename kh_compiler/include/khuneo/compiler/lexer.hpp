@@ -2,10 +2,15 @@
 
 #include <khuneo/core/utf8.hpp>
 #include <khuneo/core/metapp.hpp>
+#include <khuneo/core/contiguous_list.hpp>
+
+
+// TODO: unify everything to only use a single typename
+// TODO: assign enum class classification for tokens incase we decide to use utf8 characters for tokens
 
 namespace khuneo::compiler::lexer
 {
-	template <bool enable_sloc_track> struct msg_callback_info;
+	template <bool enable_sloc_track, typename contiguous_list_impl> struct msg_callback_info;
 }
 
 namespace khuneo::compiler::lexer::details
@@ -92,7 +97,8 @@ namespace khuneo::compiler::lexer::details
 	struct default_lexer_impl
 	{
 		static constexpr bool enable_sloc_track = true;
-		using allocator = khuneo::details::kh_allocator<>;
+		using allocator       = khuneo::details::kh_basic_allocator<>;
+		using contiguous_list_impl = khuneo::cont::details::default_contiguous_list_impl;
 		// static auto lexer_msg_recv(msg_callback_info<enable_sloc_track> * mi) -> void { };
 	};
 }
@@ -116,8 +122,6 @@ namespace khuneo::compiler::lexer
 			details::reserved_kw keyword;
 
 		} value;
-
-		token_node * next_token;
 	};
 
 	// -----------------------------------------------------------------
@@ -145,16 +149,16 @@ namespace khuneo::compiler::lexer
 
 	constexpr auto is_msg_fatal(msg m) -> bool { return khuneo::u8(m) & khuneo::u8(msg::FATAL_FLAG); };
 
-	template <bool enable_sloc_track> struct run_info;
+	template <bool enable_sloc_track, typename contiguous_list_impl> struct run_info;
 	template <bool enable_sloc_track> struct run_state;
 
-	template <bool enable_sloc_track>
+	template <bool enable_sloc_track, typename contiguous_list_impl>
 	struct msg_callback_info
 	{
 		bool ignore;
 		msg  message;
 
-		run_info<enable_sloc_track>  * info;
+		run_info<enable_sloc_track, contiguous_list_impl>  * info;
 		run_state<enable_sloc_track> * state;
 	};
 
@@ -165,19 +169,18 @@ namespace khuneo::compiler::lexer
 	{
 		bool abort;
 		const char * current;
-		token_node<enable_sloc_track> * current_token;
 	};
 
-	template <bool enable_sloc_track>
+	template <bool enable_sloc_track, typename contiguous_list_impl>
 	struct run_info : public metapp::extend_struct_if<enable_sloc_track, details::sourceloc_tabspacing_cont>
 	{
 		const char * start;
 		const char * end;
-		token_node<enable_sloc_track> * tokens;
+		cont::contiguous_list<token_node<enable_sloc_track>, contiguous_list_impl> tokens;
 	};
 
 	template <typename impl = details::default_lexer_impl>
-	auto run(run_info<impl::enable_sloc_track> * i, run_state<impl::enable_sloc_track> * s = nullptr) -> bool
+	auto run(run_info<impl::enable_sloc_track, typename impl::contiguous_list_impl> * i, run_state<impl::enable_sloc_track> * s = nullptr) -> bool
 	{
 		constexpr bool sloc_tracking = impl::enable_sloc_track; 
 		using allocator              = typename impl::allocator; // metapp::type_if<requires { impl::allocator::alloc(0); }, impl::allocator, details::default_lexer_impl::allocator>::type;
@@ -192,7 +195,7 @@ namespace khuneo::compiler::lexer
 		{
 			if constexpr (requires { impl::lexer_msg_recv(0); })
 			{
-				msg_callback_info<sloc_tracking> mi;
+				msg_callback_info<sloc_tracking, typename impl::contiguous_list_impl> mi;
 				mi.info = i;
 				mi.ignore = false;
 				mi.message = m;
@@ -222,40 +225,7 @@ namespace khuneo::compiler::lexer
 		*/
 		auto extend_tail = [&]() -> token_node_t *
 		{
-			constexpr auto is_occupied = [](token_node_t * n) constexpr -> bool { return n->type != details::token_type::UNOCCUPIED; };
-
-			token_node_t * n = nullptr;
-			if (!s->current_token // If there is no token
-			||  s->current_token && is_occupied(s->current_token) && !s->current_token->next_token // If there is a token but its already occupied and there is no next
-			) {
-				n = allocator::template talloc<token_node_t>();
-				if (!n)
-				{
-					send_msg(msg::F_ALLOC_FAIL);
-					return nullptr;
-				}
-				n->next_token = nullptr;
-			}
-			else if (s->current_token && !is_occupied(s->current_token)) // If there is a token but its not occupied yet
-			{
-				n = s->current_token;
-			}
-			else if (s->current_token && is_occupied(s->current_token) && s->current_token->next_token)
-			{
-				if (is_occupied(s->current_token->next_token))
-				{
-					if (send_msg(msg::W_TOKEN_NODE_REUSE_UNMARKED))
-						return nullptr;
-				}
-
-				n = s->current_token->next_token;
-			}
-			
-			if (!n)
-			{
-				send_msg(msg::F_UNKNOWN); // n was still null for some reason
-				return nullptr;
-			}
+			token_node_t * n = i->tokens.append();
 
 			n->value      = { 0 };
 
@@ -263,18 +233,6 @@ namespace khuneo::compiler::lexer
 			{
 				n->line   = s->line;
 				n->column = s->column;
-			}
-
-			if (!s->current_token)
-			{
-				s->current_token = n;
-				// if (!i->tokens) // should be developer's responsibility :>
-				//	i->tokens = n;
-			}
-			else if (s->current_token && s->current_token != n)
-			{
-				s->current_token->next_token = n;
-				s->current_token = n;
 			}
 
 			return n;
@@ -336,7 +294,6 @@ namespace khuneo::compiler::lexer
 		{
 			s = &_s;
 			s->current       = i->start;
-			s->current_token = i->tokens;
 			s->abort         = false;
 
 			if constexpr (sloc_tracking)

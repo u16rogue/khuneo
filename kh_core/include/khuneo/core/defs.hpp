@@ -19,48 +19,51 @@ namespace khuneo
 namespace khuneo::details
 {
 	/*
-	* kh_allocator - Allocation scheme implementation used by khuneo.
+	* kh_basic_allocator - Allocation scheme implementation used by khuneo.
 	*
 	* -- Implementing your own:
 	*		You can implement your own allocation method by creating your
-	*		own class and inheriting kh_allocator in a CRTP pattern ( class myalloc : kh_allocator<myalloc> )
+	*		own class and inheriting kh_basic_allocator in a CRTP pattern ( class myalloc : kh_basic_allocator<myalloc> )
 	*		and providing a _alloc and _dealloc implementation. The prototype for the following:
 	*			alloc   - static void * _alloc(int size);
 	*			dealloc - static bool _dealloc(void * p, int size); 
 	*/
 	template <typename impl = metapp::details::invalid_type>
-	struct kh_allocator
+	struct kh_basic_allocator
 	{
 		static_assert(
 			metapp::is_t_invalid<impl>::VALUE
 		||  requires { impl::_alloc(0); }
-		,   "kh_allocator's implementation must provide a [static void * _alloc(int size)] implementation");
+		,   "kh_basic_allocator's implementation must provide a [static void * _alloc(int size)] implementation");
 
 		static_assert(
 			metapp::is_t_invalid<impl>::VALUE	
 		||  requires { impl::_dealloc(nullptr, 0); }
-		,   "kh_allocator's implementation must provide a [static bool _dealloc(void * p, int size)] implementation");
+		,   "kh_basic_allocator's implementation must provide a [static bool _dealloc(void * p, int size)] implementation");
 
 		static_assert(
 			metapp::is_t_invalid<impl>::VALUE		
 		||  !(requires { impl::alloc(0); } && requires { impl::_dealloc(nullptr, 0); })
-		,   "kh_allocator's implementation should not override alloc and dealloc and should instead provide a _alloc and _dealloc implementation"
+		,   "kh_basic_allocator's implementation should not override alloc and dealloc and should instead provide a _alloc and _dealloc implementation"
 		);
 
 		static auto alloc(int size) -> void *
 		{
 			if constexpr (requires { impl::_alloc(size); })
 				return impl::_alloc(size);
-			return new char[size];
+			else
+				return new char[size];
 		}
 
 		static auto dealloc(void * p, int size) -> bool
 		{
 			if constexpr (requires { impl::_dealloc(p, size); })
 				return impl::_dealloc(p, size);
-
-			delete[] reinterpret_cast<char *>(p);
-			return true;
+			else
+			{
+				delete[] reinterpret_cast<char *>(p);
+				return true;
+			}
 		}
 
 		template <typename T>
@@ -75,4 +78,54 @@ namespace khuneo::details
 			return dealloc(p, sizeof(T));
 		}
 	};
+
+	// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+	#if 0
+	template <typename impl, typename allocator>
+	struct kh_basic_container
+	{
+		using T = impl;
+
+		// Creates an impl instance, this will automatically call construct
+		static auto create() -> T *
+		{
+			T * i = allocator::template talloc<T>();
+			if (!i)
+				return nullptr;
+
+			if (!construct(i))
+			{
+				allocator::template tdealloc<T>(i);
+				return nullptr;
+			}
+
+			return i;
+		}
+
+		// Destroys an impl instance, this will automatically call destruct
+		static auto destroy(T * i) -> bool
+		{
+			if (!destruct(i))
+				return false;
+
+			return allocator::template tdealloc<T>(i);
+		}
+
+		static auto construct(T * i) -> bool
+		{
+			return i->construct();
+		}
+
+		static auto destruct(T * i) -> bool
+		{
+			return i->destruct();
+		}
+
+		static auto count(T * i) -> khuneo::u32
+		{
+			return i->count();
+		}
+	};
+	#endif
 }
