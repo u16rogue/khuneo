@@ -13,6 +13,10 @@ namespace khuneo
 	KH_DEFPRIMT(16, short, unsigned short)
 	KH_DEFPRIMT(32, int, unsigned int)
 	KH_DEFPRIMT(64, long long, unsigned long long)
+
+	using f32 = float;
+	using f64 = double;
+
 	#undef KH_DEFPRIMT 
 }
 

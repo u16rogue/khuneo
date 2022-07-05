@@ -22,9 +22,10 @@ namespace khuneo::cont
 
 		static auto construct(self_t * self) -> bool
 		{
-			self->data  = nullptr;
-			self->count = 0;
-			self->size  = 0;
+			self->data       = nullptr;
+			self->used_count = 0;
+			self->real_count = 0;
+			return true;
 		}
 
 		auto construct() -> bool { return construct(this); }

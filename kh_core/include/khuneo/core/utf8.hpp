@@ -7,7 +7,7 @@ namespace khuneo::utf8
 	*/
 	constexpr auto size(const char b) -> int
 	{
-		if ((b & 0b11000000) == 0b00000000)
+		if ((b & 0b10000000) == 0b00000000)
 			return 1;
 
 		char x = 0b11111000;

@@ -22,9 +22,9 @@ namespace khuneo::compiler::lexer::details
 		SYMBOL,
 		KEYWORD,
 		TOKEN,
-		NUMBER,
 		STRING,
-		FLOAT
+		NUMBER64,
+		FLOAT64,
 	};
 
 	constexpr char valid_tokens[] = {
@@ -118,6 +118,7 @@ namespace khuneo::compiler::lexer
 			} symbol, string;
 
 			char token;
+			khuneo::i64 number64;
 			details::reserved_kw keyword;
 
 		} value;
@@ -240,8 +241,8 @@ namespace khuneo::compiler::lexer
 			return n;
 		};
 
-		auto is_end_v = [&](const char * p) -> bool { return p == i->end; };
-		auto is_end = [&](int offset = 0) -> bool { return s->current + offset == i->end; };
+		auto is_end_v = [&](const char * p) -> bool { return p >= i->end; };
+		auto is_end = [&](int offset = 0) -> bool { return s->current + offset >= i->end; };
 
 		// Processes wording characters such as NULL, \r, \n, and \t
 		auto process_sloc_char = [&](char c) -> bool
@@ -317,12 +318,15 @@ namespace khuneo::compiler::lexer
 
 			char cc = *s->current; // current character
 
-			if (csz == 1 && process_sloc_char(cc)) // no need to run check if its a utf8 character because all process_wordings matches are ascii
+			// no need to run check if its a utf8 character because all process_wordings matches are ascii
+			if (csz == 1 && process_sloc_char(cc)) 
 			{
 				++s->current;
 				continue; // LOOP A
 			}
-			else if (csz == 1 && cc == '/') // Process if possibly a comment
+
+			// Process if possibly a comment
+			if (csz == 1 && cc == '/') 
 			{
 				if (is_end(1))
 				{
@@ -364,69 +368,135 @@ namespace khuneo::compiler::lexer
 					continue; // LOOP A
 				}
 			}
-			else
+
+			// TODO: maybe support utf8 tokens
+			// Match token
+			if (details::is_valid_token(s->current))
 			{
-				// TODO: maybe support utf8 tokens
-				// Check if token
-				if (details::is_valid_token(s->current))
-				{
-					token_node_t * t = extend_tail();
-					if (!t)
-						break;
+				token_node_t * t = extend_tail();
+				if (!t)
+					break;
 
-					t->type = details::token_type::TOKEN;
-					t->value.token = cc;
+				t->type = details::token_type::TOKEN;
+				t->value.token = cc;
 
-					s->current += csz;
-					if constexpr (sloc_tracking)
-						++s->column;
-					continue;
-				}
-
-				bool matched = false;
-				// Check if reserved keyword
-				for (int ikw = 0; ikw < details::valid_keywords_count; ++ikw) // LOOP B
-				{
-					const char * c  = s->current;
-					const char * kw = details::valid_keywords[ikw];
-
-					while (*kw && *c) // LOOP C
-					{
-						if (*kw != *c)
-							break;
-
-						++kw;
-						++c;
-
-						// Match!
-						if (*kw == '\0')
-						{
-							token_node_t * t = extend_tail();
-							if (!t)
-								break;
-
-							t->type = details::token_type::KEYWORD;
-							t->value.keyword = details::reserved_kw(ikw + 1 /*0 is UNDEFINED in enum*/);
-							int size = kw - details::valid_keywords[ikw];
-							
-							if constexpr (sloc_tracking)
-								s->column += utf8::length(s->current, s->current + size);
-							s->current += size;
-							matched = true;
-							break; // LOOP C
-						}
-					}
-
-					if (matched)
-						break; // LOOP B
-				}
-
-				if (matched)
-					continue; // LOOP A (Reserve keyword match)
-
-				// Match symbol
+				s->current += csz;
+				if constexpr (sloc_tracking)
+					++s->column;
+				continue;
 			}
 
+			bool matched = false;
+			// Match keyword
+			for (int ikw = 0; ikw < details::valid_keywords_count; ++ikw) // LOOP B
+			{
+				const char * c  = s->current;
+				const char * kw = details::valid_keywords[ikw];
+
+				while (*kw && *c) // LOOP C
+				{
+					if (*kw != *c || is_end_v(c))
+						break;
+
+					++kw;
+					++c;
+
+					// Match!
+					if (*kw == '\0')
+					{
+						token_node_t * t = extend_tail();
+						if (!t)
+							break; // LOOP C
+
+						t->type = details::token_type::KEYWORD;
+						t->value.keyword = details::reserved_kw(ikw + 1 /*0 is UNDEFINED in enum*/);
+						int size = kw - details::valid_keywords[ikw];
+						
+						if constexpr (sloc_tracking)
+							s->column += utf8::length(s->current, s->current + size);
+						s->current += size;
+						matched = true;
+						break; // LOOP C
+					}
+				}
+
+				if (matched || s->abort)
+					break; // LOOP B
+			}
+
+			if (s->abort)
+				break; // LOOP A
+
+			if (matched)
+				continue; // LOOP A (Reserve keyword match)
+
+			// Match symbol
+			constexpr auto is_valid_symbolchar = [](char c, bool allow_numeric = true) constexpr -> int
+			{
+				auto s = khuneo::utf8::size(c);
+				if (s == 1)
+				{
+					return c == '$' || c == '_' || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (allow_numeric && (c >= '0' && c <= '9'));
+				}
+				else if (s > 1)
+				{
+					return s;
+				}
+
+				return 0;
+			};
+
+			if (int csymlen = is_valid_symbolchar(cc, false); csymlen && !is_end(csymlen))
+			{
+				token_node_t * t = extend_tail();
+				if (!t)
+					break; // LOOP A
+
+				t->type = details::token_type::SYMBOL;
+				t->value.symbol.rsource = s->current - i->start;
+				t->value.symbol.size    = csymlen;
+
+				do
+				{
+					if constexpr (sloc_tracking)
+						++s->column;
+					s->current += csymlen;
+					csymlen = is_valid_symbolchar(*s->current, true);
+					t->value.symbol.size += csymlen;
+				} while(!is_end() && csymlen);
+
+				continue; // LOOP A
+			}
+
+			// Match numbers
+			constexpr auto is_numeric = [](char c) -> bool { return c >= '0' && c <= '9'; };
+			constexpr auto char_to_num = [](char c) -> int { return c - '0'; };
+			if (is_numeric(cc))
+			{
+				// TODO: negative numbers
+				token_node_t * t = extend_tail();
+				if (!t)
+					break; // LOOP A
+				t->type = details::token_type::NUMBER64;
+				t->value.number64 = char_to_num(cc);
+				++s->current;
+
+				if constexpr (sloc_tracking)
+						++s->column;
+
+				while(!is_end() && is_numeric(*s->current))
+				{
+					t->value.number64 *= 10;
+					t->value.number64 += char_to_num(cc);
+					++s->current;
+					if constexpr (sloc_tracking)
+						++s->column;
+				} 
+
+				continue;
+			}
+
+			// No matches
 			if (!send_msg(msg::W_INVALID_TOKEN))
 			{
 				++s->current;
