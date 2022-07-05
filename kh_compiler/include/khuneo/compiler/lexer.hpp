@@ -4,13 +4,12 @@
 #include <khuneo/core/metapp.hpp>
 #include <khuneo/core/contiguous_list.hpp>
 
-
-// TODO: unify everything to only use a single typename
 // TODO: assign enum class classification for tokens incase we decide to use utf8 characters for tokens
+// TODO: lookup table for RW/toks size
 
 namespace khuneo::compiler::lexer
 {
-	template <bool enable_sloc_track, typename contiguous_list_impl> struct msg_callback_info;
+	template <typename lexer_impl> struct msg_callback_info;
 }
 
 namespace khuneo::compiler::lexer::details
@@ -105,8 +104,8 @@ namespace khuneo::compiler::lexer::details
 
 namespace khuneo::compiler::lexer
 {
-	template <bool enable_sloc_track = true>
-	struct token_node : public metapp::extend_struct_if<enable_sloc_track, details::sourceloc_tracking_cont>
+	template <typename lexer_impl>
+	struct token_node : public metapp::extend_struct_if<lexer_impl::enable_sloc_track, details::sourceloc_tracking_cont>
 	{
 		details::token_type  type;
 
@@ -149,43 +148,43 @@ namespace khuneo::compiler::lexer
 
 	constexpr auto is_msg_fatal(msg m) -> bool { return khuneo::u8(m) & khuneo::u8(msg::FATAL_FLAG); };
 
-	template <bool enable_sloc_track, typename contiguous_list_impl> struct run_info;
-	template <bool enable_sloc_track> struct run_state;
+	template <typename lexer_impl> struct run_info;
+	template <typename lexer_impl> struct run_state;
 
-	template <bool enable_sloc_track, typename contiguous_list_impl>
+	template <typename lexer_impl>
 	struct msg_callback_info
 	{
 		bool ignore;
 		msg  message;
 
-		run_info<enable_sloc_track, contiguous_list_impl>  * info;
-		run_state<enable_sloc_track> * state;
+		run_info<lexer_impl>  * info;
+		run_state<lexer_impl> * state;
 	};
 
 	// -----------------------------------------------------------------
 
-	template <bool enable_sloc_track>
-	struct run_state : public metapp::extend_struct_if<enable_sloc_track, details::sourceloc_tracking_cont>
+	template <typename lexer_impl>
+	struct run_state : public metapp::extend_struct_if<lexer_impl::enable_sloc_track, details::sourceloc_tracking_cont>
 	{
 		bool abort;
 		const char * current;
 	};
 
-	template <bool enable_sloc_track, typename contiguous_list_impl>
-	struct run_info : public metapp::extend_struct_if<enable_sloc_track, details::sourceloc_tabspacing_cont>
+	template <typename lexer_impl>
+	struct run_info : public metapp::extend_struct_if<lexer_impl::enable_sloc_track, details::sourceloc_tabspacing_cont>
 	{
 		const char * start;
 		const char * end;
-		cont::contiguous_list<token_node<enable_sloc_track>, contiguous_list_impl> tokens;
+		cont::contiguous_list<token_node<lexer_impl>, typename lexer_impl::contiguous_list_impl> tokens;
 	};
 
-	template <typename impl = details::default_lexer_impl>
-	auto run(run_info<impl::enable_sloc_track, typename impl::contiguous_list_impl> * i, run_state<impl::enable_sloc_track> * s = nullptr) -> bool
+	template <typename impl>
+	auto run(run_info<impl> * i, run_state<impl> * s = nullptr) -> bool
 	{
 		constexpr bool sloc_tracking = impl::enable_sloc_track; 
 		using allocator              = typename impl::allocator; // metapp::type_if<requires { impl::allocator::alloc(0); }, impl::allocator, details::default_lexer_impl::allocator>::type;
-		using state_t                = run_state<sloc_tracking>;
-		using token_node_t           = token_node<sloc_tracking>; 
+		using state_t                = run_state<impl>;
+		using token_node_t           = token_node<impl>; 
 
 		/*
 		* Generates a lexer message
@@ -195,7 +194,7 @@ namespace khuneo::compiler::lexer
 		{
 			if constexpr (requires { impl::lexer_msg_recv(0); })
 			{
-				msg_callback_info<sloc_tracking, typename impl::contiguous_list_impl> mi;
+				msg_callback_info<impl> mi;
 				mi.info = i;
 				mi.ignore = false;
 				mi.message = m;
@@ -213,19 +212,22 @@ namespace khuneo::compiler::lexer
 				return s->abort;
 			}
 			else
-				return false;
+				return true;
 		};
 
 		/*
 		*  Extends the current token_node list by linking it to the current and replacing current with it
 		*  ! This will already send an alloc fail exception, immediately abort upon fail, no need to send your own exception
 		*  ! Automatically initializes line, column field. type and value should be provided by the caller
-		*  ! Will automatically append itself to state, linking it into the list and replacing current with itself
-		*  ! If it encounters an unoccupied node instead of allocating a new node it will instead re initialize that node and re use it
 		*/
 		auto extend_tail = [&]() -> token_node_t *
 		{
 			token_node_t * n = i->tokens.append();
+			if (!n)
+			{
+				send_msg(msg::F_ALLOC_FAIL);
+				return nullptr;
+			}
 
 			n->value      = { 0 };
 
