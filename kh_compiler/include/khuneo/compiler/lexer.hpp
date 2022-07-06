@@ -28,6 +28,7 @@ namespace khuneo::compiler::lexer::details
 		FLOAT64,
 	};
 
+	// TODO: reavaluate this, some aren't needed
 	constexpr char valid_tokens[] = {
 		'"', '#',                                               // 34  - 35
 		'%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', // 37  - 47
@@ -364,7 +365,6 @@ namespace khuneo::compiler::lexer
 			}
 
 			// Match numbers
-			// [06/07/2022] Moved here so it has precedence over tokens incase we have a negative value
 			if (bool is_negative = cc == '-'; is_numeric(cc) || is_negative && !is_end(1) && is_numeric(s->current[1]))
 			{
 				static constexpr auto char_to_num = [](char c) constexpr -> int { return c - '0'; };
@@ -386,17 +386,12 @@ namespace khuneo::compiler::lexer
 				bool stop = is_end();
 				while(!stop && is_numeric(*s->current))
 				{
-					if (t->type == details::token_type::SIGNED64)
-					{
-						t->value.signed64 *= 10;
-						t->value.signed64 += char_to_num(*s->current);
-					}
-					else if (t->type == details::token_type::FLOAT64)
-					{
+					t->value.signed64 *= 10;
+					t->value.signed64 += char_to_num(*s->current);
+
+					if (t->type == details::token_type::FLOAT64)
 						fdec *= 0.1;
-						t->value.float64 *= 10.0;
-						t->value.float64 += char_to_num(*s->current);
-					}
+
 					++s->current;
 					if constexpr (sloc_tracking)
 						++s->column;
@@ -404,11 +399,16 @@ namespace khuneo::compiler::lexer
 					if (stop = is_end(); !stop && *s->current == '.')
 					{
 						t->type = details::token_type::FLOAT64;
-						t->value.float64 = static_cast<khuneo::f64>(t->value.signed64);
 						++s->current;
 						stop = is_end();
 					}
 				} 
+
+				if (t->type == details::token_type::FLOAT64)
+				{
+					t->value.float64 = static_cast<khuneo::f64>(t->value.signed64);
+					t->value.float64 *= fdec;
+				}
 
 				if (is_negative)
 				{
@@ -417,9 +417,6 @@ namespace khuneo::compiler::lexer
 					else if (t->type == details::token_type::FLOAT64)
 						t->value.float64 *= -1.0;
 				}
-
-				if (t->type == details::token_type::FLOAT64)
-					t->value.float64 *= fdec;
 
 				continue; // LOOP A
 			}
@@ -457,6 +454,9 @@ namespace khuneo::compiler::lexer
 				}
 
 				t->value.string.size = (s->current - i->start) - t->value.string.rsource;
+				++s->current; // skip the final "
+				if constexpr (sloc_tracking)
+					++s->column;
 
 				has_matched = true;
 				break; // LOOP B
@@ -522,7 +522,7 @@ namespace khuneo::compiler::lexer
 			{
 				token_node_t * t = extend_tail();
 				if (!t)
-					break;
+					break; // LOOP A
 
 				t->type = details::token_type::TOKEN;
 				t->value.token = cc;
@@ -530,7 +530,7 @@ namespace khuneo::compiler::lexer
 				s->current += csz;
 				if constexpr (sloc_tracking)
 					++s->column;
-				continue;
+				continue; // LOOP A
 			}
 
 			bool matched = false;
@@ -543,7 +543,7 @@ namespace khuneo::compiler::lexer
 				while (*kw && *c) // LOOP C
 				{
 					if (*kw != *c || is_end_v(c))
-						break;
+						break; // LOOP C
 
 					++kw;
 					++c;
