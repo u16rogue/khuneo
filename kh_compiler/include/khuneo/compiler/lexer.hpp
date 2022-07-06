@@ -322,11 +322,11 @@ namespace khuneo::compiler::lexer
 			char cc = *s->current; // current character
 
 			// Match hex
-			static constexpr auto is_numeric = [](char c) -> bool { return c >= '0' && c <= '9'; };
-			static constexpr auto is_hex = [](char c) -> bool { return is_numeric(c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'); };
+			static constexpr auto is_numeric = [](char c) constexpr -> bool { return c >= '0' && c <= '9'; };
+			static constexpr auto is_hex = [](char c) constexpr -> bool { return is_numeric(c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'); };
 			if (cc == '0' && !is_end(2) && (s->current[1] == 'x' || s->current[1] == 'X') && is_hex(s->current[2]))
 			{
-				constexpr auto char_to_hex = [](char c) -> int
+				static constexpr auto char_to_hex = [](char c) constexpr -> int
 				{
 					if (c >= '0' && c <= '9')
 						return c - '0';
@@ -367,7 +367,7 @@ namespace khuneo::compiler::lexer
 			// [06/07/2022] Moved here so it has precedence over tokens incase we have a negative value
 			if (bool is_negative = cc == '-'; is_numeric(cc) || is_negative && !is_end(1) && is_numeric(s->current[1]))
 			{
-				constexpr auto char_to_num = [](char c) -> int { return c - '0'; };
+				static constexpr auto char_to_num = [](char c) constexpr -> int { return c - '0'; };
 				token_node_t * t = extend_tail();
 				if (!t)
 					break; // LOOP A
@@ -382,11 +382,21 @@ namespace khuneo::compiler::lexer
 				if constexpr (sloc_tracking)
 					s->column = is_negative ? 2 : 1;
 
+				khuneo::f64 fdec = 1.0;
 				bool stop = is_end();
 				while(!stop && is_numeric(*s->current))
 				{
-					t->value.signed64 *= 10;
-					t->value.signed64 += char_to_num(*s->current);
+					if (t->type == details::token_type::SIGNED64)
+					{
+						t->value.signed64 *= 10;
+						t->value.signed64 += char_to_num(*s->current);
+					}
+					else if (t->type == details::token_type::FLOAT64)
+					{
+						fdec *= 0.1;
+						t->value.float64 *= 10.0;
+						t->value.float64 += char_to_num(*s->current);
+					}
 					++s->current;
 					if constexpr (sloc_tracking)
 						++s->column;
@@ -407,6 +417,9 @@ namespace khuneo::compiler::lexer
 					else if (t->type == details::token_type::FLOAT64)
 						t->value.float64 *= -1.0;
 				}
+
+				if (t->type == details::token_type::FLOAT64)
+					t->value.float64 *= fdec;
 
 				continue; // LOOP A
 			}
