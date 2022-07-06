@@ -23,7 +23,8 @@ namespace khuneo::compiler::lexer::details
 		KEYWORD,
 		TOKEN,
 		STRING,
-		NUMBER64,
+		SIGNED64,
+		UNSIGNED64,
 		FLOAT64,
 	};
 
@@ -118,7 +119,9 @@ namespace khuneo::compiler::lexer
 			} symbol, string;
 
 			char token;
-			khuneo::i64 number64;
+			khuneo::i64 signed64;
+			khuneo::u64 unsigned64;
+			khuneo::f64 float64;
 			details::reserved_kw keyword;
 
 		} value;
@@ -318,6 +321,58 @@ namespace khuneo::compiler::lexer
 
 			char cc = *s->current; // current character
 
+			// Match numbers
+			// [06/07/2022] Moved here so it has precedence over tokens incase we have a negative value
+			constexpr auto is_numeric = [](char c) -> bool { return c >= '0' && c <= '9'; };
+			constexpr auto char_to_num = [](char c) -> int { return c - '0'; };
+			if (bool is_negative = cc == '-'; is_numeric(cc) || is_negative && !is_end(1) && is_numeric(*(s->current + 1)))
+			{
+				// TODO: negative numbers
+				token_node_t * t = extend_tail();
+				if (!t)
+					break; // LOOP A
+				t->type = details::token_type::SIGNED64;
+
+				if (is_negative)
+					++s->current;
+
+				t->value.signed64 = char_to_num(*s->current);
+				++s->current;
+
+				if constexpr (sloc_tracking)
+					s->column = is_negative ? 2 : 1;
+
+				bool stop = is_end();
+				while(!stop && is_numeric(*s->current))
+				{
+					t->value.signed64 *= 10;
+					t->value.signed64 += char_to_num(*s->current);
+					++s->current;
+					if constexpr (sloc_tracking)
+						++s->column;
+
+					if (stop = is_end(); !stop && *s->current == '.')
+					{
+						t->type = details::token_type::FLOAT64;
+						t->value.float64 = static_cast<khuneo::f64>(t->value.signed64);
+						++s->current;
+						stop = is_end();
+					}
+				} 
+
+				if (is_negative)
+				{
+					if (t->type == details::token_type::SIGNED64)
+						t->value.signed64 *= -1;
+					else if (t->type == details::token_type::FLOAT64)
+						t->value.float64 *= -1.0;
+				}
+
+				continue;
+			}
+
+			// Match hex
+
 			// no need to run check if its a utf8 character because all process_wordings matches are ascii
 			if (csz == 1 && process_sloc_char(cc)) 
 			{
@@ -345,7 +400,7 @@ namespace khuneo::compiler::lexer
 				else if (nc == '*') // multi line comment
 				{
 					s->current += 2;
-					while (!s->abort && !is_end() && !is_end(1) && *s->current != '*' && *(s->current + 1) != '/')
+					while (!s->abort && !is_end(1) && *s->current != '*' && *(s->current + 1) != '/')
 					{
 						if (process_sloc_char(*s->current))
 							++s->current;
@@ -468,33 +523,7 @@ namespace khuneo::compiler::lexer
 				continue; // LOOP A
 			}
 
-			// Match numbers
-			constexpr auto is_numeric = [](char c) -> bool { return c >= '0' && c <= '9'; };
-			constexpr auto char_to_num = [](char c) -> int { return c - '0'; };
-			if (is_numeric(cc))
-			{
-				// TODO: negative numbers
-				token_node_t * t = extend_tail();
-				if (!t)
-					break; // LOOP A
-				t->type = details::token_type::NUMBER64;
-				t->value.number64 = char_to_num(cc);
-				++s->current;
-
-				if constexpr (sloc_tracking)
-						++s->column;
-
-				while(!is_end() && is_numeric(*s->current))
-				{
-					t->value.number64 *= 10;
-					t->value.number64 += char_to_num(cc);
-					++s->current;
-					if constexpr (sloc_tracking)
-						++s->column;
-				} 
-
-				continue;
-			}
+			
 
 			// No matches
 			if (!send_msg(msg::W_INVALID_TOKEN))

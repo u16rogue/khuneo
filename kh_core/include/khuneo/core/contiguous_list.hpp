@@ -18,7 +18,7 @@ namespace khuneo::cont
 	{
 		using allocator = typename impl::allocator;
 		using self_t = contiguous_list<T, impl>;
-		static constexpr khuneo::u32 block_count = impl::alloc_ahead_count ?: 1;
+		static constexpr khuneo::u32 block_count = impl::alloc_ahead_count ? impl::alloc_ahead_count : 1;
 
 		static auto construct(self_t * self) -> bool
 		{
