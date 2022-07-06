@@ -321,13 +321,53 @@ namespace khuneo::compiler::lexer
 
 			char cc = *s->current; // current character
 
+			// Match hex
+			static constexpr auto is_numeric = [](char c) -> bool { return c >= '0' && c <= '9'; };
+			static constexpr auto is_hex = [](char c) -> bool { return is_numeric(c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'); };
+			if (cc == '0' && !is_end(2) && (s->current[1] == 'x' || s->current[1] == 'X') && is_hex(s->current[2]))
+			{
+				constexpr auto char_to_hex = [](char c) -> int
+				{
+					if (c >= '0' && c <= '9')
+						return c - '0';
+					else if (c >= 'A' && c <= 'F')
+						return c - 'A' + 0xA;
+					else if (c >= 'a' && c<= 'f')
+						return c - 'a' + 0xa;
+
+					return -1;
+				};
+
+				s->current += 2;
+				if constexpr (sloc_tracking)
+					s->column += 2 + 1 /* the one is for the assignment so we dont have to do it later */;
+
+				token_node_t * t = extend_tail();
+				if (!t)
+					break; // LOOP A
+
+				t->value.unsigned64 = char_to_hex(*s->current);
+				t->type = details::token_type::UNSIGNED64;
+
+				++s->current;	
+
+				while (!is_end() && is_hex(*s->current))
+				{
+					t->value.unsigned64 *= 16;
+					t->value.unsigned64 += char_to_hex(*s->current);
+					if constexpr (sloc_tracking)
+						++s->column;
+					++s->current;
+				}
+
+				continue; // LOOP A
+			}
+
 			// Match numbers
 			// [06/07/2022] Moved here so it has precedence over tokens incase we have a negative value
-			constexpr auto is_numeric = [](char c) -> bool { return c >= '0' && c <= '9'; };
-			constexpr auto char_to_num = [](char c) -> int { return c - '0'; };
-			if (bool is_negative = cc == '-'; is_numeric(cc) || is_negative && !is_end(1) && is_numeric(*(s->current + 1)))
+			if (bool is_negative = cc == '-'; is_numeric(cc) || is_negative && !is_end(1) && is_numeric(s->current[1]))
 			{
-				// TODO: negative numbers
+				constexpr auto char_to_num = [](char c) -> int { return c - '0'; };
 				token_node_t * t = extend_tail();
 				if (!t)
 					break; // LOOP A
@@ -368,12 +408,10 @@ namespace khuneo::compiler::lexer
 						t->value.float64 *= -1.0;
 				}
 
-				continue;
+				continue; // LOOP A
 			}
 
-			// Match hex
-
-			// no need to run check if its a utf8 character because all process_wordings matches are ascii
+			// no need to run check if its a utf8 character because all process_sloc_char matches are ascii
 			if (csz == 1 && process_sloc_char(cc)) 
 			{
 				++s->current;
