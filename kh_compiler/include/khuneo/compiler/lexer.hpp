@@ -424,6 +424,47 @@ namespace khuneo::compiler::lexer
 				continue; // LOOP A
 			}
 
+			// Match strings	
+			bool has_matched = false;
+			constexpr const char strc[] = { '\'', '"', '`' };
+			for (char c : strc) // LOOP B
+			{
+				if (cc != c)
+					continue;
+
+				++s->current;
+				if constexpr (sloc_tracking)
+					++s->column;
+
+				token_node_t * t = extend_tail();
+				if (!t)
+				{
+					has_matched = false;
+					break; // LOOP B
+				}
+
+				t->type = details::token_type::STRING;
+				t->value.string.rsource = s->current - i->start;
+
+				while (!is_end() && *s->current != c)
+				{
+					int csz = utf8::size(*s->current);
+					if (!csz)
+						continue;
+					s->current += csz;
+					if constexpr (sloc_tracking)
+						++s->column;
+				}
+
+				t->value.string.size = (s->current - i->start) - t->value.string.rsource;
+
+				has_matched = true;
+				break; // LOOP B
+			}
+
+			if (s->abort)
+				break; // LOOP A
+
 			// no need to run check if its a utf8 character because all process_sloc_char matches are ascii
 			if (csz == 1 && process_sloc_char(cc)) 
 			{
@@ -573,8 +614,6 @@ namespace khuneo::compiler::lexer
 
 				continue; // LOOP A
 			}
-
-			
 
 			// No matches
 			if (!send_msg(msg::W_INVALID_TOKEN))

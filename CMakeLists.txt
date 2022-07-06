@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.18)
 
 option(KH_LOCAL_TEST "Local test project" OFF)
+option(KH_INCLUDE_COMPILER "Include the khuneo compiler" ON)
+option(KH_INCLUDE_EXTRA "Include extra libraries for khuneo, these libraries are purely optional and are for trivial things" OFF)
 
 add_subdirectory("kh_core/")
-add_subdirectory("kh_compiler/")
 
 project(
     khuneo
@@ -29,8 +30,25 @@ target_link_libraries(
     ${PROJECT_NAME}
     PUBLIC
     khuneo_core
-    khuneo_compiler
 )
+
+if (KH_INCLUDE_COMPILER)
+	add_subdirectory("kh_compiler/")
+	target_link_libraries(
+		${PROJECT_NAME}
+		PUBLIC
+		khuneo_compiler
+	)
+endif()
+
+if (KH_INCLUDE_EXTRA)
+	add_subdirectory("kh_extra/")
+	target_link_libraries(
+		${PROJECT_NAME}
+		PUBLIC
+		khuneo_extra
+	)
+endif()
 
 set_target_properties(
     ${PROJECT_NAME}
