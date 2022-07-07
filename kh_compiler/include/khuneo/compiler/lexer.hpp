@@ -535,6 +535,7 @@ namespace khuneo::compiler::lexer
 				s->current += csz;
 				if constexpr (sloc_tracking)
 					++s->column;
+				matched = true;
 				break; // LOOP B
 			}
 
