@@ -43,4 +43,13 @@ namespace khuneo::metapp
 	// types in the khuneo library
 	template <typename T>
 	struct is_t_invalid { enum { VALUE = requires { T::KH_FLAG_IS_INVALID; } }; };
+
+	// --------------------------------------------------  
+
+	// Obtains the size of an array
+	template <typename T, int sz>
+	consteval auto array_size(const T (&v)[sz]) -> int
+	{
+		return sz;
+	}
 }

@@ -28,26 +28,28 @@ namespace khuneo::compiler::lexer::details
 		FLOAT64,
 	};
 
-	// TODO: reavaluate this, some aren't needed
-	constexpr char valid_tokens[] = {
-		'"', '#',                                               // 34  - 35
-		'%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', // 37  - 47
+	// ---------------------------------------------------------------------------------------------------- 
+
+	constexpr char tokens[] = {
+		/*'"',*/ '#',                                           // 34  - 35
+		'%', '&', /*'\'',*/ '(', ')', '*', '+', ',', '-', '.', '/', // 37  - 47
 		':', ';', '<', '=', '>', '?', '@',                      // 58  - 64
 		'[', '\\', ']', '^',                                    // 91  - 94
 		'{', '|', '}', '~'                                      // 123 - 126
 	};
-
-	constexpr int valid_tokens_count = sizeof(valid_tokens) / sizeof(valid_tokens[0]);
-
+	/*
 	constexpr auto is_valid_token(const char * s) -> bool
 	{
 		char c = s[0];
 		constexpr auto inbetween = [](char c, int low, int high) constexpr -> bool { return c >= low && c <= high; };
 		return c == '"' || c == '#' || inbetween(c, '%', '/') || inbetween(c, ':', '@') || inbetween(c, '[', '^') || inbetween(c, '{', '~'); 
 	}
+	*/
+
+	// ---------------------------------------------------------------------------------------------------- 
 
 	// Classifies a special symbol referring to a reserved keyword
-	enum class reserved_kw : khuneo::u8
+	enum class keyword : khuneo::u8
 	{
 		UNDEFINED,
 		LET,
@@ -66,7 +68,7 @@ namespace khuneo::compiler::lexer::details
 		_COUNT = _INDEXER - 1
 	};
 
-	constexpr const char * const valid_keywords[] = {
+	constexpr const char * const keywords[] = {
 		"let",
 		"fn",
 		"import",
@@ -78,11 +80,10 @@ namespace khuneo::compiler::lexer::details
 		"if",
 		"elif",
 		"else",
-		"defer"
+		"defer" // thank you zig
 	};
 
-	constexpr int valid_keywords_count = sizeof(valid_keywords) / sizeof(valid_keywords[0]);
-	static_assert(valid_keywords_count == int(reserved_kw::_COUNT), "khuneo::lexer::details::reserved_kw and khuneo::lexer::details::valid_keywords did not match its count.");
+	// ---------------------------------------------------------------------------------------------------- 
 
 	struct sourceloc_tracking_cont
 	{
@@ -123,7 +124,7 @@ namespace khuneo::compiler::lexer
 			khuneo::i64 signed64;
 			khuneo::u64 unsigned64;
 			khuneo::f64 float64;
-			details::reserved_kw keyword;
+			details::keyword keyword;
 
 		} value;
 	};
@@ -195,7 +196,7 @@ namespace khuneo::compiler::lexer
 		* Generates a lexer message
 		* Returns true if treated as fatal and returns false if it should be ignored 
 		*/
-		constexpr auto send_msg = [&](msg m) -> bool 
+		auto send_msg = [&](msg m) -> bool 
 		{
 			if constexpr (requires { impl::lexer_msg_recv(0); })
 			{
@@ -350,7 +351,7 @@ namespace khuneo::compiler::lexer
 				t->value.unsigned64 = char_to_hex(*s->current);
 				t->type = details::token_type::UNSIGNED64;
 
-				++s->current;	
+				++s->current;
 
 				while (!is_end() && is_hex(*s->current))
 				{
@@ -516,13 +517,17 @@ namespace khuneo::compiler::lexer
 				}
 			}
 
+			bool matched = false;
 			// TODO: maybe support utf8 tokens
 			// Match token
-			if (details::is_valid_token(s->current))
+			for (char tok : details::tokens) // LOOP B
 			{
+				if (tok != cc)
+					continue;
+
 				token_node_t * t = extend_tail();
 				if (!t)
-					break; // LOOP A
+					break; // LOOP B
 
 				t->type = details::token_type::TOKEN;
 				t->value.token = cc;
@@ -530,15 +535,20 @@ namespace khuneo::compiler::lexer
 				s->current += csz;
 				if constexpr (sloc_tracking)
 					++s->column;
-				continue; // LOOP A
+				break; // LOOP B
 			}
 
-			bool matched = false;
+			if (s->abort)
+				break; // LOOP A
+
+			if (matched)
+				continue; // LOOP A
+
 			// Match keyword
-			for (int ikw = 0; ikw < details::valid_keywords_count; ++ikw) // LOOP B
+			for (int ikw = 0; ikw < metapp::array_size(details::keywords); ++ikw) // LOOP B
 			{
 				const char * c  = s->current;
-				const char * kw = details::valid_keywords[ikw];
+				const char * kw = details::keywords[ikw];
 
 				while (*kw && *c) // LOOP C
 				{
@@ -556,8 +566,8 @@ namespace khuneo::compiler::lexer
 							break; // LOOP C
 
 						t->type = details::token_type::KEYWORD;
-						t->value.keyword = details::reserved_kw(ikw + 1 /*0 is UNDEFINED in enum*/);
-						int size = kw - details::valid_keywords[ikw];
+						t->value.keyword = details::keyword(ikw + 1 /*0 is UNDEFINED in enum*/);
+						int size = kw - details::keywords[ikw];
 						
 						if constexpr (sloc_tracking)
 							s->column += utf8::length(s->current, s->current + size);
