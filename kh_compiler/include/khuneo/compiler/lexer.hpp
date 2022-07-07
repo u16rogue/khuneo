@@ -42,7 +42,7 @@ namespace khuneo::compiler::lexer::details
 	constexpr auto is_valid_token(const char * s) -> bool
 	{
 		char c = s[0];
-		constexpr auto inbetween = [](char c, int low, int high) { return c >= low && c <= high; };
+		constexpr auto inbetween = [](char c, int low, int high) constexpr -> bool { return c >= low && c <= high; };
 		return c == '"' || c == '#' || inbetween(c, '%', '/') || inbetween(c, ':', '@') || inbetween(c, '[', '^') || inbetween(c, '{', '~'); 
 	}
 
@@ -234,7 +234,7 @@ namespace khuneo::compiler::lexer
 				return nullptr;
 			}
 
-			n->value      = { 0 };
+			n->value = { 0 };
 
 			if constexpr (sloc_tracking)
 			{
@@ -246,7 +246,7 @@ namespace khuneo::compiler::lexer
 		};
 
 		auto is_end_v = [&](const char * p) -> bool { return p >= i->end; };
-		auto is_end = [&](int offset = 0) -> bool { return s->current + offset >= i->end; };
+		auto is_end   = [&](int offset = 0) -> bool { return s->current + offset >= i->end; };
 
 		// Processes wording characters such as NULL, \r, \n, and \t
 		auto process_sloc_char = [&](char c) -> bool
@@ -549,7 +549,7 @@ namespace khuneo::compiler::lexer
 					++c;
 
 					// Match!
-					if (*kw == '\0')
+					if (*kw == '\0' && (*c == ' ' || *c == '\t' || *c == '\r' || *c == '\n'))
 					{
 						token_node_t * t = extend_tail();
 						if (!t)
@@ -578,7 +578,7 @@ namespace khuneo::compiler::lexer
 				continue; // LOOP A (Reserve keyword match)
 
 			// Match symbol
-			constexpr auto is_valid_symbolchar = [](char c, bool allow_numeric = true) constexpr -> int
+			static constexpr auto is_valid_symbolchar = [](char c, bool allow_numeric = true) constexpr -> int
 			{
 				auto s = khuneo::utf8::size(c);
 				if (s == 1)
