@@ -4,16 +4,40 @@
 #include <khuneo/core/metapp.hpp>
 #include <khuneo/core/contiguous_list.hpp>
 
-// TODO: assign enum class classification for tokens incase we decide to use utf8 characters for tokens
-// TODO: lookup table for RW/toks size
-
-namespace khuneo::compiler::lexer
-{
-	template <typename lexer_impl> struct msg_callback_info;
-}
-
 namespace khuneo::compiler::lexer::details
 {
+	/*
+	*  This is the default implementation used by the lexer, you can use this or derive from it since C++
+	*  allows overloading you can simply inherit this structure and override specific parts if you don't
+	*  want to implement it from scratch
+	*  e.g. Enabling receiving messages from the lexer
+	*  struct my_impl : public khuneo::compiler::lexer::details::default_lexer_impl
+	*  {
+	*		static auto lexer_msg_recv(khuneo::compiler::lexer::msg_callback_info<my_impl> * mi) -> void
+	*		{
+	*		}
+	*  }
+	*  ...
+	*  khuneo::compiler::lexer::run<my_impl>(...);
+	*/
+	struct default_lexer_impl
+	{
+		static constexpr bool enable_sloc_track = true;                                                // Toggles if the lexer should keep track of lines and column of each token
+		using allocator                         = khuneo::details::kh_basic_allocator<>;               // Defines the allocator to be used
+		using contiguous_list_impl              = khuneo::cont::details::default_contiguous_list_impl; // Defines the implementation used by the contiguous list container
+		// static auto lexer_msg_recv(msg_callback_info<enable_sloc_track> * mi) -> void { };          // Lexer message receiver callback
+
+		// TODO: decide whether we should make token literal types an implementation option
+		/*
+		using signed_tok_t   = khuneo::i64; // Type of the signed token
+		using unsigned_tok_t = khuneo::u64; // Type of the unsigned token
+		using float_tok_t    = khuneo::f64; // Type of the floating point token
+
+		static constexpr khuneo::f64 float_tok_neg  = -1.0;
+		static constexpr khuneo::i64 signed_tok_neg =  1.0;
+		*/
+	};
+
 	// Classifies a token
 	enum class token_type : khuneo::u8
 	{
@@ -37,6 +61,7 @@ namespace khuneo::compiler::lexer::details
 		'[', '\\', ']', '^',                                    // 91  - 94
 		'{', '|', '}', '~'                                      // 123 - 126
 	};
+
 	/*
 	constexpr auto is_valid_token(const char * s) -> bool
 	{
@@ -94,14 +119,6 @@ namespace khuneo::compiler::lexer::details
 	struct sourceloc_tabspacing_cont
 	{
 		khuneo::u8 tab_space_count;
-	};
-
-	struct default_lexer_impl
-	{
-		static constexpr bool enable_sloc_track = true;
-		using allocator       = khuneo::details::kh_basic_allocator<>;
-		using contiguous_list_impl = khuneo::cont::details::default_contiguous_list_impl;
-		// static auto lexer_msg_recv(msg_callback_info<enable_sloc_track> * mi) -> void { };
 	};
 }
 
@@ -313,7 +330,7 @@ namespace khuneo::compiler::lexer
 
 		while (!is_end() && !s->abort) // LOOP A
 		{
-			int csz = khuneo::utf8::size(s->current);
+			int csz = khuneo::utf8::csize(*s->current);
 
 			if (csz == 0) // Corrupted byte (no utf8 match) 
 			{
@@ -446,7 +463,7 @@ namespace khuneo::compiler::lexer
 
 				while (!is_end() && *s->current != c)
 				{
-					int csz = utf8::size(*s->current);
+					int csz = utf8::csize(*s->current);
 					if (!csz)
 						continue;
 					s->current += csz;
@@ -499,7 +516,7 @@ namespace khuneo::compiler::lexer
 							++s->current;
 						else
 						{
-							int mlc_csz = khuneo::utf8::size(s->current);
+							int mlc_csz = khuneo::utf8::csize(*s->current);
 							if constexpr (sloc_tracking)
 								++s->column;
 							s->current += mlc_csz; 
@@ -571,7 +588,7 @@ namespace khuneo::compiler::lexer
 						int size = kw - details::keywords[ikw];
 						
 						if constexpr (sloc_tracking)
-							s->column += utf8::length(s->current, s->current + size);
+							s->column += utf8::slength(s->current, s->current + size);
 						s->current += size;
 						matched = true;
 						break; // LOOP C
@@ -591,7 +608,7 @@ namespace khuneo::compiler::lexer
 			// Match symbol
 			static constexpr auto is_valid_symbolchar = [](char c, bool allow_numeric = true) constexpr -> int
 			{
-				auto s = khuneo::utf8::size(c);
+				auto s = khuneo::utf8::csize(c);
 				if (s == 1)
 				{
 					return c == '$' || c == '_' || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (allow_numeric && (c >= '0' && c <= '9'));

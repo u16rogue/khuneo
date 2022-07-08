@@ -10,7 +10,6 @@ project(
     khuneo
     DESCRIPTION "An embeddable programming language"
     LANGUAGES CXX C
-    VERSION 0.1.0
 )
 
 add_library(

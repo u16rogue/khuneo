@@ -17,12 +17,14 @@ target_include_directories(
 )
 
 if (TARGET khuneo_compiler)
-	message("khuneo >> Extra library found khuneo_compiler as a target!")
+	message("khuneo_extra >> Extra library found khuneo_compiler as a target!")
 	target_link_libraries(
 		${PROJECT_NAME}
 		INTERFACE
 		khuneo_compiler
 	)
+else()
+	# message(AUTHOR_WARNING "khuneo_extra >> Extra library did not find khuneo_compiler as a target! Ignoring.")
 endif()
 
 set_target_properties(

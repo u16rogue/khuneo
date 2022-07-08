@@ -5,7 +5,7 @@ namespace khuneo::utf8
 	/*
 	* Calculates the size of a UTF-8 Character
 	*/
-	constexpr auto size(const char b) -> int
+	constexpr auto csize(const char b) -> int
 	{
 		if ((b & 0b10000000) == 0b00000000)
 			return 1;
@@ -25,27 +25,35 @@ namespace khuneo::utf8
 	}
 
 	/*
-	* Calculates the size of a UTF-8 Character
-	*/
-	constexpr auto size(const char * s) -> int
-	{
-		return size(*s);
-	}
-
-	/*
 	* Calculates the length of a UTF-8 string, if the parameter e is not
-	* provided it would instead check for null termination
+	* provided it would instead check for null terminator
 	*/
-	constexpr auto length(const char * s, const char * e = nullptr) -> int
+	constexpr auto slength(const char * s, const char * e = nullptr) -> int
 	{
 		int len = 0;
 		while ((e && s < e) || (!e && *s))
 		{
-			int cvl = size(s);
-			len += cvl;
-			s   += cvl;
+			++len;
+			s += csize(*s);
 		}
 
 		return len;
+	}
+
+	/*
+	* Calculates the size of a UTF-8 string, if the parameter e is not
+	* provided it would instead check for a null terminator
+	*/
+	constexpr auto ssize(const char * s, const char * e = nullptr) -> int
+	{
+		int size = 0;
+		while ((e && s < e) || (!e && *s))
+		{
+			int cvl = csize(*s);
+			size += cvl;
+			s += cvl;
+		}
+
+		return size;
 	}
 }
