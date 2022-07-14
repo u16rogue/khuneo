@@ -52,4 +52,12 @@ namespace khuneo::metapp
 	{
 		return sz;
 	}
+
+	// --------------------------------------------------  
+
+	template <typename A, typename... B>
+	constexpr auto match_any_a_to_b(A a, B... b) -> bool
+	{
+		return ((a == b) || ...);
+	}
 }

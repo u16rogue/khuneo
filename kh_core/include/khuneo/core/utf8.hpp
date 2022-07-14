@@ -1,13 +1,20 @@
 #pragma once
 
+#include <khuneo/core/defs.hpp>
+
 namespace khuneo::utf8
 {
+	constexpr auto c_is_utf8(const char c) -> bool
+	{
+		return (c & 0b10000000);
+	}
+
 	/*
 	* Calculates the size of a UTF-8 Character
 	*/
 	constexpr auto csize(const char b) -> int
 	{
-		if ((b & 0b10000000) == 0b00000000)
+		if (!c_is_utf8(b))
 			return 1;
 
 		char x = 0b11111000;
@@ -22,6 +29,50 @@ namespace khuneo::utf8
 		}
 
 		return 0;
+	}
+
+	constexpr auto c_is_numeric(const char c, khuneo::u8 * out = nullptr) -> bool
+	{
+		if (c >= '0' && c <= '9')
+		{
+			if (out)
+				*out = c - '0';
+			return true;
+		}
+
+		return false;
+	}
+
+	constexpr auto c_is_hex(const char c, khuneo::u8 * out = nullptr) -> bool
+	{
+		if (c >= 'A' && c <= 'F')
+		{
+			if (out)
+				*out = c - 'A' + 0xA;
+			return true;
+		}
+		else if (c >= 'a' && c <= 'f')
+		{
+			if (out)
+				*out = c - 'a' + 0xa;
+			return true;
+		}
+		else if (c_is_numeric(c, out))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	constexpr auto c_is_alpha(const char c) -> bool
+	{
+		return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+	}
+
+	constexpr auto c_is_alphanumeric(const char c) -> bool
+	{
+		return c_is_alpha(c) || c_is_numeric(c);
 	}
 
 	/*
