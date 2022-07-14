@@ -4,6 +4,8 @@
 #include <khuneo/core/metapp.hpp>
 #include <khuneo/core/contiguous_list.hpp>
 
+// TODO: maybe add option to completely ignore warnings at compile (c++) level
+
 namespace khuneo::compiler::lexer::details
 {
 	/*
@@ -55,11 +57,11 @@ namespace khuneo::compiler::lexer::details
 	// ---------------------------------------------------------------------------------------------------- 
 
 	constexpr char tokens[] = {
-		/*'"',*/ '#',                                           // 34  - 35
+		/*'"',*/ '#',                                               // 34  - 35
 		'%', '&', /*'\'',*/ '(', ')', '*', '+', ',', '-', '.', '/', // 37  - 47
-		':', ';', '<', '=', '>', '?', '@',                      // 58  - 64
-		'[', '\\', ']', '^',                                    // 91  - 94
-		'{', '|', '}', '~'                                      // 123 - 126
+		':', ';', '<', '=', '>', '?', '@',                          // 58  - 64
+		'[', '\\', ']', '^',                                        // 91  - 94
+		'{', '|', '}', '~'                                          // 123 - 126
 	};
 
 	/*
@@ -160,6 +162,7 @@ namespace khuneo::compiler::lexer
 		W_SOURCE_NULL               = 0x7F & 1, // A null character was met in the source buffer before its end
 		W_TOKEN_NODE_REUSE_UNMARKED = 0x7F & 2, // A reused token list has a node that is still mark occupied, when reusing token nodes, all nodes next to current must be marked unoccupied, by ignoring this warning the lexer will force reuse that node which COULD lead to undefined behaviour
 		W_INVALID_TOKEN             = 0x7F & 3, // Could not determine token
+		W_PAST_END                  = 0x7F & 4, // Lexer parsing has ended but the cursor went past the end, this could be a sign of a corrupted buffer, corrupted UTF-8, or a misconfigured contex. It is recommended to NOT ignore this warning
 
 		FATAL_FLAG     = 0x80,
 		F_CORRUPT_UTF8 = 0x80 | 1, // A corrupted utf-8 byte was found in the source buffer
@@ -172,7 +175,6 @@ namespace khuneo::compiler::lexer
 	constexpr auto is_msg_fatal(msg m) -> bool { return khuneo::u8(m) & khuneo::u8(msg::FATAL_FLAG); };
 
 	template <typename lexer_impl> struct run_info;
-	template <typename lexer_impl> struct run_state;
 
 	template <typename lexer_impl>
 	struct msg_callback_info
@@ -181,32 +183,25 @@ namespace khuneo::compiler::lexer
 		msg  message;
 
 		run_info<lexer_impl>  * info;
-		run_state<lexer_impl> * state;
 	};
 
 	// -----------------------------------------------------------------
 
 	template <typename lexer_impl>
-	struct run_state : public metapp::extend_struct_if<lexer_impl::enable_sloc_track, details::sourceloc_tracking_cont>
-	{
-		bool abort;
-		const char * current;
-	};
-
-	template <typename lexer_impl>
-	struct run_info : public metapp::extend_struct_if<lexer_impl::enable_sloc_track, details::sourceloc_tabspacing_cont>
+	struct run_info : public metapp::extend_struct_if<lexer_impl::enable_sloc_track, details::sourceloc_tabspacing_cont>, metapp::extend_struct_if<lexer_impl::enable_sloc_track, details::sourceloc_tracking_cont>
 	{
 		const char * start;
 		const char * end;
+		bool abort;
+		const char * current;
 		cont::contiguous_list<token_node<lexer_impl>, typename lexer_impl::contiguous_list_impl> tokens;
 	};
 
 	template <typename impl>
-	auto run(run_info<impl> * i, run_state<impl> * s = nullptr) -> bool
+	auto run(run_info<impl> * i) -> bool
 	{
 		constexpr bool sloc_tracking = impl::enable_sloc_track; 
 		using allocator              = typename impl::allocator; // metapp::type_if<requires { impl::allocator::alloc(0); }, impl::allocator, details::default_lexer_impl::allocator>::type;
-		using state_t                = run_state<impl>;
 		using token_node_t           = token_node<impl>; 
 
 		/*
@@ -221,18 +216,17 @@ namespace khuneo::compiler::lexer
 				mi.info = i;
 				mi.ignore = false;
 				mi.message = m;
-				mi.state = s;
 
 				impl::lexer_msg_recv(&mi);
 
 				if (is_msg_fatal(mi.message))
 				{
-					s->abort = true;
+					i->abort = true;
 					return true;
 				}
 
-				s->abort = !mi.ignore;
-				return s->abort;
+				i->abort = !mi.ignore;
+				return i->abort;
 			}
 			else
 				return true;
@@ -256,15 +250,15 @@ namespace khuneo::compiler::lexer
 
 			if constexpr (sloc_tracking)
 			{
-				n->line   = s->line;
-				n->column = s->column;
+				n->line   = i->line;
+				n->column = i->column;
 			}
 
 			return n;
 		};
 
 		auto is_end_v = [&](const char * p) -> bool { return p >= i->end; };
-		auto is_end   = [&](int offset = 0) -> bool { return s->current + offset >= i->end; };
+		auto is_end   = [&](int offset = 0) -> bool { return i->current + offset >= i->end; };
 
 		// Processes wording characters such as NULL, \r, \n, and \t
 		auto process_sloc_char = [&](char c) -> bool
@@ -280,28 +274,28 @@ namespace khuneo::compiler::lexer
 				case ' ':
 				{
 					if constexpr (sloc_tracking)
-						++s->column;
+						++i->column;
 					break;
 				}
 				case '\r':
 				{
 					if constexpr (sloc_tracking)
-						s->column = 0;
+						i->column = 0;
 					break;
 				}
 				case '\n':
 				{
 					if constexpr (sloc_tracking)
 					{
-						s->column = 0;
-						++s->line;
+						i->column = 0;
+						++i->line;
 					}
 					break;
 				}
 				case '\t':
 				{
 					if constexpr (sloc_tracking)
-						s->column += i->tab_space_count;
+						i->column += i->tab_space_count;
 					break;
 				}
 				default:
@@ -313,24 +307,9 @@ namespace khuneo::compiler::lexer
 
 		// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
 
-		// Internal state if no state is provided (for recursion)
-		state_t _s;
-		if (!s)
+		while (!is_end() && !i->abort) // LOOP A
 		{
-			s = &_s;
-			s->current       = i->start;
-			s->abort         = false;
-
-			if constexpr (sloc_tracking)
-			{
-				s->column = 0;
-				s->line   = 0;
-			}
-		}
-
-		while (!is_end() && !s->abort) // LOOP A
-		{
-			int csz = khuneo::utf8::csize(*s->current);
+			int csz = khuneo::utf8::csize(*i->current);
 
 			if (csz == 0) // Corrupted byte (no utf8 match) 
 			{
@@ -338,12 +317,12 @@ namespace khuneo::compiler::lexer
 				break; // LOOP A
 			}
 
-			char cc = *s->current; // current character
+			char cc = *i->current; // current character
 
 			// Match hex
 			static constexpr auto is_numeric = [](char c) constexpr -> bool { return c >= '0' && c <= '9'; };
 			static constexpr auto is_hex = [](char c) constexpr -> bool { return is_numeric(c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'); };
-			if (cc == '0' && !is_end(2) && (s->current[1] == 'x' || s->current[1] == 'X') && is_hex(s->current[2]))
+			if (cc == '0' && !is_end(2) && (i->current[1] == 'x' || i->current[1] == 'X') && is_hex(i->current[2]))
 			{
 				static constexpr auto char_to_hex = [](char c) constexpr -> int
 				{
@@ -357,33 +336,33 @@ namespace khuneo::compiler::lexer
 					return -1;
 				};
 
-				s->current += 2;
+				i->current += 2;
 				if constexpr (sloc_tracking)
-					s->column += 2 + 1 /* the one is for the assignment so we dont have to do it later */;
+					i->column += 2 + 1 /* the one is for the assignment so we dont have to do it later */;
 
 				token_node_t * t = extend_tail();
 				if (!t)
 					break; // LOOP A
 
-				t->value.unsigned64 = char_to_hex(*s->current);
+				t->value.unsigned64 = char_to_hex(*i->current);
 				t->type = details::token_type::UNSIGNED64;
 
-				++s->current;
+				++i->current;
 
-				while (!is_end() && is_hex(*s->current))
+				while (!is_end() && is_hex(*i->current))
 				{
 					t->value.unsigned64 *= 16;
-					t->value.unsigned64 += char_to_hex(*s->current);
+					t->value.unsigned64 += char_to_hex(*i->current);
 					if constexpr (sloc_tracking)
-						++s->column;
-					++s->current;
+						++i->column;
+					++i->current;
 				}
 
 				continue; // LOOP A
 			}
 
 			// Match numbers
-			if (bool is_negative = cc == '-'; is_numeric(cc) || is_negative && !is_end(1) && is_numeric(s->current[1]))
+			if (bool is_negative = cc == '-'; is_numeric(cc) || is_negative && !is_end(1) && is_numeric(i->current[1]))
 			{
 				static constexpr auto char_to_num = [](char c) constexpr -> int { return c - '0'; };
 				token_node_t * t = extend_tail();
@@ -392,32 +371,32 @@ namespace khuneo::compiler::lexer
 				t->type = details::token_type::SIGNED64;
 
 				if (is_negative)
-					++s->current;
+					++i->current;
 
-				t->value.signed64 = char_to_num(*s->current);
-				++s->current;
+				t->value.signed64 = char_to_num(*i->current);
+				++i->current;
 
 				if constexpr (sloc_tracking)
-					s->column = is_negative ? 2 : 1;
+					i->column = is_negative ? 2 : 1;
 
 				khuneo::f64 fdec = 1.0;
 				bool stop = is_end();
-				while(!stop && is_numeric(*s->current))
+				while(!stop && is_numeric(*i->current))
 				{
 					t->value.signed64 *= 10;
-					t->value.signed64 += char_to_num(*s->current);
+					t->value.signed64 += char_to_num(*i->current);
 
 					if (t->type == details::token_type::FLOAT64)
 						fdec *= 0.1;
 
-					++s->current;
+					++i->current;
 					if constexpr (sloc_tracking)
-						++s->column;
+						++i->column;
 
-					if (stop = is_end(); !stop && *s->current == '.')
+					if (stop = is_end(); !stop && *i->current == '.')
 					{
 						t->type = details::token_type::FLOAT64;
-						++s->current;
+						++i->current;
 						stop = is_end();
 					}
 				} 
@@ -447,9 +426,9 @@ namespace khuneo::compiler::lexer
 				if (cc != c)
 					continue;
 
-				++s->current;
+				++i->current;
 				if constexpr (sloc_tracking)
-					++s->column;
+					++i->column;
 
 				token_node_t * t = extend_tail();
 				if (!t)
@@ -459,34 +438,34 @@ namespace khuneo::compiler::lexer
 				}
 
 				t->type = details::token_type::STRING;
-				t->value.string.rsource = s->current - i->start;
+				t->value.string.rsource = i->current - i->start;
 
-				while (!is_end() && *s->current != c)
+				while (!is_end() && *i->current != c)
 				{
-					int csz = utf8::csize(*s->current);
+					int csz = utf8::csize(*i->current);
 					if (!csz)
 						continue;
-					s->current += csz;
+					i->current += csz;
 					if constexpr (sloc_tracking)
-						++s->column;
+						++i->column;
 				}
 
-				t->value.string.size = (s->current - i->start) - t->value.string.rsource;
-				++s->current; // skip the final "
+				t->value.string.size = (i->current - i->start) - t->value.string.rsource;
+				++i->current; // skip the final "
 				if constexpr (sloc_tracking)
-					++s->column;
+					++i->column;
 
 				has_matched = true;
 				break; // LOOP B
 			}
 
-			if (s->abort)
+			if (i->abort)
 				break; // LOOP A
 
 			// no need to run check if its a utf8 character because all process_sloc_char matches are ascii
 			if (csz == 1 && process_sloc_char(cc)) 
 			{
-				++s->current;
+				++i->current;
 				continue; // LOOP A
 			}
 
@@ -499,35 +478,35 @@ namespace khuneo::compiler::lexer
 					break; // LOOP A
 				}
 
-				char nc = *(s->current + 1);
+				char nc = *(i->current + 1);
 				if (nc == '/') // single line comment
 				{
-					s->current += 2;
-					while (!is_end() && *s->current != '\n')
-						++s->current;
+					i->current += 2;
+					while (!is_end() && *i->current != '\n')
+						++i->current;
 					continue; // LOOP A // let process_wordings deal with it since we are now at the \n
 				}
 				else if (nc == '*') // multi line comment
 				{
-					s->current += 2;
-					while (!s->abort && !is_end(1) && *s->current != '*' && *(s->current + 1) != '/')
+					i->current += 2;
+					while (!i->abort && !is_end(1) && *i->current != '*' && *(i->current + 1) != '/')
 					{
-						if (process_sloc_char(*s->current))
-							++s->current;
+						if (process_sloc_char(*i->current))
+							++i->current;
 						else
 						{
-							int mlc_csz = khuneo::utf8::csize(*s->current);
+							int mlc_csz = khuneo::utf8::csize(*i->current);
 							if constexpr (sloc_tracking)
-								++s->column;
-							s->current += mlc_csz; 
+								++i->column;
+							i->current += mlc_csz; 
 						}
 					}
 
-					if (*s->current == '*' && *(s->current + 1) == '/')
+					if (*i->current == '*' && *(i->current + 1) == '/')
 					{
-						s->current += 2;
+						i->current += 2;
 						if constexpr (sloc_tracking)
-							s->column += 2;
+							i->column += 2;
 					}
 
 					continue; // LOOP A
@@ -549,14 +528,14 @@ namespace khuneo::compiler::lexer
 				t->type = details::token_type::TOKEN;
 				t->value.token = cc;
 
-				s->current += csz;
+				i->current += csz;
 				if constexpr (sloc_tracking)
-					++s->column;
+					++i->column;
 				matched = true;
 				break; // LOOP B
 			}
 
-			if (s->abort)
+			if (i->abort)
 				break; // LOOP A
 
 			if (matched)
@@ -565,7 +544,7 @@ namespace khuneo::compiler::lexer
 			// Match keyword
 			for (int ikw = 0; ikw < metapp::array_size(details::keywords); ++ikw) // LOOP B
 			{
-				const char * c  = s->current;
+				const char * c  = i->current;
 				const char * kw = details::keywords[ikw];
 
 				while (*kw && *c) // LOOP C
@@ -588,18 +567,18 @@ namespace khuneo::compiler::lexer
 						int size = kw - details::keywords[ikw];
 						
 						if constexpr (sloc_tracking)
-							s->column += utf8::slength(s->current, s->current + size);
-						s->current += size;
+							i->column += utf8::slength(i->current, i->current + size);
+						i->current += size;
 						matched = true;
 						break; // LOOP C
 					}
 				}
 
-				if (matched || s->abort)
+				if (matched || i->abort)
 					break; // LOOP B
 			}
 
-			if (s->abort)
+			if (i->abort)
 				break; // LOOP A
 
 			if (matched)
@@ -628,15 +607,15 @@ namespace khuneo::compiler::lexer
 					break; // LOOP A
 
 				t->type = details::token_type::SYMBOL;
-				t->value.symbol.rsource = s->current - i->start;
+				t->value.symbol.rsource = i->current - i->start;
 				t->value.symbol.size    = csymlen;
 
 				do
 				{
 					if constexpr (sloc_tracking)
-						++s->column;
-					s->current += csymlen;
-					csymlen = is_valid_symbolchar(*s->current, true);
+						++i->column;
+					i->current += csymlen;
+					csymlen = is_valid_symbolchar(*i->current, true);
 					t->value.symbol.size += csymlen;
 				} while(!is_end() && csymlen);
 
@@ -646,20 +625,23 @@ namespace khuneo::compiler::lexer
 			// No matches
 			if (!send_msg(msg::W_INVALID_TOKEN))
 			{
-				++s->current;
+				++i->current;
 				if constexpr (sloc_tracking)
-					++s->column;
+					++i->column;
 				continue;
 			}
 
 			return false;
 		}
 
-		if (s->abort)
+		if (i->abort)
 		{
 			send_msg(msg::F_ABORTED);
 			return false;
 		}
+
+		if (i->current != i->end && send_msg(msg::W_PAST_END))
+			return false;	
 
 		return true;
 	}
