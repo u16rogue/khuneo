@@ -6,39 +6,49 @@
 
 // TODO: maybe add option to completely ignore warnings at compile (c++) level
 
+namespace khuneo::compiler::lexer
+{
+	namespace details
+	{
+		/*
+		*  This is the default implementation used by the lexer, you can use this or derive from it since C++
+		*  allows overloading you can simply inherit this structure and override specific parts if you don't
+		*  want to implement it from scratch
+		*  e.g. Enabling receiving messages from the lexer
+		*  struct my_impl : public khuneo::compiler::lexer::details::default_lexer_impl
+		*  {
+		*		static auto lexer_msg_recv(khuneo::compiler::lexer::msg_callback_info<my_impl> * mi) -> void
+		*		{
+		*		}
+		*  }
+		*  ...
+		*  khuneo::compiler::lexer::run<my_impl>(...);
+		*/
+		struct default_lexer_impl
+		{
+			static constexpr bool enable_sloc_track = true;                                                // Toggles if the lexer should keep track of lines and column of each token
+			using allocator                         = khuneo::details::kh_basic_allocator<>;               // Defines the allocator to be used
+			using contiguous_list_impl              = khuneo::cont::details::default_contiguous_list_impl; // Defines the implementation used by the contiguous list container
+			// static auto lexer_msg_recv(msg_callback_info<enable_sloc_track> * mi) -> void { };          // Lexer message receiver callback
+
+			using signed_tok_t   = khuneo::i64; // Type of the signed token
+			using unsigned_tok_t = khuneo::u64; // Type of the unsigned token
+			using float_tok_t    = khuneo::f64; // Type of the floating point token
+
+			static constexpr float_tok_t  float_tok_pos  =  1.0; // Positive 1 value for floating point type
+			static constexpr float_tok_t  float_tok_neg  = -1.0; // Negation value for floating point type
+			static constexpr float_tok_t  float_tok_dec  =  0.1; // Decimal multiplier value for floating point type
+			static constexpr signed_tok_t signed_tok_neg = -1; // Negation value for signed type
+		};
+	}
+
+	template <typename lexer_impl> struct run_info;
+	template <typename lexer_impl> struct msg_callback_info;
+	enum class msg : khuneo::u8;
+}
+
 namespace khuneo::compiler::lexer::details
 {
-	/*
-	*  This is the default implementation used by the lexer, you can use this or derive from it since C++
-	*  allows overloading you can simply inherit this structure and override specific parts if you don't
-	*  want to implement it from scratch
-	*  e.g. Enabling receiving messages from the lexer
-	*  struct my_impl : public khuneo::compiler::lexer::details::default_lexer_impl
-	*  {
-	*		static auto lexer_msg_recv(khuneo::compiler::lexer::msg_callback_info<my_impl> * mi) -> void
-	*		{
-	*		}
-	*  }
-	*  ...
-	*  khuneo::compiler::lexer::run<my_impl>(...);
-	*/
-	struct default_lexer_impl
-	{
-		static constexpr bool enable_sloc_track = true;                                                // Toggles if the lexer should keep track of lines and column of each token
-		using allocator                         = khuneo::details::kh_basic_allocator<>;               // Defines the allocator to be used
-		using contiguous_list_impl              = khuneo::cont::details::default_contiguous_list_impl; // Defines the implementation used by the contiguous list container
-		// static auto lexer_msg_recv(msg_callback_info<enable_sloc_track> * mi) -> void { };          // Lexer message receiver callback
-
-		using signed_tok_t   = khuneo::i64; // Type of the signed token
-		using unsigned_tok_t = khuneo::u64; // Type of the unsigned token
-		using float_tok_t    = khuneo::f64; // Type of the floating point token
-
-		static constexpr float_tok_t  float_tok_pos  =  1.0; // Positive 1 value for floating point type
-		static constexpr float_tok_t  float_tok_neg  = -1.0; // Negation value for floating point type
-		static constexpr float_tok_t  float_tok_dec  =  0.1; // Decimal multiplier value for floating point type
-		static constexpr signed_tok_t signed_tok_neg = -1; // Negation value for signed type
-	};
-
 	// Classifies a token
 	enum class token_type : khuneo::u8
 	{
@@ -121,6 +131,35 @@ namespace khuneo::compiler::lexer::details
 	{
 		khuneo::u8 tab_space_count;
 	};
+
+	/*
+	* Generates a lexer message
+	* Returns true if treated as fatal and returns false if it should be ignored 
+	*/
+	template <typename lexer_impl>
+	constexpr auto send_msg(run_info<lexer_impl> * i, msg m) -> bool
+	{
+		if constexpr (requires { lexer_impl::lexer_msg_recv(0); })
+		{
+			msg_callback_info<lexer_impl> mi;
+			mi.info = i;
+			mi.ignore = false;
+			mi.message = m;
+
+			lexer_impl::lexer_msg_recv(&mi);
+
+			if (is_msg_fatal(mi.message))
+			{
+				i->abort = true;
+				return true;
+			}
+
+			i->abort = !mi.ignore;
+			return i->abort;
+		}
+		else
+			return true;
+	}
 }
 
 namespace khuneo::compiler::lexer
@@ -173,7 +212,6 @@ namespace khuneo::compiler::lexer
 
 	constexpr auto is_msg_fatal(msg m) -> bool { return khuneo::u8(m) & khuneo::u8(msg::FATAL_FLAG); };
 
-	template <typename lexer_impl> struct run_info;
 
 	template <typename lexer_impl>
 	struct msg_callback_info
@@ -204,34 +242,6 @@ namespace khuneo::compiler::lexer
 		using token_node_t           = token_node<impl>; 
 
 		/*
-		* Generates a lexer message
-		* Returns true if treated as fatal and returns false if it should be ignored 
-		*/
-		auto send_msg = [&](msg m) -> bool 
-		{
-			if constexpr (requires { impl::lexer_msg_recv(0); })
-			{
-				msg_callback_info<impl> mi;
-				mi.info = i;
-				mi.ignore = false;
-				mi.message = m;
-
-				impl::lexer_msg_recv(&mi);
-
-				if (is_msg_fatal(mi.message))
-				{
-					i->abort = true;
-					return true;
-				}
-
-				i->abort = !mi.ignore;
-				return i->abort;
-			}
-			else
-				return true;
-		};
-
-		/*
 		*  Extends the current token_node list by linking it to the current and replacing current with it
 		*  ! This will already send an alloc fail exception, immediately abort upon fail, no need to send your own exception
 		*  ! Automatically initializes line, column field. type and value should be provided by the caller
@@ -241,7 +251,7 @@ namespace khuneo::compiler::lexer
 			token_node_t * n = i->tokens.append();
 			if (!n)
 			{
-				send_msg(msg::F_ALLOC_FAIL);
+				details::send_msg(i, msg::F_ALLOC_FAIL);
 				return nullptr;
 			}
 
@@ -266,7 +276,7 @@ namespace khuneo::compiler::lexer
 			{
 				case '\0':
 				{
-					if (send_msg(msg::W_SOURCE_NULL))
+					if (details::send_msg(i, msg::W_SOURCE_NULL))
 						return false;
 					break;
 				}
@@ -312,7 +322,7 @@ namespace khuneo::compiler::lexer
 
 			if (csz == 0) // Corrupted byte (no utf8 match) 
 			{
-				send_msg(msg::F_CORRUPT_UTF8);
+				details::send_msg(i, msg::F_CORRUPT_UTF8);
 				break; // LOOP A
 			}
 
@@ -396,7 +406,7 @@ namespace khuneo::compiler::lexer
 					{
 						if (t->type == details::token_type::FLOAT)
 						{
-							send_msg(msg::F_SYNTAX_ERROR);
+							details::send_msg(i, msg::F_SYNTAX_ERROR);
 							break; // LOOP B
 						}
 						t->type = details::token_type::FLOAT;
@@ -481,7 +491,7 @@ namespace khuneo::compiler::lexer
 			{
 				if (is_end(1))
 				{
-					send_msg(msg::F_SYNTAX_ERROR);
+					details::send_msg(i, msg::F_SYNTAX_ERROR);
 					break; // LOOP A
 				}
 
@@ -630,7 +640,7 @@ namespace khuneo::compiler::lexer
 			}
 
 			// No matches
-			if (!send_msg(msg::W_INVALID_TOKEN))
+			if (!details::send_msg(i, msg::W_INVALID_TOKEN))
 			{
 				++i->current;
 				if constexpr (sloc_tracking)
@@ -643,11 +653,11 @@ namespace khuneo::compiler::lexer
 
 		if (i->abort)
 		{
-			send_msg(msg::F_ABORTED);
+			details::send_msg(i, msg::F_ABORTED);
 			return false;
 		}
 
-		if (i->current != i->end && send_msg(msg::W_PAST_END))
+		if (i->current != i->end && details::send_msg(i, msg::W_PAST_END))
 			return false;	
 
 		return true;
