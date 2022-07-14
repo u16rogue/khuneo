@@ -160,6 +160,13 @@ namespace khuneo::compiler::lexer::details
 		else
 			return true;
 	}
+
+	template <typename lexer_impl>
+	constexpr auto is_end(run_info<lexer_impl> * i, const char * p) -> bool { return p >= i->end; };
+
+	template <typename lexer_impl>
+	constexpr auto is_end(run_info<lexer_impl> * i, int offset = 0) -> bool { return i->current + offset >= i->end; };
+
 }
 
 namespace khuneo::compiler::lexer
@@ -266,8 +273,7 @@ namespace khuneo::compiler::lexer
 			return n;
 		};
 
-		auto is_end_v = [&](const char * p) -> bool { return p >= i->end; };
-		auto is_end   = [&](int offset = 0) -> bool { return i->current + offset >= i->end; };
+		
 
 		// Processes wording characters such as NULL, \r, \n, and \t
 		auto process_sloc_char = [&](char c) -> bool
@@ -316,7 +322,7 @@ namespace khuneo::compiler::lexer
 
 		// -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
 
-		while (!is_end() && !i->abort) // LOOP A
+		while (!details::is_end(i) && !i->abort) // LOOP A
 		{
 			int csz = khuneo::utf8::csize(*i->current);
 
@@ -331,7 +337,7 @@ namespace khuneo::compiler::lexer
 			// Match hex
 			static constexpr auto is_numeric = [](char c) constexpr -> bool { return c >= '0' && c <= '9'; };
 			static constexpr auto is_hex = [](char c) constexpr -> bool { return is_numeric(c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'); };
-			if (cc == '0' && !is_end(2) && (i->current[1] == 'x' || i->current[1] == 'X') && is_hex(i->current[2]))
+			if (cc == '0' && !details::is_end(i, 2) && (i->current[1] == 'x' || i->current[1] == 'X') && is_hex(i->current[2]))
 			{
 				static constexpr auto char_to_hex = [](char c) constexpr -> int
 				{
@@ -358,7 +364,7 @@ namespace khuneo::compiler::lexer
 
 				++i->current;
 
-				while (!is_end() && is_hex(*i->current))
+				while (!details::is_end(i) && is_hex(*i->current))
 				{
 					t->value.unsignedn *= 16;
 					t->value.unsignedn += char_to_hex(*i->current);
@@ -371,7 +377,7 @@ namespace khuneo::compiler::lexer
 			}
 
 			// Match numbers
-			if (bool is_negative = cc == '-'; is_numeric(cc) || is_negative && !is_end(1) && is_numeric(i->current[1]))
+			if (bool is_negative = cc == '-'; is_numeric(cc) || is_negative && !details::is_end(i, 1) && is_numeric(i->current[1]))
 			{
 				static constexpr auto char_to_num = [](char c) constexpr -> int { return c - '0'; };
 				token_node_t * t = extend_tail();
@@ -389,7 +395,7 @@ namespace khuneo::compiler::lexer
 					i->column = is_negative ? 2 : 1;
 
 				typename impl::float_tok_t fdec = impl::float_tok_pos;
-				bool stop = is_end();
+				bool stop = details::is_end(i);
 				while(!stop && is_numeric(*i->current)) // LOOP B
 				{
 					t->value.signedn *= 10;
@@ -402,7 +408,7 @@ namespace khuneo::compiler::lexer
 					if constexpr (sloc_tracking)
 						++i->column;
 
-					if (stop = is_end(); !stop && *i->current == '.')
+					if (stop = details::is_end(i); !stop && *i->current == '.')
 					{
 						if (t->type == details::token_type::FLOAT)
 						{
@@ -411,7 +417,7 @@ namespace khuneo::compiler::lexer
 						}
 						t->type = details::token_type::FLOAT;
 						++i->current;
-						stop = is_end();
+						stop = details::is_end(i);
 					}
 				} 
 
@@ -457,7 +463,7 @@ namespace khuneo::compiler::lexer
 				t->type = details::token_type::STRING;
 				t->value.string.rsource = i->current - i->start;
 
-				while (!is_end() && *i->current != c)
+				while (!details::is_end(i) && *i->current != c)
 				{
 					int csz = utf8::csize(*i->current);
 					if (!csz)
@@ -489,7 +495,7 @@ namespace khuneo::compiler::lexer
 			// Process if possibly a comment
 			if (csz == 1 && cc == '/') 
 			{
-				if (is_end(1))
+				if (details::is_end(i, 1))
 				{
 					details::send_msg(i, msg::F_SYNTAX_ERROR);
 					break; // LOOP A
@@ -499,14 +505,14 @@ namespace khuneo::compiler::lexer
 				if (nc == '/') // single line comment
 				{
 					i->current += 2;
-					while (!is_end() && *i->current != '\n')
+					while (!details::is_end(i) && *i->current != '\n')
 						++i->current;
 					continue; // LOOP A // let process_wordings deal with it since we are now at the \n
 				}
 				else if (nc == '*') // multi line comment
 				{
 					i->current += 2;
-					while (!i->abort && !is_end(1) && *i->current != '*' && *(i->current + 1) != '/')
+					while (!i->abort && !details::is_end(i, 1) && *i->current != '*' && *(i->current + 1) != '/')
 					{
 						if (process_sloc_char(*i->current))
 							++i->current;
@@ -566,7 +572,7 @@ namespace khuneo::compiler::lexer
 
 				while (*kw && *c) // LOOP C
 				{
-					if (*kw != *c || is_end_v(c))
+					if (*kw != *c || details::is_end(i, c))
 						break; // LOOP C
 
 					++kw;
@@ -617,7 +623,7 @@ namespace khuneo::compiler::lexer
 				return 0;
 			};
 
-			if (int csymlen = is_valid_symbolchar(cc, false); csymlen && !is_end(csymlen))
+			if (int csymlen = is_valid_symbolchar(cc, false); csymlen && !details::is_end(i, csymlen))
 			{
 				token_node_t * t = extend_tail();
 				if (!t)
@@ -634,7 +640,7 @@ namespace khuneo::compiler::lexer
 					i->current += csymlen;
 					csymlen = is_valid_symbolchar(*i->current, true);
 					t->value.symbol.size += csymlen;
-				} while(!is_end() && csymlen);
+				} while(!details::is_end(i) && csymlen);
 
 				continue; // LOOP A
 			}
