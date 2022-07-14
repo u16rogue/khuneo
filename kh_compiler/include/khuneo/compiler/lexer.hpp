@@ -29,15 +29,14 @@ namespace khuneo::compiler::lexer::details
 		using contiguous_list_impl              = khuneo::cont::details::default_contiguous_list_impl; // Defines the implementation used by the contiguous list container
 		// static auto lexer_msg_recv(msg_callback_info<enable_sloc_track> * mi) -> void { };          // Lexer message receiver callback
 
-		// TODO: decide whether we should make token literal types an implementation option
-		/*
 		using signed_tok_t   = khuneo::i64; // Type of the signed token
 		using unsigned_tok_t = khuneo::u64; // Type of the unsigned token
 		using float_tok_t    = khuneo::f64; // Type of the floating point token
 
-		static constexpr khuneo::f64 float_tok_neg  = -1.0;
-		static constexpr khuneo::i64 signed_tok_neg =  1.0;
-		*/
+		static constexpr float_tok_t  float_tok_pos  =  1.0; // Positive 1 value for floating point type
+		static constexpr float_tok_t  float_tok_neg  = -1.0; // Negation value for floating point type
+		static constexpr float_tok_t  float_tok_dec  =  0.1; // Decimal multiplier value for floating point type
+		static constexpr signed_tok_t signed_tok_neg = -1; // Negation value for signed type
 	};
 
 	// Classifies a token
@@ -49,9 +48,9 @@ namespace khuneo::compiler::lexer::details
 		KEYWORD,
 		TOKEN,
 		STRING,
-		SIGNED64,
-		UNSIGNED64,
-		FLOAT64,
+		SIGNED,
+		UNSIGNED,
+		FLOAT,
 	};
 
 	// ---------------------------------------------------------------------------------------------------- 
@@ -140,9 +139,9 @@ namespace khuneo::compiler::lexer
 			} symbol, string;
 
 			char token;
-			khuneo::i64 signed64;
-			khuneo::u64 unsigned64;
-			khuneo::f64 float64;
+			typename lexer_impl::signed_tok_t   signedn;
+			typename lexer_impl::unsigned_tok_t unsignedn;
+			typename lexer_impl::float_tok_t    floatn;
 			details::keyword keyword;
 
 		} value;
@@ -344,15 +343,15 @@ namespace khuneo::compiler::lexer
 				if (!t)
 					break; // LOOP A
 
-				t->value.unsigned64 = char_to_hex(*i->current);
-				t->type = details::token_type::UNSIGNED64;
+				t->value.unsignedn = char_to_hex(*i->current);
+				t->type = details::token_type::UNSIGNED;
 
 				++i->current;
 
 				while (!is_end() && is_hex(*i->current))
 				{
-					t->value.unsigned64 *= 16;
-					t->value.unsigned64 += char_to_hex(*i->current);
+					t->value.unsignedn *= 16;
+					t->value.unsignedn += char_to_hex(*i->current);
 					if constexpr (sloc_tracking)
 						++i->column;
 					++i->current;
@@ -368,26 +367,26 @@ namespace khuneo::compiler::lexer
 				token_node_t * t = extend_tail();
 				if (!t)
 					break; // LOOP A
-				t->type = details::token_type::SIGNED64;
+				t->type = details::token_type::SIGNED;
 
 				if (is_negative)
 					++i->current;
 
-				t->value.signed64 = char_to_num(*i->current);
+				t->value.signedn = char_to_num(*i->current);
 				++i->current;
 
 				if constexpr (sloc_tracking)
 					i->column = is_negative ? 2 : 1;
 
-				khuneo::f64 fdec = 1.0;
+				typename impl::float_tok_t fdec = impl::float_tok_pos;
 				bool stop = is_end();
-				while(!stop && is_numeric(*i->current))
+				while(!stop && is_numeric(*i->current)) // LOOP B
 				{
-					t->value.signed64 *= 10;
-					t->value.signed64 += char_to_num(*i->current);
+					t->value.signedn *= 10;
+					t->value.signedn += char_to_num(*i->current);
 
-					if (t->type == details::token_type::FLOAT64)
-						fdec *= 0.1;
+					if (t->type == details::token_type::FLOAT)
+						fdec *= impl::float_tok_dec;
 
 					++i->current;
 					if constexpr (sloc_tracking)
@@ -395,24 +394,32 @@ namespace khuneo::compiler::lexer
 
 					if (stop = is_end(); !stop && *i->current == '.')
 					{
-						t->type = details::token_type::FLOAT64;
+						if (t->type == details::token_type::FLOAT)
+						{
+							send_msg(msg::F_SYNTAX_ERROR);
+							break; // LOOP B
+						}
+						t->type = details::token_type::FLOAT;
 						++i->current;
 						stop = is_end();
 					}
 				} 
 
-				if (t->type == details::token_type::FLOAT64)
+				if (i->abort)
+					break; // LOOP A
+
+				if (t->type == details::token_type::FLOAT)
 				{
-					t->value.float64 = static_cast<khuneo::f64>(t->value.signed64);
-					t->value.float64 *= fdec;
+					t->value.floatn = static_cast<typename impl::float_tok_t>(t->value.signedn);
+					t->value.floatn *= fdec;
 				}
 
 				if (is_negative)
 				{
-					if (t->type == details::token_type::SIGNED64)
-						t->value.signed64 *= -1;
-					else if (t->type == details::token_type::FLOAT64)
-						t->value.float64 *= -1.0;
+					if (t->type == details::token_type::SIGNED)
+						t->value.signedn *= impl::signed_tok_neg;
+					else if (t->type == details::token_type::FLOAT)
+						t->value.floatn *= impl::float_tok_neg;
 				}
 
 				continue; // LOOP A
