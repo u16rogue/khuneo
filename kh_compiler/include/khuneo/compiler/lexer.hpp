@@ -5,6 +5,7 @@
 #include <khuneo/core/contiguous_list.hpp>
 
 // TODO: maybe add option to completely ignore warnings at compile (c++) level
+// TODO: fix column tracking
 
 namespace khuneo::compiler::lexer
 {
@@ -207,11 +208,11 @@ namespace khuneo::compiler::lexer::details
 
 		n->value = { 0 };
 
-		if constexpr (lexer_impl::enable_sloc_track)
+		KHUNEO_METAPP_IF_CONSTEXPR_DO_BLOCK(
 		{
 			n->line = i->line;
 			n->column = i->column;
-		}
+		});
 
 		return n;
 	};
@@ -239,29 +240,26 @@ namespace khuneo::compiler::lexer::details
 		{
 			case ' ':
 			{
-				if constexpr (lexer_impl::enable_sloc_track)
-					++i->column;
+				KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
 				break;
 			}
 			case '\r':
 			{
-				if constexpr (lexer_impl::enable_sloc_track)
-					i->column = 1;
+				KHUNEO_METAPP_IF_CONSTEXPR_DO(i->column = 1);
 				break;
 			}
 			case '\n':
 			{
-				if constexpr (lexer_impl::enable_sloc_track)
+				KHUNEO_METAPP_IF_CONSTEXPR_DO_BLOCK(
 				{
 					i->column = 1;
 					++i->line;
-				}
+				});
 				break;
 			}
 			case '\t':
 			{
-				if constexpr (lexer_impl::enable_sloc_track)
-					i->column += i->tab_space_count;
+				KHUNEO_METAPP_IF_CONSTEXPR_DO(i->column += i->tab_space_count);
 				break;
 			}
 			default:
@@ -280,8 +278,7 @@ namespace khuneo::compiler::lexer::details
 			return iresp::PASS;
 
 		i->current += 2;
-		if constexpr (lexer_impl::enable_sloc_track)
-			i->column += 2 + 1 /* the one is for the assignment so we dont have to do it later */;
+		KHUNEO_METAPP_IF_CONSTEXPR_DO(i->column += 2 + 1); /* the one is for the assignment so we dont have to do it later */;
 
 		token_node<lexer_impl> * t = details::extend_tail(i);
 		if (!t)
@@ -296,8 +293,7 @@ namespace khuneo::compiler::lexer::details
 		{
 			t->value.unsignedn *= 16;
 			t->value.unsignedn += hex_value;
-			if constexpr (lexer_impl::enable_sloc_track)
-				++i->column;
+			KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
 			++i->current;
 		}
 
@@ -324,8 +320,7 @@ namespace khuneo::compiler::lexer::details
 		t->value.signedn = numval;
 		++i->current;
 
-		if constexpr (lexer_impl::enable_sloc_track)
-			i->column = is_negative ? 2 : 1;
+		KHUNEO_METAPP_IF_CONSTEXPR_DO(i->column = is_negative ? 2 : 1);
 
 		typename lexer_impl::float_tok_t fdec = lexer_impl::float_tok_pos;
 		bool stop = details::is_end(i);
@@ -338,8 +333,7 @@ namespace khuneo::compiler::lexer::details
 				fdec *= lexer_impl::float_tok_dec;
 
 			++i->current;
-			if constexpr (lexer_impl::enable_sloc_track)
-				++i->column;
+			KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
 
 			if (stop = details::is_end(i); !stop && i->current[0] == '.')
 			{
@@ -382,8 +376,7 @@ namespace khuneo::compiler::lexer::details
 				continue;
 
 			++i->current;
-			if constexpr (lexer_impl::enable_sloc_track)
-				++i->column;
+			KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
 
 			token_node<lexer_impl> * t = details::extend_tail(i);
 			if (!t)
@@ -398,14 +391,12 @@ namespace khuneo::compiler::lexer::details
 				if (!csz)
 					continue;
 				i->current += csz;
-				if constexpr (lexer_impl::enable_sloc_track)
-					++i->column;
+				KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
 			}
 
 			t->value.string.size = (i->current - i->start) - t->value.string.rsource;
 			++i->current; // skip the final "
-			if constexpr (lexer_impl::enable_sloc_track)
-				++i->column;
+			KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
 
 			return iresp::OK;
 		}
@@ -453,8 +444,7 @@ namespace khuneo::compiler::lexer::details
 				else
 				{
 					int mlc_csz = khuneo::utf8::csize(i->current[0]);
-					if constexpr (lexer_impl::enable_sloc_track)
-						++i->column;
+					KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
 					i->current += mlc_csz; 
 				}
 			}
@@ -462,8 +452,7 @@ namespace khuneo::compiler::lexer::details
 			if (i->current[0] == '*' && i->current[1] == '/')
 			{
 				i->current += 2;
-				if constexpr (lexer_impl::enable_sloc_track)
-					i->column += 2;
+				KHUNEO_METAPP_IF_CONSTEXPR_DO(i->column += 2);
 			}
 
 			return iresp::OK;
@@ -488,8 +477,7 @@ namespace khuneo::compiler::lexer::details
 			t->value.token = i->current[0];
 
 			i->current += utf8::csize(t->value.token);
-			if constexpr (lexer_impl::enable_sloc_track)
-				++i->column;
+			KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
 			return iresp::OK;
 		}
 
@@ -523,8 +511,7 @@ namespace khuneo::compiler::lexer::details
 					t->value.keyword = details::keyword(ikw + 1 /*0 is UNDEFINED in enum*/);
 					int size = kw - details::keywords[ikw];
 					
-					if constexpr (lexer_impl::enable_sloc_track)
-						i->column += utf8::slength(i->current, i->current + size);
+					KHUNEO_METAPP_IF_CONSTEXPR_DO(i->column += utf8::slength(i->current, i->current + size));
 					i->current += size;
 					return iresp::OK;
 				}
@@ -564,8 +551,7 @@ namespace khuneo::compiler::lexer::details
 
 			do
 			{
-				if constexpr (lexer_impl::enable_sloc_track)
-					++i->column;
+				KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
 				i->current += csymlen;
 				csymlen = is_valid_symbolchar(i->current[0], true);
 				t->value.symbol.size += csymlen;

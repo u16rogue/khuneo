@@ -1,5 +1,13 @@
 #pragma once
 
+#define KHUNEO_METAPP_IF_CONSTEXPR_DO(expr) \
+	if constexpr (requires { expr; }) \
+		expr
+
+#define KHUNEO_METAPP_IF_CONSTEXPR_DO_BLOCK(expr) \
+	if constexpr (requires expr) \
+		expr
+
 namespace khuneo::metapp::details
 {
 	struct empty_struct {};
