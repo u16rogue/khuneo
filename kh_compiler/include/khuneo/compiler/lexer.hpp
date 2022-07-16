@@ -199,7 +199,7 @@ namespace khuneo::compiler::lexer::details
 	template <typename lexer_impl>
 	constexpr auto extend_tail(run_info<lexer_impl> * i) -> token_node<lexer_impl> *
 	{
-		token_node<lexer_impl> * n = i->tokens.append();
+		token_node<lexer_impl> * n = cont::contiguous_list<token_node<lexer_impl>, typename lexer_impl::contiguous_list_impl>::append(&i->tokens);
 		if (!n)
 		{
 			details::send_msg(i, msg::F_ALLOC_FAIL);
@@ -590,7 +590,7 @@ namespace khuneo::compiler::lexer
 			{
 				khuneo::u32 rsource; // Relative source - offset to the matched token
 				khuneo::u32 size;
-			} symbol, string;
+			} symbol, string, arb;
 
 			char token;
 			typename lexer_impl::signed_tok_t   signedn;
@@ -629,10 +629,6 @@ namespace khuneo::compiler::lexer
 	template <typename impl>
 	auto run(run_info<impl> * i) -> bool
 	{
-		constexpr bool sloc_tracking = impl::enable_sloc_track; 
-		using allocator              = typename impl::allocator; // metapp::type_if<requires { impl::allocator::alloc(0); }, impl::allocator, details::default_lexer_impl::allocator>::type;
-		using token_node_t           = token_node<impl>; 
-
 		while (!details::is_end(i) && !i->abort) // LOOP A
 		{
 			if (utf8::csize(*i->current) == 0) // Corrupted byte (no utf8 match) 
@@ -653,13 +649,12 @@ namespace khuneo::compiler::lexer
 
 			if (response == details::iresp::ABORT)
 				break; // LOOP A
-			else if (response == details::iresp::PASS) // No match
+			else if (response == details::iresp::PASS) // If its still PASS that means there was no match
 			{
 				if (details::send_msg(i, msg::W_INVALID_TOKEN))
 					break; // LOOP A
 				++i->current;
-				if constexpr (sloc_tracking)
-					++i->column;
+				KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
 			}
 		}
 
