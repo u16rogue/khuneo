@@ -33,7 +33,14 @@ namespace khuneo::cont
 		// This will only destroy the internal data, if self is heap allocated it must be free'd externally
 		static auto destruct(self_t * self) -> bool
 		{
-			return allocator::dealloc(self->data, count_to_bytes(self->real_count));
+			bool r = allocator::dealloc(self->data, count_to_bytes(self->real_count));
+			if (r)
+			{
+				self->used_count = 0;
+				self->real_count = 0;
+				self->data = nullptr;
+			}
+			return r;
 		}
 
 		auto destruct() -> bool { return destruct(this); }
@@ -88,7 +95,7 @@ namespace khuneo::cont
 					new_data[i] = self->data[i];
 
 				// Should panic here, new_data memory leak!
-				// TODO: implement this better
+				// TODO: possible memory leak, implement this better
 				if (!allocator::dealloc(self->data, count_to_bytes(self->real_count)))
 					return false;
 			}

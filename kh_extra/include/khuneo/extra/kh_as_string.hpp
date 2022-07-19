@@ -18,9 +18,6 @@ namespace khuneo
 
 namespace khuneo::extra
 {
-
-
-
 	#ifdef KH_EXTRA_COMPILER_AVAILABLE
 
 	constexpr auto msg_string(khuneo::compiler::lexer::msg m) -> const char *
@@ -36,8 +33,8 @@ namespace khuneo::extra
 			"A corrupted UTF-8 byte was found in the source buffer",
 			"Invalid syntax",
 			"Operation aborted due to an error",
-			"Failed to allocate memory",
-			"A fatal error occured but it was not clear as to why. This error could be used by the developer for features in production and is under development."
+			"Failed to allocate/deallocate memory, this should be taken seriously as a possible memory leak has occured",
+			"A fatal error occured but it was not clear as to why. This error could be used by the developer for features in production and is under development"
 		};
 
 		const char ** msg_source[] = { (const char **)msg_map_warning, (const char **)msg_map_fatal };

@@ -61,7 +61,7 @@ namespace khuneo::compiler::lexer
 		F_CORRUPT_UTF8 = 0x80 | 1, // A corrupted utf-8 byte was found in the source buffer
 		F_SYNTAX_ERROR = 0x80 | 2, // Invalid syntax
 		F_ABORTED      = 0x80 | 3, // Operation aborted due to an error
-		F_ALLOC_FAIL   = 0x80 | 4, // Failed to allocate memory
+		F_ALLOC_FAIL   = 0x80 | 4, // Failed to allocate/deallocate memory, this should be taken seriously as a possible memory leak has occured. // Handle this through your own kh_alloc implementation.
 		F_UNKNOWN      = 0x80 | 5, // A fatal error occured but it was not clear as to why. This error could be used by the developer for features in production and is under development.
 	};
 
@@ -199,7 +199,7 @@ namespace khuneo::compiler::lexer::details
 	template <typename lexer_impl>
 	constexpr auto extend_tail(run_info<lexer_impl> * i) -> token_node<lexer_impl> *
 	{
-		token_node<lexer_impl> * n = cont::contiguous_list<token_node<lexer_impl>, typename lexer_impl::contiguous_list_impl>::append(&i->tokens);
+		token_node<lexer_impl> * n = cont::contiguous_list<token_node<lexer_impl>, typename lexer_impl::contiguous_list_impl>::append(i->tokens);
 		if (!n)
 		{
 			details::send_msg(i, msg::F_ALLOC_FAIL);
@@ -623,7 +623,7 @@ namespace khuneo::compiler::lexer
 		const char * end;
 		bool abort;
 		const char * current;
-		cont::contiguous_list<token_node<lexer_impl>, typename lexer_impl::contiguous_list_impl> tokens;
+		cont::contiguous_list<token_node<lexer_impl>, typename lexer_impl::contiguous_list_impl> * tokens;
 	};
 
 	template <typename impl>
