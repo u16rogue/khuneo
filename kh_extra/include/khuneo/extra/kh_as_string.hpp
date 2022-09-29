@@ -81,6 +81,7 @@ namespace khuneo::extra
 			"SIGNED",
 			"UNSIGNED",
 			"FLOAT",
+			"LAZY_UNEVAL"
 		};
 
 		return ttype_map[int(t->type)]; 
@@ -120,6 +121,7 @@ namespace khuneo::extra
 			}
 			case lx::token_type::STRING:
 			case lx::token_type::SYMBOL:
+			case lx::token_type::LAZY_UNEVAL:
 			{
 				if (!info)
 				{

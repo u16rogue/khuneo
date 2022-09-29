@@ -480,6 +480,65 @@ namespace khuneo::compiler::lexer::details
 
 			i->current += utf8::csize(t->value.token);
 			KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
+
+			if constexpr (lexer_impl::lazy_eval)
+			{
+				// Check for groupings such as (), {}, etc
+				char end_tok = '\0';
+				switch (tok)
+				{
+					case '(':
+						end_tok = ')';
+						break;
+					case '{':
+						end_tok = '}';
+						break;
+				}
+
+				if (end_tok)
+				{
+					t = details::extend_tail(i);
+					const char * start = i->current;
+					int scope_count = 1;
+					while (!is_end(i))
+					{
+						auto c_size = khuneo::utf8::csize(i->current[0]);
+						if (i->current[0] == end_tok)
+						{
+							KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
+							--scope_count;
+							if (scope_count == 0)
+								break;
+							i->current += c_size;
+							continue;
+						}
+						else if (i->current[0] == tok)
+						{
+							i->current += c_size;
+							KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
+							++scope_count;
+						}
+						else
+						{
+							if (process_sloc_char(i, i->current[0]) == iresp::PASS)
+								i->current += c_size;
+						}
+					}
+					
+					if (scope_count)
+					{
+						details::send_msg(i, msg::F_SYNTAX_ERROR);
+						return iresp::ABORT;
+					}
+
+					t->type = details::token_type::LAZY_UNEVAL;
+					t->value.unevaluated.rsource = start - i->start;
+					t->value.unevaluated.size    = i->current - start - 1;
+					return iresp::OK;
+				}
+			}
+
+			
 			return iresp::OK;
 		}
 
@@ -592,7 +651,7 @@ namespace khuneo::compiler::lexer
 			{
 				khuneo::u32 rsource; // Relative source - offset to the matched token
 				khuneo::u32 size;
-			} symbol, string, arb;
+			} symbol, string, arb, unevaluated;
 
 			char token;
 			typename lexer_impl::signed_tok_t   signedn;
