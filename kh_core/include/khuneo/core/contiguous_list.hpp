@@ -28,8 +28,6 @@ namespace khuneo::cont
 			return true;
 		}
 
-		auto construct() -> bool { return construct(this); }
-
 		// This will only destroy the internal data, if self is heap allocated it must be free'd externally
 		static auto destruct(self_t * self) -> bool
 		{
@@ -43,21 +41,15 @@ namespace khuneo::cont
 			return r;
 		}
 
-		auto destruct() -> bool { return destruct(this); }
-
 		static auto get(self_t * self, khuneo::u32 index) -> T *
 		{
 			return &self->data[index];
 		}
 
-		auto get(khuneo::u32 index) -> T * { return get(this, index); }
-
 		static auto count(self_t * self) -> khuneo::u32
 		{
 			return self->used_count;
 		}
-
-		auto count() -> khuneo::u32 { return count(this); }
 
 		static auto append(self_t * self) -> T *
 		{
@@ -69,7 +61,12 @@ namespace khuneo::cont
 			return d;
 		}
 
-		auto append() -> T * { return append(this); }
+		// This will just reset the count, memory will NOT be nulled as in most cases it is unecessary. Null it yourself if needed.
+		static auto reuse(self_t * self) -> bool
+		{
+			self->used_count = 0;
+			return true;
+		}
 
 	private:
 
@@ -119,7 +116,7 @@ namespace khuneo::cont
 
 	private:
 		T * data;
-		khuneo::u32 used_count;
-		khuneo::u32 real_count;
+		khuneo::u32 used_count; // Number of elements stored
+		khuneo::u32 real_count; // Number of total capacity
 	};
 }

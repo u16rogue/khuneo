@@ -28,6 +28,7 @@ namespace khuneo::compiler::lexer
 		struct default_lexer_impl
 		{
 			static constexpr bool enable_sloc_track = true;                                                // Toggles if the lexer should keep track of lines and column of each token
+			static constexpr bool lazy_eval         = true;                                                // States whether the lexing should be lazily done
 			using allocator                         = khuneo::details::kh_basic_allocator<>;               // Defines the allocator to be used
 			using contiguous_list_impl              = khuneo::cont::details::default_contiguous_list_impl; // Defines the implementation used by the contiguous list container
 			// static auto lexer_msg_recv(msg_callback_info<enable_sloc_track> * mi) -> void { };          // Lexer message receiver callback
@@ -84,6 +85,7 @@ namespace khuneo::compiler::lexer::details
 		SIGNED,
 		UNSIGNED,
 		FLOAT,
+		LAZY_UNEVAL, // Unevaluated content to be parsed later
 	};
 
 	// ---------------------------------------------------------------------------------------------------- 
@@ -117,8 +119,8 @@ namespace khuneo::compiler::lexer::details
 		EXPORT,
 		AS,
 		FOR,
-		WHILE,
-		DO,
+		// WHILE,
+		// DO,
 		IF,
 		ELIF,
 		ELSE,
@@ -134,12 +136,12 @@ namespace khuneo::compiler::lexer::details
 		"export",
 		"as",
 		"for",
-		"while",
-		"do",
+		// "while",
+		// "do",
 		"if",
 		"elif",
 		"else",
-		"defer" // thank you zig
+		"defer"
 	};
 
 	// ---------------------------------------------------------------------------------------------------- 
@@ -626,9 +628,25 @@ namespace khuneo::compiler::lexer
 		cont::contiguous_list<token_node<lexer_impl>, typename lexer_impl::contiguous_list_impl> * tokens;
 	};
 
-	template <typename impl>
-	auto run(run_info<impl> * i) -> bool
+	enum class result
 	{
+		// Everything went OK (expected response in non lazy eval mode when the entire source was parsed. 
+		// In lazy eval mode an OK response means the entire source code was parsed.
+		OK,  
+
+		// A failure was met, should abort.
+		FAIL,
+
+		// Expected only in lazy eval mode, means a chunk was lexed and there are more.
+		PASS
+	};
+
+	template <typename impl>
+	auto run(run_info<impl> * i) -> result
+	{
+		using contiguous_list = khuneo::cont::contiguous_list<token_node<impl>, typename impl::contiguous_list_impl>;
+		contiguous_list::reuse(i->tokens);
+
 		while (!details::is_end(i) && !i->abort) // LOOP A
 		{
 			if (utf8::csize(*i->current) == 0) // Corrupted byte (no utf8 match) 
@@ -643,8 +661,21 @@ namespace khuneo::compiler::lexer
 				response = matcher(i);
 				if (response == details::iresp::PASS)
 					continue; // LOOP B
-
 				break; // LOOP B
+			}
+
+			if constexpr (impl::lazy_eval)
+			{
+				if (response == details::iresp::OK)
+				{
+					const auto tok_count = contiguous_list::count(i->tokens);
+					if (tok_count)
+					{
+						auto * top = contiguous_list::get(i->tokens, tok_count - 1);
+						if (top->type == details::token_type::TOKEN && top->value.token == ';')
+							return /*details::is_end(i) ? result::OK :*/ result::PASS;
+					}
+				}
 			}
 
 			if (response == details::iresp::ABORT)
@@ -661,12 +692,12 @@ namespace khuneo::compiler::lexer
 		if (i->abort)
 		{
 			details::send_msg(i, msg::F_ABORTED);
-			return false;
+			return result::FAIL;
 		}
 
-		if (i->current != i->end && details::send_msg(i, msg::W_PAST_END))
-			return false;	
+		if constexpr (!impl::lazy_eval && i->current != i->end && details::send_msg(i, msg::W_PAST_END))
+			return result::FAIL;
 
-		return true;
+		return result::OK;
 	}
 }

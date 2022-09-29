@@ -4,6 +4,10 @@
 
 namespace khuneo::compiler::parser::details
 {
+	struct default_parser_impl
+	{
+		using lexer_impl = khuneo::compiler::lexer::details::default_lexer_impl;
+	};
 }
 
 namespace khuneo::compiler::parser

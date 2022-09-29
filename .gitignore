@@ -6,3 +6,4 @@ build/
 out/
 localtest/
 CMakeSettings.json
+notes.txt
