@@ -77,7 +77,7 @@ namespace khuneo::compiler::lexer::details
 	enum class token_type : khuneo::u8
 	{
 		UNOCCUPIED = 0,
-		UNDEFINED = UNOCCUPIED,
+		UNKNOWN = UNOCCUPIED,
 		SYMBOL,
 		KEYWORD,
 		TOKEN,
@@ -112,7 +112,7 @@ namespace khuneo::compiler::lexer::details
 	// Classifies a special symbol referring to a reserved keyword
 	enum class keyword : khuneo::u8
 	{
-		UNDEFINED,
+		UNKNOWN,
 		LET,
 		FUNCTION,
 		IMPORT,
@@ -573,7 +573,7 @@ namespace khuneo::compiler::lexer::details
 						return iresp::ABORT;
 
 					t->type = details::token_type::KEYWORD;
-					t->value.keyword = details::keyword(ikw + 1 /*0 is UNDEFINED in enum*/);
+					t->value.keyword = details::keyword(ikw + 1 /*0 is UNKNOWN in enum*/);
 					int size = kw - details::keywords[ikw];
 					
 					KHUNEO_METAPP_IF_CONSTEXPR_DO(i->column += utf8::slength(i->current, i->current + size));
