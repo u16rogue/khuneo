@@ -90,7 +90,7 @@ namespace khuneo::compiler::lexer::details
 
 	// ---------------------------------------------------------------------------------------------------- 
 
-	constexpr char tokens[] = {
+	constexpr char8_t tokens[] = {
 		/*'"',*/ '#',                                               // 34  - 35
 		'%', '&', /*'\'',*/ '(', ')', '*', '+', ',', '-', '.', '/', // 37  - 47
 		':', ';', '<', '=', '>', '?', '@',                          // 58  - 64
@@ -119,29 +119,33 @@ namespace khuneo::compiler::lexer::details
 		EXPORT,
 		AS,
 		FOR,
-		// WHILE,
-		// DO,
 		IF,
 		ELIF,
 		ELSE,
 		DEFER,
+		NULL_KW,
+		UNDEFINED,
+		TRUE,
+		FALSE,
 		_INDEXER,
 		_COUNT = _INDEXER - 1
 	};
 
-	constexpr const char * const keywords[] = {
-		"let",
-		"fn",
-		"import",
-		"export",
-		"as",
-		"for",
-		// "while",
-		// "do",
-		"if",
-		"elif",
-		"else",
-		"defer"
+	constexpr const char8_t * const keywords[] = {
+		u8"let",
+		u8"fn",
+		u8"import",
+		u8"export",
+		u8"as",
+		u8"for",
+		u8"if",
+		u8"elif",
+		u8"else",
+		u8"defer",
+		u8"null",
+		u8"undefined",
+		u8"true",
+		u8"false"
 	};
 
 	// ---------------------------------------------------------------------------------------------------- 
@@ -188,7 +192,7 @@ namespace khuneo::compiler::lexer::details
 	}
 
 	template <typename lexer_impl>
-	constexpr auto is_end(run_info<lexer_impl> * i, const char * p) -> bool { return p >= i->end; };
+	constexpr auto is_end(run_info<lexer_impl> * i, const char8_t * p) -> bool { return p >= i->end; };
 
 	template <typename lexer_impl>
 	constexpr auto is_end(run_info<lexer_impl> * i, int offset = 0) -> bool { return i->current + offset >= i->end; };
@@ -228,7 +232,7 @@ namespace khuneo::compiler::lexer::details
 
 	// Processes wording characters such as NULL, \r, \n, and \t
 	template <typename lexer_impl>
-	constexpr auto process_sloc_char(run_info<lexer_impl> * i, char c) -> iresp
+	constexpr auto process_sloc_char(run_info<lexer_impl> * i, char8_t c) -> iresp
 	{
 
 		if (c == '\0')
@@ -371,8 +375,8 @@ namespace khuneo::compiler::lexer::details
 	template <typename lexer_impl>
 	constexpr auto match_string(run_info<lexer_impl> * i) -> iresp
 	{
-		constexpr const char strc[] = { '\'', '"', '`' };
-		for (char c : strc)
+		constexpr const char8_t strc[] = { '\'', '"', '`' };
+		for (char8_t c : strc)
 		{
 			if (i->current[0] != c)
 				continue;
@@ -425,7 +429,7 @@ namespace khuneo::compiler::lexer::details
 			return iresp::ABORT;
 		}
 
-		char nc = i->current[1];
+		char8_t nc = i->current[1];
 		if (nc == '/') // single line comment
 		{
 			i->current += 2;
@@ -466,7 +470,7 @@ namespace khuneo::compiler::lexer::details
 	template <typename lexer_impl>
 	constexpr auto match_token(run_info<lexer_impl> * i) -> iresp
 	{
-		for (char tok : details::tokens) // LOOP B
+		for (char8_t tok : details::tokens) // LOOP B
 		{
 			if (tok != i->current[0])
 				continue;
@@ -484,7 +488,7 @@ namespace khuneo::compiler::lexer::details
 			if constexpr (lexer_impl::lazy_eval)
 			{
 				// Check for groupings such as (), {}, etc
-				char end_tok = '\0';
+				char8_t end_tok = '\0';
 				switch (tok)
 				{
 					case '(':
@@ -498,7 +502,7 @@ namespace khuneo::compiler::lexer::details
 				if (end_tok)
 				{
 					t = details::extend_tail(i);
-					const char * start = i->current;
+					const char8_t * start = i->current;
 					int scope_count = 1;
 					while (!is_end(i))
 					{
@@ -550,8 +554,8 @@ namespace khuneo::compiler::lexer::details
 	{
 		for (int ikw = 0; ikw < metapp::array_size(keywords); ++ikw)
 		{
-			const char * c  = i->current;
-			const char * kw = keywords[ikw];
+			const char8_t * c  = i->current;
+			const char8_t * kw = keywords[ikw];
 
 			while (*kw && *c) // LOOP C
 			{
@@ -585,7 +589,7 @@ namespace khuneo::compiler::lexer::details
 	template <typename lexer_impl>
 	constexpr auto match_symbol(run_info<lexer_impl> * i) -> iresp
 	{
-		constexpr auto is_valid_symbolchar = [](char c, bool allow_numeric = true) constexpr -> int
+		constexpr auto is_valid_symbolchar = [](char8_t c, bool allow_numeric = true) constexpr -> int
 		{
 			auto s = khuneo::utf8::csize(c);
 			if (s == 1)
@@ -653,7 +657,7 @@ namespace khuneo::compiler::lexer
 				khuneo::u32 size;
 			} symbol, string, arb, unevaluated;
 
-			char token;
+			char8_t token;
 			typename lexer_impl::signed_tok_t   signedn;
 			typename lexer_impl::unsigned_tok_t unsignedn;
 			typename lexer_impl::float_tok_t    floatn;
@@ -680,10 +684,10 @@ namespace khuneo::compiler::lexer
 	template <typename lexer_impl>
 	struct run_info : public metapp::extend_struct_if<lexer_impl::enable_sloc_track, details::sourceloc_tabspacing_cont>, metapp::extend_struct_if<lexer_impl::enable_sloc_track, details::sourceloc_tracking_cont>
 	{
-		const char * start;
-		const char * end;
+		const char8_t * start;
+		const char8_t * end;
 		bool abort;
-		const char * current;
+		const char8_t * current;
 		cont::contiguous_list<token_node<lexer_impl>, typename lexer_impl::contiguous_list_impl> * tokens;
 	};
 

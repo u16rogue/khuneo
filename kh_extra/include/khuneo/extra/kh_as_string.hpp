@@ -6,6 +6,8 @@
 	#include <khuneo/compiler/lexer.hpp>
 #endif
 
+#include <khuneo/core/metapp.hpp>
+
 namespace khuneo
 {
 	// TODO: Make our own snprintf
@@ -39,7 +41,14 @@ namespace khuneo::extra
 
 		const char ** msg_source[] = { (const char **)msg_map_warning, (const char **)msg_map_fatal };
 
-		return msg_source[khuneo::compiler::lexer::is_msg_fatal(m)][(khuneo::u8(m) & 0x7F) - 1];
+		constexpr int severity_counts[] = { metapp::array_size(msg_map_warning), metapp::array_size(msg_map_fatal) };
+		const int severity_index = khuneo::compiler::lexer::is_msg_fatal(m);
+		const int msg_index = (khuneo::u8(m) & 0x7F) - 1;
+
+		if (msg_index < 0 || msg_index > severity_counts[severity_index])
+			return "Invalid index";
+
+		return msg_source[severity_index][msg_index];
 	}
 
 	template <int sz, typename lexer_impl>
@@ -84,7 +93,11 @@ namespace khuneo::extra
 			"LAZY_UNEVAL"
 		};
 
-		return ttype_map[int(t->type)]; 
+		int i = int(t->type);
+		if (i < 0 || i > metapp::array_size(ttype_map) - 1)
+			return "Invalid index";
+
+		return ttype_map[i]; 
 	}
 
 	template <int sz, typename lexer_impl>
