@@ -6,7 +6,7 @@ namespace khuneo::cont::details
 {
 	struct default_contiguous_list_impl
 	{
-		using allocator = khuneo::details::kh_basic_allocator<>;
+		using allocator = khuneo::details::kh_basic_allocator<khuneo::details::kh_default_std_allocator>;
 		static constexpr khuneo::u32 alloc_ahead_count = 8;
 	};
 }

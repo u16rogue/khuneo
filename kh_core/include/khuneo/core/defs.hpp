@@ -22,6 +22,12 @@ namespace khuneo
 
 namespace khuneo::details
 {
+	struct kh_default_std_allocator
+	{
+		static auto _alloc(int sz) -> void * { return new char[sz]; };
+		static auto _dealloc(void * p, int sz) -> bool { delete[] (char*)p; return true; };
+	};
+
 	/*
 	* kh_basic_allocator - Allocation scheme implementation used by khuneo.
 	*
@@ -35,39 +41,32 @@ namespace khuneo::details
 	template <typename impl = metapp::details::invalid_type>
 	struct kh_basic_allocator
 	{
+		static constexpr auto is_invalid() -> bool { return metapp::is_t_invalid<impl>::VALUE; };
+
 		static_assert(
-			metapp::is_t_invalid<impl>::VALUE
-		||  requires { impl::_alloc(0); }
+			!metapp::is_t_invalid<impl>::VALUE
+		&&  requires { impl::_alloc(0); }
 		,   "kh_basic_allocator's implementation must provide a [static void * _alloc(int size)] implementation");
 
 		static_assert(
-			metapp::is_t_invalid<impl>::VALUE	
-		||  requires { impl::_dealloc(nullptr, 0); }
+			!metapp::is_t_invalid<impl>::VALUE	
+		&&  requires { impl::_dealloc(nullptr, 0); }
 		,   "kh_basic_allocator's implementation must provide a [static bool _dealloc(void * p, int size)] implementation");
 
 		static_assert(
-			metapp::is_t_invalid<impl>::VALUE		
-		||  !(requires { impl::alloc(0); } && requires { impl::_dealloc(nullptr, 0); })
+			!metapp::is_t_invalid<impl>::VALUE		
+		&&  !(requires { impl::alloc(0); } || requires { impl::dealloc(nullptr, 0); }) // If either alloc and/or delloc was provided by the implementation turn it to false to cause an error
 		,   "kh_basic_allocator's implementation should not override alloc and dealloc and should instead provide a _alloc and _dealloc implementation"
 		);
 
 		static auto alloc(int size) -> void *
 		{
-			if constexpr (requires { impl::_alloc(size); })
-				return impl::_alloc(size);
-			else
-				return new char[size];
+			return impl::_alloc(size);
 		}
 
 		static auto dealloc(void * p, int size) -> bool
 		{
-			if constexpr (requires { impl::_dealloc(p, size); })
-				return impl::_dealloc(p, size);
-			else
-			{
-				delete[] reinterpret_cast<char *>(p);
-				return true;
-			}
+			return impl::_dealloc(p, size);
 		}
 
 		template <typename T>

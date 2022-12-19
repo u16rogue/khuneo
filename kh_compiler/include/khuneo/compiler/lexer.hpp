@@ -29,7 +29,7 @@ namespace khuneo::compiler::lexer
 		{
 			static constexpr bool enable_sloc_track = true;                                                // Toggles if the lexer should keep track of lines and column of each token
 			static constexpr bool lazy_eval         = true;                                                // States whether the lexing should be lazily done
-			using allocator                         = khuneo::details::kh_basic_allocator<>;               // Defines the allocator to be used
+			using allocator                         = khuneo::details::kh_basic_allocator<khuneo::details::kh_default_std_allocator>;     // Defines the allocator to be used
 			using contiguous_list_impl              = khuneo::cont::details::default_contiguous_list_impl; // Defines the implementation used by the contiguous list container
 			// static auto lexer_msg_recv(msg_callback_info<enable_sloc_track> * mi) -> void { };          // Lexer message receiver callback
 
