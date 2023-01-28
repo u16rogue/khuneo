@@ -641,7 +641,7 @@ struct msg_callback_info {
 // -----------------------------------------------------------------
 
 template <typename lexer_impl>
-struct run_info : public metapp::extend_struct_if<lexer_impl::enable_sloc_track, details::sourceloc_tabspacing_cont>, metapp::extend_struct_if<lexer_impl::enable_sloc_track, details::sourceloc_tracking_cont> {
+struct run_info : public metapp::extend_struct_if<lexer_impl::enable_sloc_track, details::sourceloc_tabspacing_cont, details::sourceloc_tracking_cont> {
   const char8_t *                                                                            start;
   const char8_t *                                                                            end;
   bool                                                                                       abort;

@@ -23,12 +23,6 @@ if (TARGET khuneo_compiler)
     INTERFACE
     khuneo_compiler
   )
-
-  target_compile_definitions(
-    ${PROJECT_NAME}
-    INTERFACE
-    KH_EXTRA_COMPILER_AVAILABLE = 1
-  )
 else()
   message(AUTHOR_WARNING "khuneo_extra >> Extra library did not find khuneo_compiler as a target! Ignoring.")
 endif()

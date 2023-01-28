@@ -2,7 +2,8 @@
 
 #include <cstdio>
 
-#ifdef KH_EXTRA_COMPILER_AVAILABLE
+#if __has_include(<khuneo/compiler/lexer.hpp>)
+#define KH_EXTRA_COMPILER_AVAILABLE
 #include <khuneo/compiler/lexer.hpp>
 #endif
 
@@ -17,7 +18,7 @@ constexpr auto sformat(char (&out)[count], const char * format, vargs_t... vargs
 } // namespace khuneo
 
 namespace khuneo::extra {
-#ifdef KH_EXTRA_COMPILER_AVAILABLE
+#if defined(KH_EXTRA_COMPILER_AVAILABLE)
 
 constexpr auto msg_string(khuneo::compiler::lexer::msg m) -> const char * {
   constexpr const char * msg_map_warning[] = {
@@ -156,5 +157,6 @@ constexpr auto token_sloc_to_string(char (&out)[sz], const khuneo::compiler::lex
   return count > 0 && count < 0;
 }
 
+#undef KH_EXTRA_COMPILER_AVAILABLE
 #endif
 } // namespace khuneo::extra

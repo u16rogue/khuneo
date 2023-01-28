@@ -45,8 +45,8 @@ struct type_if<false, T, F> {
 // --------------------------------------------------
 
 // Extends a structure based off an expression which allows to either enable or disable certain parts of a structure
-template <bool expr, typename T>
-struct extend_struct_if : public type_if<expr, T, details::empty_struct>::type {};
+template <bool expr, typename... T>
+struct extend_struct_if : public type_if<expr, T, details::empty_struct>::type... {};
 
 // --------------------------------------------------
 
