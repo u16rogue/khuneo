@@ -7,3 +7,4 @@ out/
 localtest/
 CMakeSettings.json
 notes.txt
+.cache/
