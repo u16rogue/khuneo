@@ -3,15 +3,15 @@
 #include <khuneo/core/metapp.hpp>
 
 namespace khuneo {
-#define KH_DEFPRIMT(bitsz, signed_t, unsigned_t) \
-  using i##bitsz = signed_t;                     \
-  using u##bitsz = unsigned_t;                   \
-  static_assert(sizeof(u##bitsz) == bitsz / 8 && sizeof(i##bitsz) == bitsz / 8, "[khuneo] type did not match the expected size.");
+#define KH_DEFPRIMT(bitsz, signed_t)  \
+  using i##bitsz = signed_t;          \
+  using u##bitsz = unsigned signed_t; \
+  static_assert(sizeof(u##bitsz) == bitsz / 8 && sizeof(i##bitsz) == bitsz / 8, "[khuneo] type did not match the expected size.")
 
-KH_DEFPRIMT(8, char, unsigned char)
-KH_DEFPRIMT(16, short, unsigned short)
-KH_DEFPRIMT(32, int, unsigned int)
-KH_DEFPRIMT(64, long long, unsigned long long)
+KH_DEFPRIMT(8 , char     ); 
+KH_DEFPRIMT(16, short    );
+KH_DEFPRIMT(32, int      );
+KH_DEFPRIMT(64, long long);
 
 using f32 = float;
 using f64 = double;
@@ -48,11 +48,12 @@ struct kh_basic_allocator {
   static_assert(
     !metapp::is_t_invalid<impl>::VALUE && requires { impl::_dealloc(nullptr, 0); }, "kh_basic_allocator's implementation must provide a [static bool _dealloc(void * p, int size)] implementation");
 
+	// If either alloc and/or delloc was provided by the implementation turn it to false to cause an error
   static_assert(
     !metapp::is_t_invalid<impl>::VALUE && !(
-                                            requires { impl::alloc(0); } || requires { impl::dealloc(nullptr, 0); }) // If either alloc and/or delloc was provided by the implementation turn it to false to cause an error
-    ,
-    "kh_basic_allocator's implementation should not override alloc and dealloc and should instead provide a _alloc and _dealloc implementation");
+																						requires { impl::alloc(0); } || requires { impl::dealloc(nullptr, 0); }) ,
+																						"kh_basic_allocator's implementation should not override alloc and dealloc and should instead provide a _alloc and _dealloc implementation"
+																					 );
 
   static auto alloc(int size) -> void * {
     return impl::_alloc(size);

@@ -8,13 +8,21 @@
 // TODO: fix column tracking
 
 namespace khuneo::compiler::lexer {
+
+template <typename lexer_impl>
+struct run_info;
+template <typename lexer_impl>
+struct msg_callback_info;
+template <typename lexer_impl>
+struct token_node;
+
 namespace details {
 /*
  *  This is the default implementation used by the lexer, you can use this or derive from it since C++
  *  allows overloading you can simply inherit this structure and override specific parts if you don't
  *  want to implement it from scratch
  *  e.g. Enabling receiving messages from the lexer
- *  struct my_impl : public khuneo::compiler::lexer::details::default_lexer_impl
+ *  struct my_impl : public khuneo::compiler::lexer::details::default_lexer_impl<my_impl>
  *  {
  *		static auto lexer_msg_recv(khuneo::compiler::lexer::msg_callback_info<my_impl> * mi) -> void
  *		{
@@ -23,11 +31,14 @@ namespace details {
  *  ...
  *  khuneo::compiler::lexer::run<my_impl>(...);
  */
+template <typename extend = metapp::details::invalid_type>
 struct default_lexer_impl {
+  using _extend = typename metapp::type_if<metapp::is_t_invalid<extend>::VALUE, default_lexer_impl, extend>::type; // Template magic. DO NOT OVERRIDE!!!
+
   static constexpr bool enable_sloc_track = true;                                                                           // Toggles if the lexer should keep track of lines and column of each token
   static constexpr bool lazy_eval         = true;                                                                           // States whether the lexing should be lazily done
   using allocator                         = khuneo::details::kh_basic_allocator<khuneo::details::kh_default_std_allocator>; // Defines the allocator to be used
-  using contiguous_list_impl              = khuneo::cont::details::default_contiguous_list_impl;                            // Defines the implementation used by the contiguous list container
+  using container                         = khuneo::cont::contiguous_list<token_node<_extend>, khuneo::cont::details::default_contiguous_list_impl>; // Defines the implementation used by the contiguous list container
   // static auto lexer_msg_recv(msg_callback_info<enable_sloc_track> * mi) -> void { };          // Lexer message receiver callback
 
   using signed_tok_t   = khuneo::i64; // Type of the signed token
@@ -62,12 +73,6 @@ enum class msg : khuneo::u8 {
   F_UNKNOWN      = 0x80 | 5, // A fatal error occured but it was not clear as to why. This error could be used by the developer for features in production and is under development.
 };
 
-template <typename lexer_impl>
-struct run_info;
-template <typename lexer_impl>
-struct msg_callback_info;
-template <typename lexer_impl>
-struct token_node;
 } // namespace khuneo::compiler::lexer
 
 namespace khuneo::compiler::lexer::details {
@@ -215,7 +220,7 @@ constexpr auto is_end(run_info<lexer_impl> * i, int offset = 0) -> bool { return
  */
 template <typename lexer_impl>
 constexpr auto extend_tail(run_info<lexer_impl> * i) -> token_node<lexer_impl> * {
-  token_node<lexer_impl> * n = cont::contiguous_list<token_node<lexer_impl>, typename lexer_impl::contiguous_list_impl>::append(i->tokens);
+  token_node<lexer_impl> * n = lexer_impl::container::append(i->tokens);
   if (!n) {
     details::send_msg(i, msg::F_ALLOC_FAIL);
     return nullptr;
@@ -615,7 +620,7 @@ struct token_node : public metapp::extend_struct_if<lexer_impl::enable_sloc_trac
     {
       khuneo::u32 rsource; // Relative source - offset to the matched token
       khuneo::u32 size;
-    } symbol, string, arb, unevaluated;
+    } symbol, string, arb/*itrary*/, unevaluated;
 
     char8_t                             token;
     typename lexer_impl::signed_tok_t   signedn;
@@ -642,11 +647,11 @@ struct msg_callback_info {
 
 template <typename lexer_impl>
 struct run_info : public metapp::extend_struct_if<lexer_impl::enable_sloc_track, details::sourceloc_tabspacing_cont, details::sourceloc_tracking_cont> {
-  const char8_t *                                                                            start;
-  const char8_t *                                                                            end;
-  bool                                                                                       abort;
-  const char8_t *                                                                            current;
-  cont::contiguous_list<token_node<lexer_impl>, typename lexer_impl::contiguous_list_impl> * tokens;
+  const char8_t *                  start;
+  const char8_t *                  end;
+  bool                             abort;
+  const char8_t *                  current;
+  typename lexer_impl::container * tokens;
 };
 
 enum class result {
@@ -663,8 +668,7 @@ enum class result {
 
 template <typename impl>
 auto run(run_info<impl> * i) -> result {
-  using contiguous_list = khuneo::cont::contiguous_list<token_node<impl>, typename impl::contiguous_list_impl>;
-  contiguous_list::reuse(i->tokens);
+  impl::container::reuse(i->tokens);
 
   while (!details::is_end(i) && !i->abort) // LOOP A
   {
@@ -685,9 +689,9 @@ auto run(run_info<impl> * i) -> result {
 
     if constexpr (impl::lazy_eval) {
       if (response == details::iresp::OK) {
-        const auto tok_count = contiguous_list::count(i->tokens);
+        const auto tok_count = impl::container::count(i->tokens);
         if (tok_count) {
-          auto * top = contiguous_list::get(i->tokens, tok_count - 1);
+          auto * top = impl::container::get(i->tokens, tok_count - 1);
           if (top->type == details::token_type::TOKEN && top->value.token == ';')
             return /*details::is_end(i) ? result::OK :*/ result::PASS;
         }
