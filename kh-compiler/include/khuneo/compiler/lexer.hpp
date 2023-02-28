@@ -734,8 +734,9 @@ auto run(run_info<impl> * i) -> result {
     return result::FAIL;
   }
 
-  if constexpr (!impl::lazy_eval && i->current != i->end && details::send_msg(i, msg::W_PAST_END))
-    return result::FAIL;
+  if constexpr (!impl::lazy_eval)
+    if (i->current != i->end && details::send_msg(i, msg::W_PAST_END))
+      return result::FAIL;
 
   return result::OK;
 }
