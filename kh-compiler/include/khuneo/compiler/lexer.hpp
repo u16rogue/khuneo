@@ -459,92 +459,100 @@ constexpr auto match_comment(run_info<lexer_impl> * i) -> iresp {
 
 template <typename lexer_impl>
 constexpr auto match_token(run_info<lexer_impl> * i) -> iresp {
-  for (char8_t tok : details::tokens) { // LOOP B
-    if (tok != i->current[0])
-      continue;
+  token_node<lexer_impl> * t = nullptr;
+  char8_t tok[lexer_impl::lazy_eval ? 2 : 1] = { 0 }; // 0 = start tok, 1 = end tok for lazy eval
 
-    token_node<lexer_impl> * t = details::extend_tail(i);
-    if (!t)
-      return iresp::ABORT;
-
-    t->type        = details::token_type::TOKEN;
-    t->value.token = i->current[0];
-
-    i->current += utf8::csize(t->value.token);
-    KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
-
-    if constexpr (lexer_impl::lazy_eval) {
-      // Check for groupings such as (), {}, etc
-      char8_t end_tok = '\0';
-      switch (tok) {
-        case '(':
-          end_tok = ')';
-          break;
-        case '{':
-          end_tok = '}';
-          break;
-        case '[':
-          end_tok = ']';
-          break;
-        case '<':
-          end_tok = '>';
-          break;
-        default:
-          return iresp::OK;
-      }
-
-      if (i->current[0] == end_tok)
-        return iresp::OK;
-      t                           = nullptr; // details::extend_tail(i);
-      const char8_t * start       = i->current;
-      int             scope_count = 1;
-      while (!is_end(i)) {
-        // If its empty then just skip it without allocating a LAZY_UNEVAL
-        if (!t) {
-          if (process_sloc_char(i, i->current[0]) == iresp::OK)
-            continue; // If its just a sloc char lets skip it, psc advances the current pointer anyway
-          if (i->current[0] == end_tok) {
-            --scope_count;
-            break;
-          }
-          t = details::extend_tail(i); // only create a lazy_uneval when there is actually something to put in there
-        }
-
-        auto c_size = khuneo::utf8::csize(i->current[0]);
-        if (i->current[0] == end_tok) {
-          KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
-          --scope_count;
-          if (scope_count == 0)
-            break;
-          i->current += c_size;
-          continue;
-        } else if (i->current[0] == tok) {
-          i->current += c_size;
-          KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
-          ++scope_count;
-        } else {
-          if (process_sloc_char(i, i->current[0]) == iresp::PASS)
-            i->current += c_size;
-        }
-      }
-
-      if (scope_count) {
-        details::send_msg(i, msg::F_SYNTAX_ERROR);
-        return iresp::ABORT;
-      }
-
-      if (t) {
-        t->type                      = details::token_type::LAZY_UNEVAL;
-        t->value.unevaluated.rsource = start - i->start;
-        t->value.unevaluated.size    = i->current - start - 1;
-      }
-      return iresp::OK;
+  for (char8_t c : details::tokens) {
+    if (i->current[0] == c) {
+      tok[0] = c;
+      break;
     }
-
-    return iresp::OK;
   }
 
-  return iresp::PASS;
+  if (!tok[0]) {
+    for (auto [cs, ce] : details::grouping_tokens) {
+      if constexpr (lexer_impl::lazy_eval) {
+        if (i->current[0] == cs) {
+          tok[0] = cs;
+          tok[1] = ce;
+          break;
+        } else if (i->current[0] == ce) {
+          tok[0] = ce;
+          break;
+        }
+      } else {
+        if (bool cs_match = i->current[0] == cs; cs_match || i->current[0] == ce) {
+          tok[0] = cs_match ? cs : ce;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!tok[0])
+    return iresp::PASS;
+
+  t = details::extend_tail(i);
+  if (!t)
+    return iresp::ABORT;
+
+  t->type        = details::token_type::TOKEN;
+  t->value.token = tok[0];
+  i->current    += utf8::csize(i->current[0]);
+  KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
+
+  if constexpr (!lexer_impl::lazy_eval)
+    return iresp::OK;
+
+  if (!tok[1])
+    return iresp::OK;
+
+  t = nullptr;
+  int scope = 1;
+  const char8_t * start = i->current;
+  while (!is_end(i) && !i->abort) {
+    if (!t) {
+      if (i->current[0] == tok[1]) {
+        return iresp::OK;
+      } else if (process_sloc_char(i, i->current[0]) == iresp::OK) {
+        continue;
+      }
+
+      t = details::extend_tail(i);
+      if (!t)
+        return iresp::ABORT;
+    }
+
+    if (i->current[0] == tok[1]) {
+      --scope;
+      if (scope == 0) {
+        break;
+      }
+    } else if (i->current[0] == tok[0]) {
+      ++scope;
+      KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
+    } else if (process_sloc_char(i, i->current[0]) == iresp::OK) {
+      continue;
+    }
+
+    i->current += utf8::csize(i->current[0]);
+  }
+  
+  if (i->abort)
+    return iresp::ABORT;
+
+  if (scope != 0) {
+    details::send_msg(i, msg::F_SYNTAX_ERROR);
+    return iresp::ABORT;
+  }
+
+  if (t) {
+    t->type = details::token_type::LAZY_UNEVAL;
+    t->value.unevaluated.rsource = start - i->start;
+    t->value.unevaluated.size    = i->current - start;
+  }
+
+  return iresp::OK;
 }
 
 template <typename lexer_impl>
