@@ -90,11 +90,11 @@ private:
   // Automatically grows data to upto count n, if there's space for
   // n blocks this function will return true, false indicates a failure
   // in allocating the required size to fit n blocks
-  static auto grow(self_t * self, khuneo::u32 n) -> bool {
-    if (self->used_count + n <= self->real_count)
+  static auto grow(self_t * self, khuneo::u32 rel_sz) -> bool {
+    if (self->used_count + rel_sz <= self->real_count)
       return true;
 
-    khuneo::u32 need = (self->used_count + n) - self->real_count;
+    khuneo::u32 need = (self->used_count + rel_sz) - self->real_count;
     return resize_fixed_count(self, self->real_count + (need + (block_count - (need % block_count))));
   }
 

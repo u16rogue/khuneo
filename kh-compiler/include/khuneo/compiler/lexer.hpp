@@ -460,8 +460,7 @@ constexpr auto match_comment(run_info<lexer_impl> * i) -> iresp {
 
 template <typename lexer_impl>
 constexpr auto match_token(run_info<lexer_impl> * i) -> iresp {
-  for (char8_t tok : details::tokens) // LOOP B
-  {
+  for (char8_t tok : details::tokens) { // LOOP B
     if (tok != i->current[0])
       continue;
 
@@ -485,41 +484,62 @@ constexpr auto match_token(run_info<lexer_impl> * i) -> iresp {
         case '{':
           end_tok = '}';
           break;
+        case '[':
+          end_tok = ']';
+          break;
+        case '<':
+          end_tok = '>';
+          break;
+        default:
+          return iresp::OK;
       }
 
-      if (end_tok) {
-        t                           = details::extend_tail(i);
-        const char8_t * start       = i->current;
-        int             scope_count = 1;
-        while (!is_end(i)) {
-          auto c_size = khuneo::utf8::csize(i->current[0]);
+      if (i->current[0] == end_tok)
+        return iresp::OK;
+      t                           = nullptr; // details::extend_tail(i);
+      const char8_t * start       = i->current;
+      int             scope_count = 1;
+      while (!is_end(i)) {
+        // If its empty then just skip it without allocating a LAZY_UNEVAL
+        if (!t) {
+          if (process_sloc_char(i, i->current[0]) == iresp::OK)
+            continue; // If its just a sloc char lets skip it, psc advances the current pointer anyway
           if (i->current[0] == end_tok) {
-            KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
             --scope_count;
-            if (scope_count == 0)
-              break;
-            i->current += c_size;
-            continue;
-          } else if (i->current[0] == tok) {
-            i->current += c_size;
-            KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
-            ++scope_count;
-          } else {
-            if (process_sloc_char(i, i->current[0]) == iresp::PASS)
-              i->current += c_size;
+            break;
           }
+          t = details::extend_tail(i); // only create a lazy_uneval when there is actually something to put in there
         }
 
-        if (scope_count) {
-          details::send_msg(i, msg::F_SYNTAX_ERROR);
-          return iresp::ABORT;
+        auto c_size = khuneo::utf8::csize(i->current[0]);
+        if (i->current[0] == end_tok) {
+          KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
+          --scope_count;
+          if (scope_count == 0)
+            break;
+          i->current += c_size;
+          continue;
+        } else if (i->current[0] == tok) {
+          i->current += c_size;
+          KHUNEO_METAPP_IF_CONSTEXPR_DO(++i->column);
+          ++scope_count;
+        } else {
+          if (process_sloc_char(i, i->current[0]) == iresp::PASS)
+            i->current += c_size;
         }
+      }
 
+      if (scope_count) {
+        details::send_msg(i, msg::F_SYNTAX_ERROR);
+        return iresp::ABORT;
+      }
+
+      if (t) {
         t->type                      = details::token_type::LAZY_UNEVAL;
         t->value.unevaluated.rsource = start - i->start;
         t->value.unevaluated.size    = i->current - start - 1;
-        return iresp::OK;
       }
+      return iresp::OK;
     }
 
     return iresp::OK;
