@@ -57,6 +57,14 @@ struct contiguous_list {
     return true;
   }
 
+  static auto begin(self_t * self) -> T * {
+    return &self->data[0];
+  }
+
+  static auto end(self_t * self) -> T * {
+    return &self->data[self->used_count - 1];
+  }
+
 private:
   static auto count_to_bytes(khuneo::u32 n) -> khuneo::u32 {
     return n * sizeof(T);

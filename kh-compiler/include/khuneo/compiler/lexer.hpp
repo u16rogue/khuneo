@@ -33,7 +33,7 @@ namespace details {
  */
 template <typename extend = metapp::details::invalid_type>
 struct default_lexer_impl {
-  using _extend = typename metapp::type_if<metapp::is_t_invalid<extend>::VALUE, default_lexer_impl, extend>::type; // Template magic. DO NOT OVERRIDE!!!
+  using _extend = typename metapp::type_if<metapp::is_t_invalid<extend>::value, default_lexer_impl, extend>::type; // Template magic. DO NOT OVERRIDE!!!
 
   static constexpr bool enable_sloc_track = true;                                                                           // Toggles if the lexer should keep track of lines and column of each token
   static constexpr bool lazy_eval         = true;                                                                           // States whether the lexing should be lazily done
@@ -551,6 +551,8 @@ constexpr auto match_token(run_info<lexer_impl> * i) -> iresp {
     t->value.unevaluated.rsource = start - i->start;
     t->value.unevaluated.size    = i->current - start;
   }
+
+  // TODO: maybe also push the end token to tail immediately instead of letting it handled by the next lex
 
   return iresp::OK;
 }

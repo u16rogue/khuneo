@@ -27,6 +27,8 @@ constexpr auto csize(const char8_t b) -> int {
   return 0;
 }
 
+// TODO: return a u16 and use 10 as an error code instead
+constexpr khuneo::u16 INVALID_NUMERIC = 10;
 constexpr auto c_is_numeric(const char8_t c, khuneo::u8 * out = nullptr) -> bool {
   if (c >= '0' && c <= '9') {
     if (out)
@@ -37,6 +39,8 @@ constexpr auto c_is_numeric(const char8_t c, khuneo::u8 * out = nullptr) -> bool
   return false;
 }
 
+// TODO: instead of using a pointer use the value 16 as an error instead
+constexpr khuneo::u8 INVALID_HEX = 0x10;
 constexpr auto c_is_hex(const char8_t c, khuneo::u8 * out = nullptr) -> bool {
   if (c >= 'A' && c <= 'F') {
     if (out)

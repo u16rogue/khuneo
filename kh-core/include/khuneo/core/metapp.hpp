@@ -54,7 +54,7 @@ struct extend_struct_if : public type_if<expr, T, details::empty_struct>::type..
 // types in the khuneo library
 template <typename T>
 struct is_t_invalid {
-  enum { VALUE = requires { T::KH_FLAG_IS_INVALID; }
+  enum { value = requires { T::KH_FLAG_IS_INVALID; }
 };
 }; // namespace khuneo::metapp
 

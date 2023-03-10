@@ -40,17 +40,17 @@ struct kh_default_std_allocator {
  */
 template <typename impl = metapp::details::invalid_type>
 struct kh_basic_allocator {
-  static constexpr auto is_invalid() -> bool { return metapp::is_t_invalid<impl>::VALUE; };
+  static constexpr auto is_invalid() -> bool { return metapp::is_t_invalid<impl>::value; };
 
   static_assert(
-    !metapp::is_t_invalid<impl>::VALUE && requires { impl::_alloc(0); }, "kh_basic_allocator's implementation must provide a [static void * _alloc(int size)] implementation");
+    !metapp::is_t_invalid<impl>::value && requires { impl::_alloc(0); }, "kh_basic_allocator's implementation must provide a [static void * _alloc(int size)] implementation");
 
   static_assert(
-    !metapp::is_t_invalid<impl>::VALUE && requires { impl::_dealloc(nullptr, 0); }, "kh_basic_allocator's implementation must provide a [static bool _dealloc(void * p, int size)] implementation");
+    !metapp::is_t_invalid<impl>::value && requires { impl::_dealloc(nullptr, 0); }, "kh_basic_allocator's implementation must provide a [static bool _dealloc(void * p, int size)] implementation");
 
 	// If either alloc and/or delloc was provided by the implementation turn it to false to cause an error
   static_assert(
-    !metapp::is_t_invalid<impl>::VALUE && !(
+    !metapp::is_t_invalid<impl>::value && !(
 																						requires { impl::alloc(0); } || requires { impl::dealloc(nullptr, 0); }) ,
 																						"kh_basic_allocator's implementation should not override alloc and dealloc and should instead provide a _alloc and _dealloc implementation"
 																					 );
