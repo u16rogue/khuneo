@@ -33,7 +33,7 @@ namespace details {
  */
 template <typename extend = metapp::details::invalid_type>
 struct default_lexer_impl {
-  using _extend = typename metapp::type_if<metapp::is_t_invalid<extend>::value, default_lexer_impl, extend>::type; // Template magic. DO NOT OVERRIDE!!!
+  using _extend = typename metapp::extends_self_crtp<extend, default_lexer_impl>::type; // Template magic. DO NOT OVERRIDE!!!
 
   static constexpr bool enable_sloc_track = true;                                                                           // Toggles if the lexer should keep track of lines and column of each token
   static constexpr bool lazy_eval         = true;                                                                           // States whether the lexing should be lazily done

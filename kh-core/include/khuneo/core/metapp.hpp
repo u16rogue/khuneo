@@ -72,4 +72,15 @@ template <typename A, typename... B>
 constexpr auto match_any_a_to_b(A a, B... b) -> bool {
   return ((a == b) || ...);
 }
-}
+
+// --------------------------------------------------
+
+// Quick wrapper for CRTP self implementation to help
+// default implementation easy access to the optional
+// extented implementation of itself
+template <typename CRTP, typename SELF>
+struct extends_self_crtp {
+  using type = typename type_if<is_t_invalid<CRTP>::value, SELF, CRTP>::type;
+};
+
+} // khuneo::metapp
