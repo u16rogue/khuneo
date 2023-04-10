@@ -6,6 +6,7 @@
 
 // TODO: maybe add option to completely ignore warnings at compile (c++) level
 // TODO: fix column tracking
+// TODO: i think lexing comments is still broken
 
 namespace khuneo::compiler::lexer {
 
@@ -37,7 +38,6 @@ struct default_lexer_impl {
 
   static constexpr bool enable_sloc_track = true;                                                                           // Toggles if the lexer should keep track of lines and column of each token
   static constexpr bool lazy_eval         = true;                                                                           // States whether the lexing should be lazily done
-  using allocator                         = khuneo::details::kh_basic_allocator<khuneo::details::kh_default_std_allocator>; // Defines the allocator to be used
   using container                         = khuneo::cont::contiguous_list<token_node<_extend>, khuneo::cont::details::default_contiguous_list_impl>; // Defines the implementation used by the contiguous list container
   // static auto lexer_msg_recv(msg_callback_info<enable_sloc_track> * mi) -> void { };          // Lexer message receiver callback
 
@@ -628,15 +628,16 @@ constexpr auto match_symbol(run_info<lexer_impl> * i) -> iresp {
 
 template <typename impl>
 constexpr iresp (*matches[])(run_info<impl> *) = {
-  match_hex<impl>,
-  match_number<impl>,
-  match_string<impl>,
-  match_sloc<impl>,
-  match_comment<impl>,
-  match_token<impl>,
-  match_keyword<impl>,
-  match_symbol<impl>
+  match_hex     <impl>,
+  match_number  <impl>,
+  match_string  <impl>,
+  match_sloc    <impl>,
+  match_comment <impl>,
+  match_token   <impl>,
+  match_keyword <impl>,
+  match_symbol  <impl>,
 };
+
 } // namespace khuneo::compiler::lexer::details
 
 namespace khuneo::compiler::lexer {
@@ -699,17 +700,14 @@ template <typename impl>
 auto run(run_info<impl> * i) -> result {
   impl::container::reuse(i->tokens);
 
-  while (!details::is_end(i) && !i->abort) // LOOP A
-  {
-    if (utf8::csize(*i->current) == 0) // Corrupted byte (no utf8 match)
-    {
+  while (!details::is_end(i) && !i->abort) { // LOOP A
+    if (utf8::csize(*i->current) == 0) { // Corrupted byte (no utf8 match)
       details::send_msg(i, msg::F_CORRUPT_UTF8);
       break; // LOOP A
     }
 
     details::iresp response = details::iresp::ABORT;
-    for (auto matcher : details::matches<impl>) // LOOP B
-    {
+    for (auto matcher : details::matches<impl>) { // LOOP B
       response = matcher(i);
       if (response == details::iresp::PASS)
         continue; // LOOP B
@@ -729,8 +727,7 @@ auto run(run_info<impl> * i) -> result {
 
     if (response == details::iresp::ABORT)
       break;                                   // LOOP A
-    else if (response == details::iresp::PASS) // If its still PASS that means there was no match
-    {
+    else if (response == details::iresp::PASS) { // If its still PASS that means there was no match
       if (details::send_msg(i, msg::W_INVALID_TOKEN))
         break; // LOOP A
       ++i->current;
@@ -749,4 +746,5 @@ auto run(run_info<impl> * i) -> result {
 
   return result::OK;
 }
+
 } // namespace khuneo::compiler::lexer

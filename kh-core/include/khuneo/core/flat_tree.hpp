@@ -44,7 +44,14 @@ public:
   }
 
 private:
+  static auto block_delta(node_t * a, node_t * b) -> khuneo::u8 {
+  }
+
+  static auto acquire_block() -> node_t * {
+  }
+
   static auto count_to_bytes(sz_t sz) -> khuneo::u32 {
+    return sizeof(node_t) * sz;
   }
 
   static auto grow(self_t * self, sz_t rel_sz) -> bool {
