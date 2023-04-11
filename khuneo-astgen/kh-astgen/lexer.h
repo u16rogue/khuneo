@@ -59,16 +59,16 @@ typedef struct _kh_lexer_run_context {
 
 typedef enum _kh_lexer_response {
   // Lexer finished parsing the tokens
-  KH_RESP_LEXER_OK,
+  KH_LEXER_RESPONSE_OK,
 
   // Lexer failure (must abort)
-  KH_RESP_LEXER_ERROR,
+  KH_LEXER_RESPONSE_ERROR,
 
   // Provided buffer in context has been exhausted, replace the buffer with a new one and call lexer again
   // with the same context to continue. The memory reallocation is left to the caller. You can either create a new buffer
   // or realloc the same memory then just set token_buffer at the start of the extended memory and setting token_buffer_size
   // to the extended memory size keeping the entire memory block contiguous
-  KH_RESP_LEXER_BUFFER_EXHAUSTED, 
+  KH_LEXER_RESPONSE_BUFFER_EXHAUSTED, 
 
 } kh_lexer_response;
 

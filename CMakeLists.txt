@@ -33,5 +33,6 @@ set_target_properties(
 target_link_libraries(
   ${PROJECT_NAME}
   PUBLIC
+  kh_core
   kh_astgen
 )

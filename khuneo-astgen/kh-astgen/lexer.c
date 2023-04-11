@@ -105,48 +105,33 @@ static kh_lex_resp lex_comments(kh_lexer_run_context * ctx) {
   ctx->isrc += 2;
   KH_HLP_ADD_COLUMN(2);
 
-  if (single_line) {
-    while (!is_src_end(ctx, 0)) {
-      if (ctx->src[ctx->isrc] == '\n') {
-        ++ctx->isrc;
-        KH_HLP_ADD_COLUMN(1);
-        break;
-      }
+  const kh_u32 delim_offset = single_line ? 1 : 2; // [11/04/2023] '\n' or "*/"
 
-      // [11/04/2023] TODO: not necessary but it would be good to check if it responds with a KH_LEX_ABORT
-      if (lex_whitespace(ctx) == KH_LEX_MATCH) { // [11/04/2023] NOTE: lex_whitespace already advances ctx->isrc that's why we cant just continue
-        continue;
-      }
+  // [11/04/2023] Under the impression that the boolean expression will
+  // produce a 0 false or a 1 true we use them as a seek value. the commented code shows the intent
+  while (!is_src_end(ctx, !single_line /*? 0 : 1*/)) { 
 
-      kh_sz char_sz = kh_utf8_char_len(ctx->src[ctx->isrc]);
-      if (char_sz == -1) {
-        ctx->status = KH_LEXER_STATUS_INVALID_UTF8;
-        return KH_LEX_ABORT;
-      }
-      ctx->isrc += char_sz;
-      KH_HLP_ADD_COLUMN(1);
+    if ( (single_line  && ctx->src[ctx->isrc] == '\n') // For single line comments
+    ||   (!single_line && *(const kh_u16 *)&ctx->src[ctx->isrc] == *(const kh_u16 *)"*/") // For multiline comments
+    ) {
+      ctx->isrc += delim_offset;
+      KH_HLP_ADD_COLUMN(delim_offset);
+      break;
     }
-  } else { // Multiline comments
-    while (!is_src_end(ctx, 1)) {
-      if ( *(const kh_u16 *)&ctx->src[ctx->isrc] == *(const kh_u16 *)"*/" ) {
-        ctx->isrc += 2;
-        KH_HLP_ADD_COLUMN(2);
-        break;
-      }
 
-      // [11/04/2023] TODO: not necessary but it would be good to check if it responds with a KH_LEX_ABORT
-      if (lex_whitespace(ctx) == KH_LEX_MATCH) { // [11/04/2023] NOTE: lex_whitespace already advances ctx->isrc that's why we cant just continue
-        continue;
-      }
-
-      kh_sz char_sz = kh_utf8_char_len(ctx->src[ctx->isrc]);
-      if (char_sz == -1) {
-        ctx->status = KH_LEXER_STATUS_INVALID_UTF8;
-        return KH_LEX_ABORT;
-      }
-      ctx->isrc += char_sz;
-      KH_HLP_ADD_COLUMN(1);
+    // [11/04/2023] TODO: not necessary but it would be good to check if it responds with a KH_LEX_ABORT
+    if (lex_whitespace(ctx) == KH_LEX_MATCH) { // [11/04/2023] NOTE: lex_whitespace already advances ctx->isrc
+      continue;
     }
+
+    kh_sz char_sz = kh_utf8_char_len(ctx->src[ctx->isrc]);
+    if (char_sz == -1) {
+      ctx->status = KH_LEXER_STATUS_INVALID_UTF8;
+      return KH_LEX_ABORT;
+    }
+
+    ctx->isrc += char_sz;
+    KH_HLP_ADD_COLUMN(1);
   }
 
   return KH_LEX_MATCH;
@@ -191,7 +176,7 @@ kh_lexer_response kh_lexer(kh_lexer_run_context * ctx) {
       if (resp == KH_LEX_PASS) {
         continue;
       } else if (resp == KH_LEX_ABORT) {
-        return KH_RESP_LEXER_ERROR; // [10/04/2023] We dont set ctx->status as the lexer callbacks might've set it
+        return KH_LEXER_RESPONSE_ERROR; // [10/04/2023] We dont set ctx->status as the lexer callbacks might've set it
       } else if (resp == KH_LEX_MATCH) {
         break;
       } else {
@@ -203,12 +188,12 @@ kh_lexer_response kh_lexer(kh_lexer_run_context * ctx) {
     // [10/04/2023] Abort if its still a pass which indicates no lexer matches
     if (resp == KH_LEX_PASS) {
       ctx->status = KH_LEXER_STATUS_NO_LEX_MATCH;
-      return KH_RESP_LEXER_ERROR;
+      return KH_LEXER_RESPONSE_ERROR;
     }
 
     // [10/04/2023] Under the assumption that the state is OK and we had a match
   }
-  return KH_RESP_LEXER_OK;
+  return KH_LEXER_RESPONSE_OK;
 }
 
 #undef KH_HLP_ADD_COLUMN
