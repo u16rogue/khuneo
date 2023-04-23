@@ -7,14 +7,14 @@ khuneo programming language - A modular and abstracted embedded programming lang
 (Planned) Syntax
 ```
 import std;
-import ffi;
+import c_ffi as ffi;
 
-const somestruct = ffi#def_struct {
+def somestruct = ffi#def_struct {
   x: i32;
   y: f32;
 };
 
-somestruct.$add = fn (self, other) {
+somestruct.$add = (self, other) {
   return {
     x = self.x + other.x,
     y = self.y + other.y,
@@ -22,18 +22,35 @@ somestruct.$add = fn (self, other) {
   };
 };
 
-let arrays = [1, 2, 3, 4];
-let dictionaries = { one = 1, two: i32 = 2 };
+def arrays = [1, 2, 3, 4];
+def dictionaries = { one = 1, two: i32 = 2 };
+def mutable_var: i32! = 1234;
+mutable_var = 5678;
 
 compiler#set("entrypoint")
-fn main(args) i32 {
-  let n: i32 = args.count as i32;
+def main(args) i32 {
+  def n: i32 = args.count as i32;
   if (features#has("raw_memory") && !features#is("sanboxed")) {
-    let ptr = 0xDEADBEEF;
+    def ptr = 0xDEADBEEF;
     std.print("x is \{(ptr as somestruct).x)\}";
     ptr.$type = somestruct;
     std.print("y is \{ptr.y\}");
-  }
+  };
+
+  iter as args_loop (arg : args) {
+    if (arg != "-a")
+      break;
+    iter (x : n-1) {
+      if (args[x] == arg)
+        break args_loop;
+    };
+
+    iter {
+      def mem = ffi.malloc(4);
+      defer { ffi.free(mem); };
+    } (false);
+  };
+
   return n;
 }
 ```
