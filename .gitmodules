@@ -1,6 +1,6 @@
 [submodule "khuneo-astgen"]
 	path = khuneo-astgen
-	url = https://gitlab.com/u16rogue/khuneo-astgen.git
+	url = https://github.com/u16rogue/khuneo-astgen.git
 [submodule "khuneo-core"]
 	path = khuneo-core
-	url = https://gitlab.com/u16rogue/khuneo-core.git
+	url = https://github.com/u16rogue/khuneo-core.git

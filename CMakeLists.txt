@@ -48,3 +48,13 @@ if (KH_ENPR_ASTGEN)
 else()
   message("-- khuneo > astgen > Component is disabled!")
 endif()
+
+# -- Extra utilities component
+# option(KH_ENPR_ASTGEN "Enable project component \"AST Generation\" for parsing khuneo source." ON)
+# if (KH_ENPR_ASTGEN)
+#   message("-- khuneo > astgen > Component is enabled!")
+#   add_subdirectory("khuneo-astgen")
+#   target_link_libraries(${PROJECT_NAME} PUBLIC kh_astgen)
+# else()
+#   message("-- khuneo > astgen > Component is disabled!")
+# endif()
