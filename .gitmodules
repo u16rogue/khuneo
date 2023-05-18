@@ -4,3 +4,6 @@
 [submodule "khuneo-core"]
 	path = khuneo-core
 	url = https://github.com/u16rogue/khuneo-core.git
+[submodule "khuneo-extra"]
+	path = khuneo-extra
+	url = https://github.com/u16rogue/khuneo-extra.git
