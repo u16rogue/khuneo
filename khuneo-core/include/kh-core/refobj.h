@@ -1,0 +1,101 @@
+#pragma once
+
+#include <kh-core/types.h>
+
+
+
+/*
+ *  Reason for a Reference Object Resource Callback invocation.
+ */
+typedef enum _kh_refobj_rcb_reason {
+  KH_REFOBJ_RCB_REASON_LOCK_AND_WAIT,
+  KH_REFOBJ_RCB_REASON_UNLOCK,
+} kh_refobj_rcb_reason;
+
+/*
+ *  Data provided to a reference object's resource callback that
+ *  contains relevant information.
+ */
+typedef struct _kh_refobj_rcb_info {
+  kh_refobj_rcb_reason reason; // Reason for the invocation
+} kh_refobj_rcb_info;
+
+typedef kh_bool(*kh_refobj_rcb_fnt)(kh_refobj_rcb_info *); // Function type for Reference Object's Resource callback function
+
+/*
+ *  A reference object. Allows an abstract value
+ *  to have reference counting based on movement.
+ *
+ *  This is used to manage resources that has an
+ *  undertiministic lifetime.
+ */
+typedef struct _kh_refobj {
+  kh_vptr           _object;            // Pointer to abstract object
+  kh_u8             _count;             // Reference count
+  kh_refobj_rcb_fnt _resource_callback; // Resource management callback
+} kh_refobj;
+
+/*
+ *  An instance of a reference to a `kh_refobj`
+ *  [!] STRICLY ONLY use this value with kh_refobj_* functions
+ *  NEVER handle manually.
+ */
+typedef struct _kh_refobji { kh_u8 __compatibility_padding_donottouch; } * kh_refobji;
+
+// Indicates that the reference object instance is invalid.
+#define KH_REFOBJ_INVALID_IREF KH_NULLPTR
+
+/*
+ *  Initializes a `kh_refobj` struct.
+ *  [!] Only use when structure is previously unused.
+ *
+ *  > Parameter `resource_callback` is optional, provide `KH_NULLPTR` if no
+ *  implementation is provided.
+ */
+kh_bool kh_refobj_init(kh_refobj * ro, kh_vptr value, kh_refobji * out_firstref, kh_refobj_rcb_fnt resource_callback);
+
+/*
+ *  Moves a `kh_refobj` reference from one `kh_refobji` to another then
+ *  sets the latter into `KH_REFOBJ_INVALID_IREF`.
+ *  > Moving does not acquire and inc/dec the refrence count.
+ */
+kh_bool kh_refobj_imove(kh_refobji * inout_source, kh_refobji * out_dest);
+
+/*
+ *  Copies a `kh_refobj` reference from one `kh_refobji` to another which 
+ *  (if applicable) acquires and increases the ref count.
+ */
+kh_bool kh_refobj_icopy(kh_refobji * in_source, kh_refobji * out_dest);
+
+/*
+ *  Moves a `kh_refobj` reference from one `kh_refobji` to a function argument
+ *  through a return then sets the latter into `KH_REFOBJ_INVALID_IREF`.
+ *  > Moving does not acquire and inc/dec the refrence count.
+ *  [!] Only use to pass a `kh_refobji` variable to a `kh_refobji` function
+ *  argument.
+ */
+kh_refobji kh_refobj_imovearg(kh_refobji * inout_source);
+
+/*
+ *  Copies a `kh_refobj` reference from one `kh_refobji` to a function argument
+ *  which (if applicable) acquires and increases the ref count.
+ *  [!] Only use to pass a `kh_refobji` variable to a `kh_refobji` function
+ *  argument.
+ */
+kh_refobji kh_refobj_icopyarg(kh_refobji * in_source);
+
+/*
+ *  Removes a `kh_refobj` reference from a `kh_refobji` and (if applicable)
+ *  acquires and decreases the ref count then sets the instance to `KH_REFOBJ_INVALID_IREF`
+ */
+kh_bool kh_refobj_iremove(kh_refobji * inout_source);
+
+/*
+ *  Checks if a reference object instance still has a non zero ref count
+ */
+kh_bool kh_refobj_ialive(kh_refobji ro);
+
+/*
+ *  Checks if a reference object still has a non zero ref count
+ */
+kh_bool kh_refobj_alive(kh_refobj * ro);
