@@ -17,8 +17,8 @@ add_library(
   "include/kh-core/refobj.h"
   "src/refobj.c"
 
-  "include/kh-core/identifier_encode.h"
-  "src/identifier_encode.c"
+  "include/kh-core/identifier_encoding.h"
+  "src/identifier_encoding.c"
 )
 
 set_target_properties(
