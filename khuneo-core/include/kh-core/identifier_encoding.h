@@ -13,6 +13,6 @@ kh_u8 kh_iden_encode(const kh_utf8 character);
  */
 kh_bool kh_iden_encode_valid(const kh_u8 encoded_character);
 
-kh_bool kh_iden_encoder(const kh_utf8 * in_string, const kh_sz in_strsz, kh_vptr out_buffer, const kh_sz buffer_size);
+kh_bool kh_iden_encoder(const kh_utf8 * in_string, const kh_sz string_size, kh_vptr out_buffer, const kh_sz buffer_size);
 
 kh_bool kh_iden_decoder(const kh_vptr in_buffer, kh_sz buffer_size, kh_utf8 * out_string, kh_sz string_buffer_size);
