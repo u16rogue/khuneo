@@ -3,11 +3,11 @@
 #include "types.h"
 
 /*
- *  Determine the size of a character by providing a character
+ *  Determine the size of a UTF8
  *  > Returns a KH_UTF8_INVALID_LEN when invalid.
  */
-kh_u8 kh_utf8_char_len(const kh_utf8 c);
-#define KH_UTF8_INVALID_LEN KH_U8_MAX
+kh_u8 kh_utf8_char_sz(const kh_utf8 c);
+#define KH_UTF8_INVALID_SZ KH_U8_MAX
 
 /*
  *  Converts a character representing a number to its

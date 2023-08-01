@@ -1,6 +1,6 @@
 #include <kh-core/utf8.h>
 
-kh_u8 kh_utf8_char_len(const kh_utf8 c) {
+kh_u8 kh_utf8_char_sz(const kh_utf8 c) {
   kh_u8 mask = *(kh_u8 *)&c & 0xF0;
   if (~mask & 0x80)
     return 1;
@@ -19,7 +19,7 @@ kh_u8 kh_utf8_char_len(const kh_utf8 c) {
   }
 
   if (!sz)
-    return KH_UTF8_INVALID_LEN;
+    return KH_UTF8_INVALID_SZ;
   return sz + 1;
 }
 

@@ -2,25 +2,23 @@
 
 #include <kh-core/types.h>
 
-
-
 /*
  *  Reason for a Reference Object Resource Callback invocation.
  */
-typedef enum _kh_refobj_rcb_reason {
+enum kh_refobj_rcb_reason {
   KH_REFOBJ_RCB_REASON_LOCK_AND_WAIT,
   KH_REFOBJ_RCB_REASON_UNLOCK,
-} kh_refobj_rcb_reason;
+};
 
 /*
  *  Data provided to a reference object's resource callback that
  *  contains relevant information.
  */
-typedef struct _kh_refobj_rcb_info {
-  kh_refobj_rcb_reason reason; // Reason for the invocation
-} kh_refobj_rcb_info;
+struct kh_refobj_rcb_info {
+  enum kh_refobj_rcb_reason reason; // Reason for the invocation
+};
 
-typedef kh_bool(*kh_refobj_rcb_fnt)(kh_refobj_rcb_info *); // Function type for Reference Object's Resource callback function
+typedef kh_bool(*kh_refobj_rcb_fnt)(struct kh_refobj_rcb_info *); // Function type for Reference Object's Resource callback function
 
 /*
  *  A reference object. Allows an abstract value
@@ -29,11 +27,11 @@ typedef kh_bool(*kh_refobj_rcb_fnt)(kh_refobj_rcb_info *); // Function type for 
  *  This is used to manage resources that has an
  *  undertiministic lifetime.
  */
-typedef struct _kh_refobj {
+struct kh_refobj {
   kh_vptr           _object;            // Pointer to abstract object
   kh_u8             _count;             // Reference count
   kh_refobj_rcb_fnt _resource_callback; // Resource management callback
-} kh_refobj;
+};
 
 /*
  *  An instance of a reference to a `kh_refobj`
@@ -52,7 +50,7 @@ typedef struct _kh_refobji { kh_u8 __compatibility_padding_donottouch; } * kh_re
  *  > Parameter `resource_callback` is optional, provide `KH_NULLPTR` if no
  *  implementation is provided.
  */
-kh_bool kh_refobj_init(kh_refobj * ro, kh_vptr value, kh_refobji * out_firstref, kh_refobj_rcb_fnt resource_callback);
+kh_bool kh_refobj_init(struct kh_refobj * ro, kh_vptr value, kh_refobji * out_firstref, kh_refobj_rcb_fnt resource_callback);
 
 /*
  *  Moves a `kh_refobj` reference from one `kh_refobji` to another then
@@ -98,4 +96,4 @@ kh_bool kh_refobj_ialive(kh_refobji ro);
 /*
  *  Checks if a reference object still has a non zero ref count
  */
-kh_bool kh_refobj_alive(kh_refobj * ro);
+kh_bool kh_refobj_alive(struct kh_refobj * ro);
