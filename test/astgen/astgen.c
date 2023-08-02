@@ -73,7 +73,7 @@ DEF_TEST_UNIT(t_ll_parse_match_identifiers) {
     const struct match_set * set = &fail[i];
     struct kh_lexer_ll_parse_result res = { 0 };
     res.status = KH_LEXER_STATUS_OK;
-    if (kh_ll_lexer_parse(set->code, set->sz, &res) == KH_LEXER_TOKEN_TYPE_IDENTIFIER || res.status != KH_LEXER_STATUS_OK || res.value.marker.size != 0) {
+    if (kh_ll_lexer_parse(set->code, set->sz, &res) == KH_LEXER_TOKEN_TYPE_IDENTIFIER && res.status == KH_LEXER_STATUS_OK && res.value.marker.size != 0) {
       did_fail = KH_TRUE;
       MSG_UNIT_FMT("Parsing code '%s' expecting to fail. Reported size was %d", set->code, res.value.marker.size);
     }
@@ -99,9 +99,59 @@ DEF_TEST_UNIT(t_ll_parse_match_identifiers) {
   }
 }
 
+DEF_TEST_UNIT(t_ll_parse_match_basic_string) {
+  struct match_set {
+    const kh_utf8 * code;
+    int             sz;
+    int             expect;
+  };
+
+  #define _set(code, expect) { code, sizeof(code) - 1, expect }
+  const struct match_set pass[] = {
+    _set("'foo'",     5),
+    _set("'fo'o",     4),
+    _set("''",        2),
+    _set("'\\''",     4),
+    _set("'\\n\\''",  6),
+    _set("'$b\\'ar'", 8),
+  };
+  #undef _set
+
+  kh_bool did_fail = KH_FALSE;
+
+  for (int i = 0; i < (int)kh_narray(pass); ++i) {
+    const struct match_set * set = &pass[i];
+    struct kh_lexer_ll_parse_result res = { 0 };
+    res.status = KH_LEXER_STATUS_OK;
+
+    if (kh_ll_lexer_parse(set->code, set->sz, &res) != KH_LEXER_TOKEN_TYPE_STRING || res.status != KH_LEXER_STATUS_OK || (int)res.value.marker.size != set->expect) {
+      did_fail = KH_TRUE;
+      MSG_UNIT_FMT("Parsing code \"%s\" expecting size %d failed. Reported size was %d with status flag %x", set->code, set->expect, res.value.marker.size, res.status);
+    }
+  }
+
+  // Test missing closing string tag syntax error
+  {
+    struct kh_lexer_ll_parse_result res = { 0 };
+    res.status = KH_LEXER_STATUS_OK;
+    if (kh_ll_lexer_parse("' foo", 5, &res) != KH_LEXER_TOKEN_TYPE_STRING || res.status != KH_LEXER_STATUS_SYNTAX_ERROR) {
+      did_fail = KH_TRUE;
+      MSG_UNIT_FMT("Parsing code '%s' expecting to to cause a string type syntax error failed.", "' foo");
+    }
+  }
+
+  if (did_fail) {
+    FAIL_UNIT("String parsing failed.");
+  } else {
+    PASS_UNIT();
+  }
+}
+
+
 START_UNIT_TESTS(tests)
-  ADD_UNIT_TEST("Low level token lexer - Match symbols",         t_ll_parse_match_symbols)
-  ADD_UNIT_TEST("Low level token lexer - Match identifiers", t_ll_parse_match_identifiers)
+  ADD_UNIT_TEST("Low level token lexer - Match symbols",            t_ll_parse_match_symbols)
+  ADD_UNIT_TEST("Low level token lexer - Match identifiers",    t_ll_parse_match_identifiers)
+  ADD_UNIT_TEST("Low level token lexer - Match basic strings", t_ll_parse_match_basic_string)
 END_UNIT_TESTS(tests)
 
 DEF_TEST_UNIT_GROUP(test_astgen) {

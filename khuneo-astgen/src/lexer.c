@@ -7,7 +7,7 @@
 // -------------------------------------------------- 
 
 struct lmp_entry {
-  kh_bool(* const lexer_matcher)(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result);
+  kh_bool( * const lexer_matcher)(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result);
   const enum kh_lexer_token_type resulting_type;
 };
 

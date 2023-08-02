@@ -4,7 +4,7 @@
 #include <kh-core/utilities.h>
 #include <kh-core/utf8.h>
 
-kh_bool lmp_symbols(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+kh_bool lmp_symbols(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
   (void)size;
 
   const kh_utf8 symbols[] = {
@@ -50,7 +50,7 @@ static kh_bool valid_ident_char(const kh_utf8 c) {
          ) ? KH_TRUE : KH_FALSE;
 }
 
-kh_bool lmp_identifiers(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+kh_bool lmp_identifiers(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
   if (code[0] != '$' && code[0] != '_' && !kh_utf8_is_alpha(code[0])) {
     return KH_FALSE;
   }
@@ -81,17 +81,12 @@ kh_bool lmp_identifiers(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_par
     return KH_FALSE;
   }
 
-  // out_result->value.marker.offset = 0; // [29/07/2023] Caller should update this
   out_result->value.marker.size   = current - code;
   
   return KH_TRUE;
 }
 
-kh_bool lmp_string(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
-  (void)code;
-  (void)size;
-  (void)out_result;
-
+kh_bool lmp_string(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
   if (code[0] != '\'') {
     return KH_FALSE;
   }
@@ -99,14 +94,24 @@ kh_bool lmp_string(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_re
   const kh_utf8 * current = code + 1;
   const kh_utf8 * end     = code + size;
 
-  do {
+  while (KH_TRUE) {
+    if (current[0] == '\'' && (current - 1)[0] != '\\' ) {
+      break;
+    }
     if (current >= end) {
-      out_result->status = KH_LEXER_STATUS_SYNTAX_ERROR;
+      out_result->status = KH_LEXER_STATUS_SYNTAX_ERROR; // Missing string token to end
       return KH_FALSE;
     }
-
     ++current;
-  } while (current[0] != '\'');
+  }
 
+  // [01/08/2023] This should be impossible.
+  //if (current[0] != '\'') {
+  //  out_result->status = KH_LEXER_STATUS_UNKNOWN_WARNING;
+  //  return KH_FALSE;
+  //}
+  
+  out_result->value.marker.size = current - code + 1;
+  
   return KH_TRUE;
 }

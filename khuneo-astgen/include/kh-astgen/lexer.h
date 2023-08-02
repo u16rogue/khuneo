@@ -29,9 +29,11 @@ enum kh_lexer_status {
                                    // EXTEND FLAG using the most significant bit (1000_0000)
 
   // -- Warnings
+  KH_LEXER_STATUS_UNKNOWN_WARNING     = KH_LEXER_STATUS_WARNING | 0, // Unspecified warning (Yes the or is pointless, its for verbosity)
   KH_LEXER_STATUS_CODE_PARSE_OVERFLOW = KH_LEXER_STATUS_WARNING | 1, // Parsing index went over the size limit.
 
   // -- Errors
+  KH_LEXER_STATUS_UNKNOWN_ERROR       = KH_LEXER_STATUS_ERROR   | 0, // Unspecified error (Yes the or is pointless, its for verbosity)
   KH_LEXER_STATUS_UTF8_INVALID        = KH_LEXER_STATUS_ERROR   | 1, // Invalid UTF8 byte was met in the buffer.
   KH_LEXER_STATUS_SYNTAX_ERROR        = KH_LEXER_STATUS_ERROR   | 2, // Invalid syntax
 
