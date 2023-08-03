@@ -4,7 +4,7 @@
 #include <kh-core/utilities.h>
 #include <kh-core/utf8.h>
 
-kh_bool lmp_symbols(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+enum kh_lexer_token_type lmp_symbols(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
   (void)size;
 
   const kh_utf8 symbols[] = {
@@ -26,7 +26,7 @@ kh_bool lmp_symbols(const kh_utf8 * const code, const kh_sz size, struct kh_lexe
   for (kh_u8 i = 0; i < kh_narray(symbols); ++i) {
     if (symbols[i] == symbol) {
       out_result->value.symbol = symbol;
-      return KH_TRUE;
+      return KH_LEXER_TOKEN_TYPE_SYMBOL;
     }
   }
 
@@ -34,11 +34,11 @@ kh_bool lmp_symbols(const kh_utf8 * const code, const kh_sz size, struct kh_lexe
     const kh_u8 * symbol_range = symbol_ranges[i];
     if (symbol_range[0] <= symbol && symbol_range[1] >= code[0]) {
       out_result->value.symbol = symbol;
-      return KH_TRUE;
+      return KH_LEXER_TOKEN_TYPE_SYMBOL;
     }
   }
 
-  return KH_FALSE;
+  return KH_LEXER_TOKEN_TYPE_NONE;
 }
 
 static kh_bool valid_ident_char(const kh_utf8 c) {
@@ -50,19 +50,19 @@ static kh_bool valid_ident_char(const kh_utf8 c) {
          ) ? KH_TRUE : KH_FALSE;
 }
 
-kh_bool lmp_identifiers(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+enum kh_lexer_token_type lmp_identifiers(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
   if (code[0] != '$' && code[0] != '_' && !kh_utf8_is_alpha(code[0])) {
-    return KH_FALSE;
+    return KH_LEXER_TOKEN_TYPE_NONE;
   }
 
-  const kh_utf8 * current = code + 1;
-  const kh_utf8 * end     = code + size;
+  const kh_utf8 * current   = code + 1;
+  const kh_utf8 * const end = code + size;
 
   while (current < end) {
     const kh_u8 utf_sz = kh_utf8_char_sz(current[0]);
     if (utf_sz == KH_UTF8_INVALID_SZ) {
       out_result->status = KH_LEXER_STATUS_UTF8_INVALID; 
-      return KH_FALSE;
+      return KH_LEXER_TOKEN_TYPE_NONE;
     }
 
     // Only do validation if its ascii, if its utf8 let it pass
@@ -78,17 +78,17 @@ kh_bool lmp_identifiers(const kh_utf8 * const code, const kh_sz size, struct kh_
   // Going over `end` means we have an invalid UTF8 overflow
   if (current > end) {
     out_result->status = KH_LEXER_STATUS_CODE_PARSE_OVERFLOW;
-    return KH_FALSE;
+    return KH_LEXER_TOKEN_TYPE_IDENTIFIER;
   }
 
-  out_result->value.marker.size   = current - code;
+  out_result->value.marker.size = current - code;
   
-  return KH_TRUE;
+  return KH_LEXER_TOKEN_TYPE_IDENTIFIER;
 }
 
-kh_bool lmp_string(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+enum kh_lexer_token_type lmp_string(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
   if (code[0] != '\'') {
-    return KH_FALSE;
+    return KH_LEXER_TOKEN_TYPE_NONE;
   }
 
   const kh_utf8 * current = code + 1;
@@ -100,7 +100,7 @@ kh_bool lmp_string(const kh_utf8 * const code, const kh_sz size, struct kh_lexer
     }
     if (current >= end) {
       out_result->status = KH_LEXER_STATUS_SYNTAX_ERROR; // Missing string token to end
-      return KH_FALSE;
+      return KH_LEXER_TOKEN_TYPE_STRING;
     }
     ++current;
   }
@@ -113,5 +113,27 @@ kh_bool lmp_string(const kh_utf8 * const code, const kh_sz size, struct kh_lexer
   
   out_result->value.marker.size = current - code + 1;
   
-  return KH_TRUE;
+  return KH_LEXER_TOKEN_TYPE_STRING;
+}
+
+
+enum kh_lexer_token_type lmp_number(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+  (void)code;
+  (void)size;
+  (void)out_result;
+
+  if (kh_utf8_is_num(code[0]) == KH_FALSE) {
+    return KH_LEXER_TOKEN_TYPE_NONE;
+  }
+
+  const kh_utf8 * current    = code + 1;
+  const kh_utf8 * const end  = code + size;
+
+  while (current < end && kh_utf8_is_num(current[0]) == KH_TRUE) {
+    ++current;
+  }
+
+  out_result->value.marker.size = current - code;
+
+  return KH_LEXER_TOKEN_TYPE_NUMBER;
 }

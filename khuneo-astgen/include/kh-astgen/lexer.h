@@ -7,8 +7,7 @@ enum kh_lexer_token_type {
   KH_LEXER_TOKEN_TYPE_GROUP,      // Refers to a range group used for lazy evaluation. Uses the `code_marker` value.
   KH_LEXER_TOKEN_TYPE_SYMBOL,     // Refers to a single byte symbol. Uses the `token` value.
   KH_LEXER_TOKEN_TYPE_IDENTIFIER, // Refers to an identifier. Uses the `code_marker` value.
-  KH_LEXER_TOKEN_TYPE_UNUM,
-  KH_LEXER_TOKEN_TYPE_FLOAT,
+  KH_LEXER_TOKEN_TYPE_NUMBER,
   KH_LEXER_TOKEN_TYPE_STRING,
   KH_LEXER_TOKEN_TYPE_STRING_INTRP,
 };
