@@ -86,42 +86,47 @@ enum kh_lexer_token_type lmp_identifiers(const kh_utf8 * const code, const kh_sz
   return KH_LEXER_TOKEN_TYPE_IDENTIFIER;
 }
 
-enum kh_lexer_token_type lmp_string(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
-  if (code[0] != '\'') {
-    return KH_LEXER_TOKEN_TYPE_NONE;
-  }
-
-  const kh_utf8 * current = code + 1;
-  const kh_utf8 * end     = code + size;
-
-  while (KH_TRUE) {
-    if (current[0] == '\'' && (current - 1)[0] != '\\' ) {
-      break;
-    }
-    if (current >= end) {
-      out_result->status = KH_LEXER_STATUS_SYNTAX_ERROR; // Missing string token to end
+static enum kh_lexer_token_type what_string_type(const kh_utf8 c) {
+  switch (c) {
+    case '\'': 
       return KH_LEXER_TOKEN_TYPE_STRING;
-    }
-    ++current;
+    case '`':
+      return KH_LEXER_TOKEN_TYPE_STRING_INTRP;
   }
 
-  // [01/08/2023] This should be impossible.
-  //if (current[0] != '\'') {
-  //  out_result->status = KH_LEXER_STATUS_UNKNOWN_WARNING;
-  //  return KH_FALSE;
-  //}
-  
-  out_result->value.marker.size = current - code + 1;
-  
-  return KH_LEXER_TOKEN_TYPE_STRING;
+  return KH_LEXER_TOKEN_TYPE_NONE;
+}
+
+enum kh_lexer_token_type lmp_string(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+  const kh_utf8 string_symbol[] = { '\'', '`' };
+
+  for (int i = 0; i < (int)kh_narray(string_symbol); ++i ) {
+    const kh_utf8 sym = string_symbol[i];
+    if (code[0] != sym) {
+      continue;
+    }
+
+    const kh_utf8 * current = code + 1;
+    const kh_utf8 * end     = code + size;
+
+    while (KH_TRUE) {
+      if (current[0] == sym && (current - 1)[0] != '\\' ) {
+        out_result->value.marker.size = current - code + 1;
+        return what_string_type(sym);
+      }
+      if (current >= end) {
+        out_result->status = KH_LEXER_STATUS_SYNTAX_ERROR; // Missing string token to end
+        return what_string_type(sym);
+      }
+      ++current;
+    }
+  }
+
+  return KH_LEXER_TOKEN_TYPE_NONE;
 }
 
 
 enum kh_lexer_token_type lmp_number(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
-  (void)code;
-  (void)size;
-  (void)out_result;
-
   if (kh_utf8_is_num(code[0]) == KH_FALSE) {
     return KH_LEXER_TOKEN_TYPE_NONE;
   }

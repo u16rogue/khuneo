@@ -1,7 +1,9 @@
 #include <kh-astgen/lexer.h>
 #include <kh-core/utilities.h>
 
-#include "kh-core/refobj.h"
+#include <kh-core/refobj.h>
+#include <kh-core/types.h>
+
 #include "lexers.h"
 
 // -------------------------------------------------- 
@@ -26,6 +28,53 @@ enum kh_lexer_token_type kh_ll_lexer_parse(const kh_utf8 * code, kh_sz size, str
       return result;
     }
   }
+  return KH_LEXER_TOKEN_TYPE_NONE;
+}
+
+static const kh_utf8 group_matchers[][2] = {
+  { '(', ')' },
+  { '[', ']' },
+  { '{', '}' },
+  //{ '<', '>' },
+};
+
+enum kh_lexer_token_type kh_ll_lexer_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+  (void)code;
+  (void)size;
+  (void)out_result;
+
+  for (int i = 0; i < (int)kh_narray(group_matchers); ++i) {
+    const kh_utf8 * group = group_matchers[i];
+    if (code[0] != group[0]) {
+      continue;
+    }
+
+    const kh_utf8 * current   = code + 1;
+    const kh_utf8 * const end = code + size;
+
+    kh_sz scope = 0;
+
+    while (KH_TRUE) {
+      if (end >= current) {
+        out_result->status = KH_LEXER_STATUS_SYNTAX_ERROR;
+        return KH_LEXER_TOKEN_TYPE_GROUP;
+      }
+
+      if (current[0] == group[0]) {
+        ++scope;
+      } else if (current[0] == group[1]) {
+        if (scope == 0) {
+          out_result->value.marker.size = current - code;
+          return KH_LEXER_TOKEN_TYPE_GROUP;
+        } else {
+          --scope;
+        }
+      }
+
+      ++current;
+    }
+  }
+
   return KH_LEXER_TOKEN_TYPE_NONE;
 }
 

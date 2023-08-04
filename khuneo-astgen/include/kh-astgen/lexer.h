@@ -35,7 +35,6 @@ enum kh_lexer_status {
   KH_LEXER_STATUS_UNKNOWN_ERROR       = KH_LEXER_STATUS_ERROR   | 0, // Unspecified error (Yes the or is pointless, its for verbosity)
   KH_LEXER_STATUS_UTF8_INVALID        = KH_LEXER_STATUS_ERROR   | 1, // Invalid UTF8 byte was met in the buffer.
   KH_LEXER_STATUS_SYNTAX_ERROR        = KH_LEXER_STATUS_ERROR   | 2, // Invalid syntax
-
 };
 
 #define KH_LEXER_CONTEXT_STATUS_DECODE_FLAG 0x3F // Decode mask flag (0011_1111)
@@ -92,6 +91,8 @@ struct kh_lexer_ll_parse_result {
  *  writing your own implementation. Simply put, a reusable component of khuneo.
  */
 enum kh_lexer_token_type kh_ll_lexer_parse(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result);
+
+enum kh_lexer_token_type kh_ll_lexer_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result);
 
 struct kh_lexer_context {
   kh_refobji _code_buffer;

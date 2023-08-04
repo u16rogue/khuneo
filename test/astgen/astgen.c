@@ -135,24 +135,38 @@ DEF_TEST_UNIT(t_ll_lex_match_identifiers) {
 DEF_TEST_UNIT(t_ll_lex_match_basic_string) {
   struct code_set_marker_test_context ctx; 
 
-  const struct code_set_marker_test_entry pass[] = {
+  const struct code_set_marker_test_entry pass_str[] = {
     CODE_SET("'foo'",     5),
     CODE_SET("'fo'o",     4),
     CODE_SET("''",        2),
     CODE_SET("'\\''",     4),
     CODE_SET("'\\n\\''",  6),
-    CODE_SET("'$b\\'ar'", 8),
+    CODE_SET("'$b\\'ar'", 8), 
   };
 
   ctx.pass = KH_TRUE;
   ctx.pretext.ignore_size = KH_FALSE;
-  ctx.tests = (struct code_set_marker_test_entry *)&pass;
-  ctx.ntests = kh_narray(pass);
-  ctx.pretext.expected_type   =KH_LEXER_TOKEN_TYPE_STRING; 
+  ctx.tests = (struct code_set_marker_test_entry *)&pass_str;
+  ctx.ntests = kh_narray(pass_str);
+  ctx.pretext.expected_type   = KH_LEXER_TOKEN_TYPE_STRING; 
   ctx.pretext.should_type     = KH_TRUE;
   ctx.pretext.expected_status = KH_LEXER_STATUS_OK;
   ctx.pretext.should_status   = KH_TRUE;
   ctx.failmsg = "Expected a pass parsing identifiers. ";
+  generic_marker_test(&ctx);
+
+  const struct code_set_marker_test_entry pass_strintrp[] = {
+    CODE_SET("`foo`",     5),
+    CODE_SET("`fo`o",     4),
+    CODE_SET("``",        2),
+    CODE_SET("`\\``",     4),
+    CODE_SET("`\\n\\``",  6),
+    CODE_SET("`$b\\`ar`", 8),
+  };
+
+  ctx.tests = (struct code_set_marker_test_entry *)&pass_strintrp;
+  ctx.ntests = kh_narray(pass_strintrp);
+  ctx.pretext.expected_type = KH_LEXER_TOKEN_TYPE_STRING_INTRP; 
   generic_marker_test(&ctx);
 
   // Test missing closing string tag syntax error
@@ -204,6 +218,7 @@ START_UNIT_TESTS(tests)
   ADD_UNIT_TEST("Low level token lexer - Match identifiers",      t_ll_lex_match_identifiers)
   ADD_UNIT_TEST("Low level token lexer - Match basic strings",    t_ll_lex_match_basic_string)
   ADD_UNIT_TEST("Low level token lexer - Match unsigned numbers", t_ll_lex_match_unsigned_numbers)
+  //ADD_UNIT_TEST("Low level token lexer - Match groups", t_ll_lex_match_unsigned_numbers)
 END_UNIT_TESTS(tests)
 
 DEF_TEST_UNIT_GROUP(test_astgen) {
