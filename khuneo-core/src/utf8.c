@@ -23,6 +23,11 @@ kh_u8 kh_utf8_char_sz(const kh_utf8 c) {
   return sz + 1;
 }
 
+
+kh_bool kh_utf8_is_utf8_lazy(const kh_utf8 c) {
+  return (c & 0x80) ? KH_TRUE : KH_FALSE;
+}
+
 kh_u8 kh_utf8_char_to_num(const kh_utf8 c) {
   if (c >= '0' && c <= '9')
     return c - '0';

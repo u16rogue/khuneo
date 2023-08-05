@@ -4,6 +4,26 @@
 #include <kh-core/utilities.h>
 #include <kh-core/utf8.h>
 
+/*
+ *  [05/08/2023]
+ *  DECISION: On whether lmp_* should verify UTF8 validity.
+ *  VERDICT: It shouldn't, to minimize confusion UTF8 validity should
+ *  be confirmed somewhere else take an example of
+ *  ```
+ *  def str = 'hello <invalid utf8 + 3>'; def str2 = 'world';
+ *  ```
+ *  When the UTF8 byte is parsed we move current by 3 missing `'` which
+ *  has the possibility of throwing off the result since it might match the
+ *  ending string delimeter much later giving us `'hello <inv>'; def str2 ='`
+ *  because the invalid UTF8 byte caused it to skip. This is inpart due to lmp_
+ *  doing a lazy UTF8 parsing but by ignoring UTF8 validity we would still properly
+ *  match the ending string delimeter giving us `'hello <inv>'` this also makes validation
+ *  easier as we have the expected size of a lexed type which in the case of an invalid UTF8
+ *  would cause it to overflow not only that but it makes spotting issues easier as we can
+ *  visually confirm the range where it occurs.
+ *
+ */
+
 enum kh_lexer_token_type lmp_symbols(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
   (void)size;
 
@@ -32,7 +52,7 @@ enum kh_lexer_token_type lmp_symbols(const kh_utf8 * const code, const kh_sz siz
 
   for (kh_u8 i = 0; i < kh_narray(symbol_ranges); ++i) {
     const kh_u8 * symbol_range = symbol_ranges[i];
-    if (symbol_range[0] <= symbol && symbol_range[1] >= code[0]) {
+    if (symbol >= symbol_range[0] && symbol <= symbol_range[1]) {
       out_result->value.symbol = symbol;
       return KH_LEXER_TOKEN_TYPE_SYMBOL;
     }
@@ -51,27 +71,21 @@ static kh_bool valid_ident_char(const kh_utf8 c) {
 }
 
 enum kh_lexer_token_type lmp_identifiers(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
-  if (code[0] != '$' && code[0] != '_' && !kh_utf8_is_alpha(code[0])) {
+  if (code[0] != '$' && code[0] != '_' && !kh_utf8_is_alpha(code[0]) && !kh_utf8_is_utf8_lazy(code[0])) {
     return KH_LEXER_TOKEN_TYPE_NONE;
-  }
+  } 
 
   const kh_utf8 * current   = code + 1;
   const kh_utf8 * const end = code + size;
 
   while (current < end) {
-    const kh_u8 utf_sz = kh_utf8_char_sz(current[0]);
-    if (utf_sz == KH_UTF8_INVALID_SZ) {
-      out_result->status = KH_LEXER_STATUS_UTF8_INVALID; 
-      return KH_LEXER_TOKEN_TYPE_NONE;
-    }
-
     // Only do validation if its ascii, if its utf8 let it pass
     // to allow UTF8 identifiers
-    if (utf_sz == 1 && !valid_ident_char(current[0])) {
+    if (!kh_utf8_is_utf8_lazy(current[0]) && !valid_ident_char(current[0])) {
       break;
     }
 
-    current += utf_sz;
+    ++current;
   }
 
   // Must either hit `end` or be lesser.
@@ -115,6 +129,7 @@ enum kh_lexer_token_type lmp_string(const kh_utf8 * const code, const kh_sz size
         out_result->status = KH_LEXER_STATUS_SYNTAX_ERROR; // Missing string token to end
         return set->type;
       }
+
       ++current;
     }
   }

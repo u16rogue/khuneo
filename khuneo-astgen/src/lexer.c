@@ -35,7 +35,6 @@ static const kh_utf8 group_matchers[][2] = {
   { '(', ')' },
   { '[', ']' },
   { '{', '}' },
-  //{ '<', '>' },
 };
 
 enum kh_lexer_token_type kh_ll_lexer_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result) {

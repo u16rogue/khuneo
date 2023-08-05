@@ -10,6 +10,15 @@ kh_u8 kh_utf8_char_sz(const kh_utf8 c);
 #define KH_UTF8_INVALID_SZ KH_U8_MAX
 
 /*
+ *  Determines whether a character is UTF8 or not
+ *  NOTE: Check implementation is made lazily for speed
+ *  this is only for determining if a character byte is
+ *  UTF8 accompanied by a verification later.
+ *  !!! DO NOT USE IF INTEGRITY AND VALIDITY IS IMPORTANT !!!
+ */
+kh_bool kh_utf8_is_utf8_lazy(const kh_utf8 c);
+
+/*
  *  Converts a character representing a number to its
  *  numerical value
  *
