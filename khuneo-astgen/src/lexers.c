@@ -86,23 +86,20 @@ enum kh_lexer_token_type lmp_identifiers(const kh_utf8 * const code, const kh_sz
   return KH_LEXER_TOKEN_TYPE_IDENTIFIER;
 }
 
-static enum kh_lexer_token_type what_string_type(const kh_utf8 c) {
-  switch (c) {
-    case '\'': 
-      return KH_LEXER_TOKEN_TYPE_STRING;
-    case '`':
-      return KH_LEXER_TOKEN_TYPE_STRING_INTRP;
-  }
-
-  return KH_LEXER_TOKEN_TYPE_NONE;
-}
-
 enum kh_lexer_token_type lmp_string(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
-  const kh_utf8 string_symbol[] = { '\'', '`' };
+  struct sym_set {
+    const kh_utf8 sym;
+    const enum kh_lexer_token_type type;
+  };
+
+  const struct sym_set string_symbol[] = {
+    { '\'', KH_LEXER_TOKEN_TYPE_STRING       },
+    { '`',  KH_LEXER_TOKEN_TYPE_STRING_INTRP },
+  };
 
   for (int i = 0; i < (int)kh_narray(string_symbol); ++i ) {
-    const kh_utf8 sym = string_symbol[i];
-    if (code[0] != sym) {
+    const struct sym_set * const set = &string_symbol[i];
+    if (code[0] != set->sym) {
       continue;
     }
 
@@ -110,13 +107,13 @@ enum kh_lexer_token_type lmp_string(const kh_utf8 * const code, const kh_sz size
     const kh_utf8 * end     = code + size;
 
     while (KH_TRUE) {
-      if (current[0] == sym && (current - 1)[0] != '\\' ) {
+      if (current[0] == set->sym && (current - 1)[0] != '\\' ) {
         out_result->value.marker.size = current - code + 1;
-        return what_string_type(sym);
+        return set->type;
       }
       if (current >= end) {
         out_result->status = KH_LEXER_STATUS_SYNTAX_ERROR; // Missing string token to end
-        return what_string_type(sym);
+        return set->type;
       }
       ++current;
     }

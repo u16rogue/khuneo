@@ -39,32 +39,30 @@ static const kh_utf8 group_matchers[][2] = {
 };
 
 enum kh_lexer_token_type kh_ll_lexer_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
-  (void)code;
-  (void)size;
-  (void)out_result;
-
   for (int i = 0; i < (int)kh_narray(group_matchers); ++i) {
     const kh_utf8 * group = group_matchers[i];
     if (code[0] != group[0]) {
       continue;
     }
 
+    const kh_utf8 delim_start = group[0];
+    const kh_utf8 delim_end   = group[1];
     const kh_utf8 * current   = code + 1;
     const kh_utf8 * const end = code + size;
 
-    kh_sz scope = 0;
+    kh_sz scope = 0; 
 
     while (KH_TRUE) {
-      if (end >= current) {
+      if (current >= end) {
         out_result->status = KH_LEXER_STATUS_SYNTAX_ERROR;
         return KH_LEXER_TOKEN_TYPE_GROUP;
       }
 
-      if (current[0] == group[0]) {
+      if (current[0] == delim_start) {
         ++scope;
-      } else if (current[0] == group[1]) {
+      } else if (current[0] == delim_end) {
         if (scope == 0) {
-          out_result->value.marker.size = current - code;
+          out_result->value.marker.size = current - code + 1;
           return KH_LEXER_TOKEN_TYPE_GROUP;
         } else {
           --scope;

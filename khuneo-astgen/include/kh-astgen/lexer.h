@@ -12,6 +12,8 @@ enum kh_lexer_token_type {
   KH_LEXER_TOKEN_TYPE_STRING_INTRP,
 };
 
+#define KH_LEXER_CONTEXT_STATUS_FLAG_BITS 0x1F // Decode mask flag (0001_1111)
+                                                 //
 enum kh_lexer_status {
   KH_LEXER_STATUS_ = 0,
   KH_LEXER_STATUS_OK = 0,
@@ -27,17 +29,17 @@ enum kh_lexer_status {
                                    // Reasoning: Future proofing
                                    // EXTEND FLAG using the most significant bit (1000_0000)
 
+  // NOTE: Max flag bit value is 32
+
   // -- Warnings
-  KH_LEXER_STATUS_UNKNOWN_WARNING     = KH_LEXER_STATUS_WARNING | 0, // Unspecified warning (Yes the or is pointless, its for verbosity)
-  KH_LEXER_STATUS_CODE_PARSE_OVERFLOW = KH_LEXER_STATUS_WARNING | 1, // Parsing index went over the size limit.
+  KH_LEXER_STATUS_UNKNOWN_WARNING     = (0 & KH_LEXER_CONTEXT_STATUS_FLAG_BITS) | KH_LEXER_STATUS_WARNING, // Unspecified warning (Yes the or is pointless, its for verbosity)
+  KH_LEXER_STATUS_CODE_PARSE_OVERFLOW = (1 & KH_LEXER_CONTEXT_STATUS_FLAG_BITS) | KH_LEXER_STATUS_WARNING, // Parsing index went over the size limit.
 
   // -- Errors
-  KH_LEXER_STATUS_UNKNOWN_ERROR       = KH_LEXER_STATUS_ERROR   | 0, // Unspecified error (Yes the or is pointless, its for verbosity)
-  KH_LEXER_STATUS_UTF8_INVALID        = KH_LEXER_STATUS_ERROR   | 1, // Invalid UTF8 byte was met in the buffer.
-  KH_LEXER_STATUS_SYNTAX_ERROR        = KH_LEXER_STATUS_ERROR   | 2, // Invalid syntax
+  KH_LEXER_STATUS_UNKNOWN_ERROR       = (0 & KH_LEXER_CONTEXT_STATUS_FLAG_BITS) | KH_LEXER_STATUS_ERROR, // Unspecified error (Yes the or is pointless, its for verbosity)
+  KH_LEXER_STATUS_UTF8_INVALID        = (1 & KH_LEXER_CONTEXT_STATUS_FLAG_BITS) | KH_LEXER_STATUS_ERROR, // Invalid UTF8 byte was met in the buffer.
+  KH_LEXER_STATUS_SYNTAX_ERROR        = (2 & KH_LEXER_CONTEXT_STATUS_FLAG_BITS) | KH_LEXER_STATUS_ERROR, // Invalid syntax
 };
-
-#define KH_LEXER_CONTEXT_STATUS_DECODE_FLAG 0x3F // Decode mask flag (0011_1111)
 
 /*
  *  Holds a union of the different token type values.
@@ -59,7 +61,7 @@ struct kh_lexer_ll_parse_result {
 };
 
 /*
- *  # Low Level Lexer Parse
+ *  # Low Level Lexer Parse / Group
  *
  *  ## Arguments
  *  - code       : UTF8 khuneo code
@@ -91,7 +93,6 @@ struct kh_lexer_ll_parse_result {
  *  writing your own implementation. Simply put, a reusable component of khuneo.
  */
 enum kh_lexer_token_type kh_ll_lexer_parse(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result);
-
 enum kh_lexer_token_type kh_ll_lexer_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result);
 
 struct kh_lexer_context {

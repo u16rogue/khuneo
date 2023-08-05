@@ -17,18 +17,18 @@ struct code_set_marker_test_entry {
 
 struct code_set_marker_test_pretext {
   enum kh_lexer_token_type expected_type;
-  kh_bool                  should_type;
-
-  enum kh_lexer_status     expected_status;
-  kh_bool                  should_status;
-
+  kh_bool should_type;
+  enum kh_lexer_status expected_status;
+  kh_bool should_status;
   kh_bool ignore_size;
+
+  enum kh_lexer_token_type(*ll_lexer)(const kh_utf8 *, kh_sz, struct kh_lexer_ll_parse_result *);
 };
 
 
 struct code_set_marker_test_context {
   struct code_set_marker_test_entry * tests;
-  kh_sz                         ntests;
+  kh_sz ntests;
 
   struct code_set_marker_test_pretext pretext;
 
@@ -42,13 +42,13 @@ static void generic_marker_test(struct code_set_marker_test_context * ctx) {
     struct kh_lexer_ll_parse_result res = { 0 };
     res.status = KH_LEXER_STATUS_OK;
 
-    enum kh_lexer_token_type mtype = kh_ll_lexer_parse(test->code, test->code_size, &res);
+    enum kh_lexer_token_type mtype = ctx->pretext.ll_lexer(test->code, test->code_size, &res);
     kh_bool rtype = (mtype == ctx->pretext.expected_type)        ? KH_FALSE : KH_TRUE  == ctx->pretext.should_type;
     kh_bool rstat = (res.status == ctx->pretext.expected_status) ? KH_FALSE : KH_TRUE  == ctx->pretext.should_status;
     kh_bool rsz   = (ctx->pretext.ignore_size == KH_FALSE && res.value.marker.size != test->expected_marker_size);
     if (rtype || rstat || rsz)  {
       ctx->pass = KH_FALSE;
-      MSG_UNIT_FMT("%s [Code \"%s\", Expected size %d, Reported size %d, Status flag %x, mtype: %d | %d, %d, %d]", ctx->failmsg, test->code, (int)test->expected_marker_size, res.value.marker.size, res.status, mtype, rtype, rstat, rsz);
+      MSG_UNIT_FMT("%s [Code \"%s\", Expected size %d, Reported size %d, Status flag %x, mtype: %d | T:%d, S:%d, s:%d]", ctx->failmsg, test->code, (int)test->expected_marker_size, res.value.marker.size, res.status, mtype, rtype, rstat, rsz);
     }
   }
 }
@@ -80,6 +80,7 @@ DEF_TEST_UNIT(t_ll_lex_match_symbols) {
 
 DEF_TEST_UNIT(t_ll_lex_match_identifiers) {
   struct code_set_marker_test_context ctx; 
+  ctx.pretext.ll_lexer = kh_ll_lexer_parse;
 
   const struct code_set_marker_test_entry pass[] = {
     CODE_SET("foo",      3),
@@ -134,6 +135,7 @@ DEF_TEST_UNIT(t_ll_lex_match_identifiers) {
 
 DEF_TEST_UNIT(t_ll_lex_match_basic_string) {
   struct code_set_marker_test_context ctx; 
+  ctx.pretext.ll_lexer = kh_ll_lexer_parse;
 
   const struct code_set_marker_test_entry pass_str[] = {
     CODE_SET("'foo'",     5),
@@ -188,6 +190,7 @@ DEF_TEST_UNIT(t_ll_lex_match_basic_string) {
 
 DEF_TEST_UNIT(t_ll_lex_match_unsigned_numbers) {
   struct code_set_marker_test_context ctx; 
+  ctx.pretext.ll_lexer = kh_ll_lexer_parse;
 
   struct code_set_marker_test_entry pass[] = {
     CODE_SET("1234",         4),
@@ -213,12 +216,52 @@ DEF_TEST_UNIT(t_ll_lex_match_unsigned_numbers) {
   }
 }
 
+
+DEF_TEST_UNIT(t_ll_lex_match_groups) {
+  struct code_set_marker_test_context ctx; 
+  ctx.pretext.ll_lexer = kh_ll_lexer_group;
+  struct code_set_marker_test_entry pass[] = {
+    CODE_SET("{ hello }",      9),
+    CODE_SET("{[[[}",          5),
+    CODE_SET("[][]",           2),
+    CODE_SET("((fgfff[{{[))", 13),
+  };
+  ctx.pass = KH_TRUE;
+  ctx.pretext.ignore_size = KH_FALSE;
+  ctx.tests = (struct code_set_marker_test_entry *)&pass;
+  ctx.ntests = kh_narray(pass);
+  ctx.pretext.expected_type   = KH_LEXER_TOKEN_TYPE_GROUP;
+  ctx.pretext.should_type     = KH_TRUE;
+  ctx.pretext.expected_status = KH_LEXER_STATUS_OK;
+  ctx.pretext.should_status   = KH_TRUE;
+  ctx.failmsg = "Expected a pass parsing group contexts.";
+  generic_marker_test(&ctx);
+
+  struct code_set_marker_test_entry fail[] = {
+    CODE_SET("[[]", 0),
+    CODE_SET("(()", 0),
+    CODE_SET("{{}", 0),
+  };
+  ctx.pretext.ignore_size = KH_TRUE;
+  ctx.tests = (struct code_set_marker_test_entry *)&fail;
+  ctx.ntests = kh_narray(fail);
+  ctx.pretext.expected_status = KH_LEXER_STATUS_SYNTAX_ERROR;
+  ctx.failmsg = "Expected a fail parsing group contexts.";
+  generic_marker_test(&ctx);
+
+  if (ctx.pass) {
+    PASS_UNIT();
+  } else {
+    FAIL_UNIT("Group parsing failed.");
+  }
+}
+
 START_UNIT_TESTS(tests)
   ADD_UNIT_TEST("Low level token lexer - Match symbols",          t_ll_lex_match_symbols)
   ADD_UNIT_TEST("Low level token lexer - Match identifiers",      t_ll_lex_match_identifiers)
   ADD_UNIT_TEST("Low level token lexer - Match basic strings",    t_ll_lex_match_basic_string)
   ADD_UNIT_TEST("Low level token lexer - Match unsigned numbers", t_ll_lex_match_unsigned_numbers)
-  //ADD_UNIT_TEST("Low level token lexer - Match groups", t_ll_lex_match_unsigned_numbers)
+  ADD_UNIT_TEST("Low level token lexer - Match groups",           t_ll_lex_match_groups)
 END_UNIT_TESTS(tests)
 
 DEF_TEST_UNIT_GROUP(test_astgen) {
