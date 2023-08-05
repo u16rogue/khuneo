@@ -64,7 +64,7 @@ DEF_TEST_UNIT(t_ll_lex_match_symbols) {
     struct kh_lexer_ll_parse_result result;
     result.status = KH_LEXER_STATUS_OK;
 
-    enum kh_lexer_token_type matched = kh_ll_lexer_parse(code, sizeof(code), &result);
+    enum kh_lexer_token_type matched = kh_ll_lexer_parse_type(code, sizeof(code), &result);
     if (matched != KH_LEXER_TOKEN_TYPE_SYMBOL || result.status != KH_LEXER_STATUS_OK) {
       did_fail = KH_TRUE;
       MSG_UNIT_FMT("Did not match symbol: '%c'. Matched as: %d", symbols[i], matched);
@@ -80,7 +80,7 @@ DEF_TEST_UNIT(t_ll_lex_match_symbols) {
 
 DEF_TEST_UNIT(t_ll_lex_match_identifiers) {
   struct code_set_marker_test_context ctx; 
-  ctx.pretext.ll_lexer = kh_ll_lexer_parse;
+  ctx.pretext.ll_lexer = kh_ll_lexer_parse_type;
 
   const struct code_set_marker_test_entry pass[] = {
     CODE_SET("foo",      3),
@@ -136,7 +136,7 @@ DEF_TEST_UNIT(t_ll_lex_match_identifiers) {
 
 DEF_TEST_UNIT(t_ll_lex_match_basic_string) {
   struct code_set_marker_test_context ctx; 
-  ctx.pretext.ll_lexer = kh_ll_lexer_parse;
+  ctx.pretext.ll_lexer = kh_ll_lexer_parse_type;
 
   const struct code_set_marker_test_entry pass_str[] = {
     CODE_SET("'foo'",     5),
@@ -176,7 +176,7 @@ DEF_TEST_UNIT(t_ll_lex_match_basic_string) {
   {
     struct kh_lexer_ll_parse_result res = { 0 };
     res.status = KH_LEXER_STATUS_OK;
-    if (kh_ll_lexer_parse("' foo", 5, &res) != KH_LEXER_TOKEN_TYPE_STRING || res.status != KH_LEXER_STATUS_SYNTAX_ERROR) {
+    if (kh_ll_lexer_parse_type("' foo", 5, &res) != KH_LEXER_TOKEN_TYPE_STRING || res.status != KH_LEXER_STATUS_SYNTAX_ERROR) {
       ctx.pass = KH_FALSE;
       MSG_UNIT_FMT("Parsing code '%s' expecting to to cause a string type syntax error failed.", "' foo");
     }
@@ -191,7 +191,7 @@ DEF_TEST_UNIT(t_ll_lex_match_basic_string) {
 
 DEF_TEST_UNIT(t_ll_lex_match_unsigned_numbers) {
   struct code_set_marker_test_context ctx; 
-  ctx.pretext.ll_lexer = kh_ll_lexer_parse;
+  ctx.pretext.ll_lexer = kh_ll_lexer_parse_type;
 
   struct code_set_marker_test_entry pass[] = {
     CODE_SET("1234",         4),
@@ -220,7 +220,7 @@ DEF_TEST_UNIT(t_ll_lex_match_unsigned_numbers) {
 
 DEF_TEST_UNIT(t_ll_lex_match_groups) {
   struct code_set_marker_test_context ctx; 
-  ctx.pretext.ll_lexer = kh_ll_lexer_group;
+  ctx.pretext.ll_lexer = kh_ll_lexer_parse_group;
   struct code_set_marker_test_entry pass[] = {
     CODE_SET("{ hello }",      9),
     CODE_SET("{[[[}",          5),

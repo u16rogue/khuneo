@@ -19,7 +19,7 @@ static const struct lmp_entry lex_matchers[] = {
   { lmp_number,      },
 };
 
-enum kh_lexer_token_type kh_ll_lexer_parse(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+enum kh_lexer_token_type kh_ll_lexer_parse_type(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
   const kh_u8 n_lmp = kh_narray(lex_matchers);
   for (kh_u8 i_lmp = 0; i_lmp < n_lmp; ++i_lmp) {
     // [31/07/2023] Upon throw of non ok status, return the lexer match type that threw it for possibly diagnostic reasons
@@ -37,7 +37,7 @@ static const kh_utf8 group_matchers[][2] = {
   { '{', '}' },
 };
 
-enum kh_lexer_token_type kh_ll_lexer_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+enum kh_lexer_token_type kh_ll_lexer_parse_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
   for (int i = 0; i < (int)kh_narray(group_matchers); ++i) {
     const kh_utf8 * group = group_matchers[i];
     if (code[0] != group[0]) {
@@ -88,7 +88,7 @@ kh_bool kh_lexer_context_init(struct kh_lexer_context * ctx, kh_refobji code, kh
   return KH_TRUE;
 }
 
-kh_bool kh_lexer_context_destroy(struct kh_lexer_context * ctx) {
+kh_bool kh_lexer_context_uninit(struct kh_lexer_context * ctx) {
   if (kh_refobj_iremove(&ctx->_code_buffer) == KH_FALSE) {
     return KH_FALSE;
   }

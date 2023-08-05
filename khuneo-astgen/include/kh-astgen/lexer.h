@@ -61,7 +61,7 @@ struct kh_lexer_ll_parse_result {
 };
 
 /*
- *  # Low Level Lexer Parse / Group
+ *  # Low Level Lexer Parse Type / Group
  *
  *  ## Arguments
  *  - code       : UTF8 khuneo code
@@ -92,17 +92,40 @@ struct kh_lexer_ll_parse_result {
  *  fullfill that necessity eliminating the need to either duplicate the underlying lexer or
  *  writing your own implementation. Simply put, a reusable component of khuneo.
  */
-enum kh_lexer_token_type kh_ll_lexer_parse(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result);
-enum kh_lexer_token_type kh_ll_lexer_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result);
+enum kh_lexer_token_type kh_ll_lexer_parse_type(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result);
+enum kh_lexer_token_type kh_ll_lexer_parse_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result);
 
+/*
+ *  Represents a Lexer context storing a lexer state
+ */
 struct kh_lexer_context {
   kh_refobji _code_buffer;
   kh_u32     _code_index; // Current index of the code being lexed.
   kh_u32     _code_size;  // Size of code buffer in size
 };
 
+/*
+ *  # Lexer context initializer
+ *  Initializes a `kh_lexer_context` structure
+ *
+ *  ## Arguments
+ *  - ctx       : Pointer to a `kh_lexer_context` structure
+ *  - code      : A reference object that contains the raw UTF8 khuneo code to be parsed
+ *  - code_size : Size of the code in bytes not in length. (UTF8)
+ */
 kh_bool kh_lexer_context_init(struct kh_lexer_context * ctx, kh_refobji code, kh_sz code_size);
 
-kh_bool kh_lexer_context_destroy(struct kh_lexer_context * ctx);
+/*
+ *  # Lexer context uninitializer
+ *  Uninitializes a `kh_lexer_context` structure after
+ *  its use.
+ *  NOTE: Uninitialize != Free. If this structure is heap alloced
+ *  you'll have to free it yourself. (This allows the usage of stack
+ *  memory)
+ *
+ *  ## Arguments
+ *  - ctx       : Pointer to a valid `kh_lexer_context` structure
+ */
+kh_bool kh_lexer_context_uninit(struct kh_lexer_context * ctx);
 
 enum kh_lexer_token_type kh_lexer_context_parse_next(struct kh_lexer_context * ctx, struct kh_lexer_ll_parse_result * out_result);
