@@ -10,10 +10,11 @@ enum kh_lexer_token_type {
   KH_LEXER_TOKEN_TYPE_NUMBER,
   KH_LEXER_TOKEN_TYPE_STRING,
   KH_LEXER_TOKEN_TYPE_STRING_INTRP,
+  KH_LEXER_TOKEN_TYPE_STRING_FXHSH, // `Fixed Hash` Can be used to optimize string into a hash value. FOR: Can be used for fast pseudo enums
 };
 
 #define KH_LEXER_CONTEXT_STATUS_FLAG_BITS 0x1F // Decode mask flag (0001_1111)
-                                                 //
+
 enum kh_lexer_status {
   KH_LEXER_STATUS_ = 0,
   KH_LEXER_STATUS_OK = 0,

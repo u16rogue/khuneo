@@ -109,6 +109,7 @@ enum kh_lexer_token_type lmp_string(const kh_utf8 * const code, const kh_sz size
   const struct sym_set string_symbol[] = {
     { '\'', KH_LEXER_TOKEN_TYPE_STRING       },
     { '`',  KH_LEXER_TOKEN_TYPE_STRING_INTRP },
+    { '"',  KH_LEXER_TOKEN_TYPE_STRING_FXHSH },
   };
 
   for (int i = 0; i < (int)kh_narray(string_symbol); ++i ) {

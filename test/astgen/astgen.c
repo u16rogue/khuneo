@@ -48,7 +48,9 @@ static void generic_marker_test(struct code_set_marker_test_context * ctx) {
     kh_bool rsz   = (ctx->pretext.ignore_size == KH_FALSE && res.value.marker.size != test->expected_marker_size);
     if (rtype || rstat || rsz)  {
       ctx->pass = KH_FALSE;
-      MSG_UNIT_FMT("%s [Code \"%s\", Expected size %d, Reported size %d, Status flag %x, mtype: %d | T:%d, S:%d, s:%d]", ctx->failmsg, test->code, (int)test->expected_marker_size, res.value.marker.size, res.status, mtype, rtype, rstat, rsz);
+      MSG_UNIT_FMT("%s [Code \"%s\", Expected size %d, Reported size %d, Status flag %x, mtype: %d | T:%d, S:%d, s:%d]",
+        ctx->failmsg, test->code, (int)test->expected_marker_size, res.value.marker.size, res.status, mtype, rtype, rstat, rsz
+      );
     }
   }
 }
@@ -170,6 +172,20 @@ DEF_TEST_UNIT(t_ll_lex_match_basic_string) {
   ctx.tests = (struct code_set_marker_test_entry *)&pass_strintrp;
   ctx.ntests = kh_narray(pass_strintrp);
   ctx.pretext.expected_type = KH_LEXER_TOKEN_TYPE_STRING_INTRP; 
+  generic_marker_test(&ctx);
+
+  const struct code_set_marker_test_entry pass_strhsh[] = {
+    CODE_SET("\"foo\"",      5),
+    CODE_SET("\"fo\"o",      4),
+    CODE_SET("\"\"",         2),
+    CODE_SET("\"\\\"\"",     4),
+    CODE_SET("\"\\n\\\"\"",  6),
+    CODE_SET("\"$b\\\"ar\"", 8),
+  };
+
+  ctx.tests = (struct code_set_marker_test_entry *)&pass_strhsh;
+  ctx.ntests = kh_narray(pass_strhsh);
+  ctx.pretext.expected_type = KH_LEXER_TOKEN_TYPE_STRING_FXHSH; 
   generic_marker_test(&ctx);
 
   // Test missing closing string tag syntax error
