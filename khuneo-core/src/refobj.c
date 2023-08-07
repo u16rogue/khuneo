@@ -119,3 +119,7 @@ kh_bool kh_refobj_ialive(kh_refobji ro) {
 kh_bool kh_refobj_alive(struct kh_refobj * ro) {
   return ro->_count != 0 ? KH_TRUE : KH_FALSE;
 }
+
+kh_vptr kh_refobj_get_object(kh_refobji iro) {
+  return as_refobject(iro)->_object;
+}

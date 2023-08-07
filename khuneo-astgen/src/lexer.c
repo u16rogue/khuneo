@@ -99,8 +99,55 @@ kh_bool kh_lexer_context_uninit(struct kh_lexer_context * ctx) {
   return KH_TRUE;
 }
 
-enum kh_lexer_token_type kh_lexer_context_parse_next(struct kh_lexer_context * ctx, struct kh_lexer_ll_parse_result * out_result) {
-  (void)ctx;
-  (void)out_result;
+static kh_bool is_whitespace(const kh_utf8 c) {
+  switch (c) {
+    case ' ':
+    case '\n':
+    case '\t':
+    case '\r':
+      return KH_TRUE;
+  }
+
   return KH_FALSE;
+}
+
+enum kh_lexer_token_type kh_lexer_context_parse_next(struct kh_lexer_context * ctx, struct kh_lexer_ll_parse_result * out_result) {
+  const kh_utf8 * const code = (const kh_utf8 *)kh_refobj_get_object(ctx->_code_buffer);
+
+  while (KH_TRUE) {
+    if (ctx->_code_index >= ctx->_code_size) {
+      return KH_LEXER_TOKEN_TYPE_NONE;
+    }
+
+    if (is_whitespace(code[ctx->_code_index])) {
+      ++ctx->_code_index;
+      continue;
+    } else {
+      break;
+    }
+  }
+
+  enum kh_lexer_token_type type = kh_ll_lexer_parse_type(code + ctx->_code_index, ctx->_code_size - ctx->_code_index, out_result);
+  if (out_result->status != KH_LEXER_STATUS_OK) {
+    return type;
+  }
+
+  switch (type) {
+    case KH_LEXER_TOKEN_TYPE_NONE:
+      break;
+    case KH_LEXER_TOKEN_TYPE_SYMBOL:
+      ++ctx->_code_index;
+      break;
+    case KH_LEXER_TOKEN_TYPE_GROUP:
+    case KH_LEXER_TOKEN_TYPE_IDENTIFIER:
+    case KH_LEXER_TOKEN_TYPE_NUMBER:
+    case KH_LEXER_TOKEN_TYPE_STRING:
+    case KH_LEXER_TOKEN_TYPE_STRING_INTRP:
+    case KH_LEXER_TOKEN_TYPE_STRING_FXHSH:
+      out_result->value.marker.offset = ctx->_code_index;
+      ctx->_code_index += out_result->value.marker.size;
+      break;
+  }
+
+  return type;
 }

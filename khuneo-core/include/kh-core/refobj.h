@@ -97,3 +97,8 @@ kh_bool kh_refobj_ialive(kh_refobji ro);
  *  Checks if a reference object still has a non zero ref count
  */
 kh_bool kh_refobj_alive(struct kh_refobj * ro);
+
+/*
+ *  Get the internal object value
+ */
+kh_vptr kh_refobj_get_object(kh_refobji iro);
