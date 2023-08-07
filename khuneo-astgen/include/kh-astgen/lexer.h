@@ -129,4 +129,17 @@ kh_bool kh_lexer_context_init(struct kh_lexer_context * ctx, kh_refobji code, kh
  */
 kh_bool kh_lexer_context_uninit(struct kh_lexer_context * ctx);
 
+/*
+ *  # Context Lexer Next
+ *  Parses the current context and returns the determined lexed type
+ *  followed by advancing the context.
+ *
+ *  ## Arguments
+ *  - ctx        : Lexer context 
+ *  - out_result : Contains the status and value of the matched type
+ *
+ *  ## Return
+ *  - return     : Returns the lexed token type presented in the `kh_lexer_token_type`
+ *  enumerator
+ */
 enum kh_lexer_token_type kh_lexer_context_parse_next(struct kh_lexer_context * ctx, struct kh_lexer_ll_parse_result * out_result);
