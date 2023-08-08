@@ -277,13 +277,13 @@ DEF_TEST_UNIT(t_ll_lex_match_groups) {
 
 DEF_TEST_UNIT(t_ll_lex_run_lexer_next) {
   const kh_utf8 code[] =
-    //"/*                             \n"
-    //" * what to say                 \n"
-    //" */                            \n"
-    //"// what to say                 \n"
+    "/*                             \n"
+    " * multiline                   \n"
+    " */                            \n"
+    "// what to say                 \n"
     "var x: string = 'hello world'; \n"
     "// does the talking            \n"
-    "// abcdef\n"
+    "// abcdef                      \n"
     "fn greet() nil {               \n"
     "  print(x);                    \n"
     "}                              \n"

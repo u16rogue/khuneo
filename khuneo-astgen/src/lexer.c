@@ -99,6 +99,8 @@ kh_bool kh_lexer_context_uninit(struct kh_lexer_context * ctx) {
   return KH_TRUE;
 }
 
+//==================================================================================================== 
+
 static kh_bool is_whitespace(const kh_utf8 c) {
   switch (c) {
     case ' ':
@@ -111,52 +113,67 @@ static kh_bool is_whitespace(const kh_utf8 c) {
   return KH_FALSE;
 }
 
-static kh_bool is_comment_start(const kh_utf8 * const code) {
-  return (code[0] == '/' && (code[1] == '*' || code[1] == '/') ) ? KH_TRUE : KH_FALSE;
+static kh_bool is_end(const struct kh_lexer_context * const ctx, const int offset) {
+  return (ctx->_code_index + offset >= ctx->_code_size) ? KH_TRUE : KH_FALSE;
+}
+
+static kh_bool skip_whitespaces(struct kh_lexer_context * const ctx, const kh_utf8 * const code) {
+  if (is_end(ctx, 0) || is_whitespace(code[ctx->_code_index]) == KH_FALSE) {
+    return KH_FALSE;
+  }
+
+  while (KH_TRUE) {
+    if (ctx->_code_index >= ctx->_code_size) {
+      return KH_FALSE;
+    }
+
+    if (is_whitespace(code[ctx->_code_index]) == KH_FALSE) {
+      break;
+    }
+
+    ++ctx->_code_index;
+  }
+
+  return KH_TRUE;
+}
+
+static kh_bool skip_comments(struct kh_lexer_context * const ctx, const kh_utf8 * const code) {
+  if (is_end(ctx, 1) || (code[ctx->_code_index] != '/' && code[ctx->_code_index + 1] != '/' && code[ctx->_code_index + 1] != '*') ) {
+    return KH_FALSE;
+  }
+
+
+  kh_bool is_single = (code[ctx->_code_index + 1] == '/') ? KH_TRUE : KH_FALSE;
+  ctx->_code_index += 2;
+
+  while (KH_TRUE) {
+    if (is_end(ctx, 0)) {
+      return KH_FALSE;
+    }
+
+    if (
+      (is_single == KH_TRUE  && code[ctx->_code_index] == '\n')
+      ||
+      (is_single == KH_FALSE && !is_end(ctx, 1) && code[ctx->_code_index] == '*' && code[ctx->_code_index + 1] == '/')
+    ) {
+      ctx->_code_index += is_single == KH_TRUE ? 1 : 2;
+      break;
+    }
+
+    ++ctx->_code_index;
+  }
+
+  return KH_TRUE;
 }
 
 enum kh_lexer_token_type kh_lexer_context_parse_next(struct kh_lexer_context * ctx, struct kh_lexer_ll_parse_result * out_result) {
   const kh_utf8 * const code = (const kh_utf8 *)kh_refobj_get_object(ctx->_code_buffer);
 
-  // Whitespaces
-  while (KH_TRUE) {
-    if (ctx->_code_index >= ctx->_code_size) {
-      return KH_LEXER_TOKEN_TYPE_NONE;
-    }
-
-    if (is_whitespace(code[ctx->_code_index])) {
-      ++ctx->_code_index;
-      continue;
-    } else {
-      break;
-    }
+  while (skip_comments(ctx, code) || skip_whitespaces(ctx, code)) {
   }
 
-  // Comments
-  while (ctx->_code_index + 1 < ctx->_code_size && is_comment_start(&code[ctx->_code_index])) {
-    const kh_bool is_multi = code[ctx->_code_size + 1] == '*' ? KH_TRUE : KH_FALSE;
-    ctx->_code_index += 2;
-
-    while (KH_TRUE) {
-      if (ctx->_code_index > ctx->_code_size) {
-        return KH_LEXER_TOKEN_TYPE_NONE;
-      }
-
-      if (
-        //(is_multi && ctx->_code_index + 1 && *(const kh_u16 *)(code + ctx->_code_index) == *(const kh_u16 *)"*/")
-        //||
-        (!is_multi && code[ctx->_code_index] == '\n')
-      ) {
-        ctx->_code_index += is_multi ? 2 : 1;
-        if (ctx->_code_index >= ctx->_code_size) {
-          return KH_LEXER_TOKEN_TYPE_NONE;
-        } else {
-          break;
-        }
-      }
-
-      ++ctx->_code_index;
-    }
+  if (ctx->_code_index >= ctx->_code_size) {
+    return KH_LEXER_TOKEN_TYPE_NONE;
   }
 
   enum kh_lexer_token_type type = kh_ll_lexer_parse_type(code + ctx->_code_index, ctx->_code_size - ctx->_code_index, out_result);

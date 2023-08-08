@@ -37,7 +37,6 @@ static kh_bool resource_release(kh_refobji i) {
   return as_refobject(i)->_resource_callback(&info);
 }
 
-
 kh_bool kh_refobj_init(struct kh_refobj * ro, kh_vptr value, kh_refobji * out_firstref, kh_refobj_rcb_fnt resource_callback) {
   ro->_resource_callback = resource_callback;
   ro->_object   = value;
