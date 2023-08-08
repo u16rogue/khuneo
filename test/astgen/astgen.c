@@ -1,9 +1,11 @@
 #include "astgen.h"
-#include "kh-core/utf8.h"
+#include "kh-core/refobj.h"
 
 #include <kh-core/types.h>
 #include <kh-core/utilities.h>
 #include <kh-astgen/lexer.h>
+
+#include <kh-extra/astgen/lexer.h>
 
 #include <string.h>
 
@@ -273,12 +275,92 @@ DEF_TEST_UNIT(t_ll_lex_match_groups) {
   }
 }
 
+DEF_TEST_UNIT(t_ll_lex_run_lexer_next) {
+  const kh_utf8 code[] =
+    //"/*                             \n"
+    //" * what to say                 \n"
+    //" */                            \n"
+    //"// what to say                 \n"
+    "var x: string = 'hello world'; \n"
+    "// does the talking            \n"
+    "// abcdef\n"
+    "fn greet() nil {               \n"
+    "  print(x);                    \n"
+    "}                              \n"
+  ;
+
+  const enum kh_lexer_token_type matches[] = {
+    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // var
+    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // x
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // :
+    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // string
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // =
+    KH_LEXER_TOKEN_TYPE_STRING,     // 'hello world'
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // ;
+    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // fn
+    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // greet
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // (
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // )
+    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // nil
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // {
+    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // print
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // (
+    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // x
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // )
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // ;
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // }
+  };
+
+  struct kh_refobj ro_code;
+  kh_refobji roi_code = KH_REFOBJ_INVALID_IREF;
+  if (kh_refobj_init(&ro_code, (kh_vptr)code, &roi_code, KH_NULLPTR) == KH_FALSE) {
+    FAIL_UNIT("Failed to initialize code ref object");
+  }
+
+  struct kh_lexer_context ctx;
+  if (kh_lexer_context_init(&ctx, kh_refobj_imovearg(&roi_code), sizeof(code) - 1) == KH_FALSE) {
+    FAIL_UNIT("Failed to initialize lexer context.");
+  }
+
+  for (int i = 0; i < (int)kh_narray(matches); ++i) {
+    if (ctx._code_index >= ctx._code_size) {
+      MSG_UNIT_FMT("Index off bound without completing full match. Index: %d", ctx._code_index);
+      FAIL_UNIT("Failed to parse code.");
+    }
+    struct kh_lexer_ll_parse_result res;
+    res.status = KH_LEXER_STATUS_OK;
+    enum kh_lexer_token_type type = kh_lexer_context_parse_next(&ctx, &res);
+    if (type != matches[i] || res.status != KH_LEXER_STATUS_OK) {
+      MSG_UNIT_FMT("Parsing code at lexing stage failed. Expecting type: %s [%d], Got type: %s, Status: %s, Position: %d",
+          kh_extra_lexer_tostr_token_type(matches[i]),
+          i + 1,
+          kh_extra_lexer_tostr_token_type(type),
+          kh_extra_lexer_tostr_ctx_status(res.status),
+          ctx._code_index
+      );
+      MSG_UNIT_FMT(">> %s", &code[ctx._code_index]);
+      FAIL_UNIT("Failed to parse code.");
+    }
+  }
+
+  if (kh_lexer_context_uninit(&ctx) == KH_FALSE) {
+    FAIL_UNIT("Failed to uninitialize lexer context.");
+  }
+
+  if (kh_refobj_alive(&ro_code) == KH_TRUE) {
+    FAIL_UNIT("Code reference object should be dead.");
+  }
+
+  PASS_UNIT();
+}
+
 START_UNIT_TESTS(tests)
   ADD_UNIT_TEST("Low level token lexer - Match symbols",          t_ll_lex_match_symbols)
   ADD_UNIT_TEST("Low level token lexer - Match identifiers",      t_ll_lex_match_identifiers)
   ADD_UNIT_TEST("Low level token lexer - Match basic strings",    t_ll_lex_match_basic_string)
   ADD_UNIT_TEST("Low level token lexer - Match unsigned numbers", t_ll_lex_match_unsigned_numbers)
   ADD_UNIT_TEST("Low level token lexer - Match groups",           t_ll_lex_match_groups)
+  ADD_UNIT_TEST("Low level token lexer - Run lexer parser ",      t_ll_lex_run_lexer_next)
 END_UNIT_TESTS(tests)
 
 DEF_TEST_UNIT_GROUP(test_astgen) {

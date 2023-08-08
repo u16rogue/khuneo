@@ -111,9 +111,14 @@ static kh_bool is_whitespace(const kh_utf8 c) {
   return KH_FALSE;
 }
 
+static kh_bool is_comment_start(const kh_utf8 * const code) {
+  return (code[0] == '/' && (code[1] == '*' || code[1] == '/') ) ? KH_TRUE : KH_FALSE;
+}
+
 enum kh_lexer_token_type kh_lexer_context_parse_next(struct kh_lexer_context * ctx, struct kh_lexer_ll_parse_result * out_result) {
   const kh_utf8 * const code = (const kh_utf8 *)kh_refobj_get_object(ctx->_code_buffer);
 
+  // Whitespaces
   while (KH_TRUE) {
     if (ctx->_code_index >= ctx->_code_size) {
       return KH_LEXER_TOKEN_TYPE_NONE;
@@ -124,6 +129,33 @@ enum kh_lexer_token_type kh_lexer_context_parse_next(struct kh_lexer_context * c
       continue;
     } else {
       break;
+    }
+  }
+
+  // Comments
+  while (ctx->_code_index + 1 < ctx->_code_size && is_comment_start(&code[ctx->_code_index])) {
+    const kh_bool is_multi = code[ctx->_code_size + 1] == '*' ? KH_TRUE : KH_FALSE;
+    ctx->_code_index += 2;
+
+    while (KH_TRUE) {
+      if (ctx->_code_index > ctx->_code_size) {
+        return KH_LEXER_TOKEN_TYPE_NONE;
+      }
+
+      if (
+        //(is_multi && ctx->_code_index + 1 && *(const kh_u16 *)(code + ctx->_code_index) == *(const kh_u16 *)"*/")
+        //||
+        (!is_multi && code[ctx->_code_index] == '\n')
+      ) {
+        ctx->_code_index += is_multi ? 2 : 1;
+        if (ctx->_code_index >= ctx->_code_size) {
+          return KH_LEXER_TOKEN_TYPE_NONE;
+        } else {
+          break;
+        }
+      }
+
+      ++ctx->_code_index;
     }
   }
 
