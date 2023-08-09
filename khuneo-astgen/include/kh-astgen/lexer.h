@@ -56,7 +56,7 @@ union kh_lexer_ll_parse_result_value {
   } marker;        // Refers a chunk of the raw source buffer
 };
 
-struct kh_lexer_ll_parse_result {
+struct kh_lexer_parse_result {
   enum  kh_lexer_status                status;
   union kh_lexer_ll_parse_result_value value;
 };
@@ -93,8 +93,8 @@ struct kh_lexer_ll_parse_result {
  *  fullfill that necessity eliminating the need to either duplicate the underlying lexer or
  *  writing your own implementation. Simply put, a reusable component of khuneo.
  */
-enum kh_lexer_token_type kh_ll_lexer_parse_type(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result);
-enum kh_lexer_token_type kh_ll_lexer_parse_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result);
+enum kh_lexer_token_type kh_ll_lexer_parse_type(const kh_utf8 * code, kh_sz size, struct kh_lexer_parse_result * out_result);
+enum kh_lexer_token_type kh_ll_lexer_parse_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_parse_result * out_result);
 
 /*
  *  Represents a Lexer context storing a lexer state
@@ -142,4 +142,4 @@ kh_bool kh_lexer_context_uninit(struct kh_lexer_context * ctx);
  *  - return     : Returns the lexed token type presented in the `kh_lexer_token_type`
  *  enumerator
  */
-enum kh_lexer_token_type kh_lexer_context_parse_next(struct kh_lexer_context * ctx, struct kh_lexer_ll_parse_result * out_result);
+enum kh_lexer_token_type kh_lexer_context_parse_next(struct kh_lexer_context * ctx, struct kh_lexer_parse_result * out_result);

@@ -24,7 +24,7 @@
  *
  */
 
-enum kh_lexer_token_type lmp_symbols(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+enum kh_lexer_token_type lmp_symbols(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result) {
   (void)size;
 
   const kh_utf8 symbols[] = {
@@ -70,7 +70,7 @@ static kh_bool valid_ident_char(const kh_utf8 c) {
          ) ? KH_TRUE : KH_FALSE;
 }
 
-enum kh_lexer_token_type lmp_identifiers(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+enum kh_lexer_token_type lmp_identifiers(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result) {
   if (code[0] != '$' && code[0] != '_' && !kh_utf8_is_alpha(code[0]) && !kh_utf8_is_utf8_lazy(code[0])) {
     return KH_LEXER_TOKEN_TYPE_NONE;
   } 
@@ -100,7 +100,7 @@ enum kh_lexer_token_type lmp_identifiers(const kh_utf8 * const code, const kh_sz
   return KH_LEXER_TOKEN_TYPE_IDENTIFIER;
 }
 
-enum kh_lexer_token_type lmp_string(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+enum kh_lexer_token_type lmp_string(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result) {
   struct sym_set {
     const kh_utf8 sym;
     const enum kh_lexer_token_type type;
@@ -139,7 +139,7 @@ enum kh_lexer_token_type lmp_string(const kh_utf8 * const code, const kh_sz size
 }
 
 
-enum kh_lexer_token_type lmp_number(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+enum kh_lexer_token_type lmp_number(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result) {
   if (kh_utf8_is_num(code[0]) == KH_FALSE) {
     return KH_LEXER_TOKEN_TYPE_NONE;
   }

@@ -24,7 +24,7 @@ struct code_set_marker_test_pretext {
   kh_bool should_status;
   kh_bool ignore_size;
 
-  enum kh_lexer_token_type(*ll_lexer)(const kh_utf8 *, kh_sz, struct kh_lexer_ll_parse_result *);
+  enum kh_lexer_token_type(*ll_lexer)(const kh_utf8 *, kh_sz, struct kh_lexer_parse_result *);
 };
 
 
@@ -41,7 +41,7 @@ struct code_set_marker_test_context {
 static void generic_marker_test(struct code_set_marker_test_context * ctx) {
   for (int i = 0; i < (int)ctx->ntests; ++i) {
     const struct code_set_marker_test_entry * test = &ctx->tests[i];
-    struct kh_lexer_ll_parse_result res = { 0 };
+    struct kh_lexer_parse_result res = { 0 };
     res.status = KH_LEXER_STATUS_OK;
 
     enum kh_lexer_token_type mtype = ctx->pretext.ll_lexer(test->code, test->code_size, &res);
@@ -65,7 +65,7 @@ DEF_TEST_UNIT(t_ll_lex_match_symbols) {
   kh_bool did_fail = KH_FALSE;
   for (int i = 0; i < (int)kh_narray(symbols) - 1; ++i) {
     kh_utf8 code[4] = { symbols[i] };
-    struct kh_lexer_ll_parse_result result;
+    struct kh_lexer_parse_result result;
     result.status = KH_LEXER_STATUS_OK;
 
     enum kh_lexer_token_type matched = kh_ll_lexer_parse_type(code, sizeof(code), &result);
@@ -192,7 +192,7 @@ DEF_TEST_UNIT(t_ll_lex_match_basic_string) {
 
   // Test missing closing string tag syntax error
   {
-    struct kh_lexer_ll_parse_result res = { 0 };
+    struct kh_lexer_parse_result res = { 0 };
     res.status = KH_LEXER_STATUS_OK;
     if (kh_ll_lexer_parse_type("' foo", 5, &res) != KH_LEXER_TOKEN_TYPE_STRING || res.status != KH_LEXER_STATUS_SYNTAX_ERROR) {
       ctx.pass = KH_FALSE;
@@ -327,7 +327,7 @@ DEF_TEST_UNIT(t_ll_lex_run_lexer_next) {
       MSG_UNIT_FMT("Index off bound without completing full match. Index: %d", ctx._code_index);
       FAIL_UNIT("Failed to parse code.");
     }
-    struct kh_lexer_ll_parse_result res;
+    struct kh_lexer_parse_result res;
     res.status = KH_LEXER_STATUS_OK;
     enum kh_lexer_token_type type = kh_lexer_context_parse_next(&ctx, &res);
     if (type != matches[i] || res.status != KH_LEXER_STATUS_OK) {

@@ -9,7 +9,7 @@
 // -------------------------------------------------- 
 
 struct lmp_entry {
-  enum kh_lexer_token_type( * const lexer_matcher)(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_ll_parse_result * out_result);
+  enum kh_lexer_token_type( * const lexer_matcher)(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result);
 };
 
 static const struct lmp_entry lex_matchers[] = {
@@ -19,7 +19,7 @@ static const struct lmp_entry lex_matchers[] = {
   { lmp_number,      },
 };
 
-enum kh_lexer_token_type kh_ll_lexer_parse_type(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+enum kh_lexer_token_type kh_ll_lexer_parse_type(const kh_utf8 * code, kh_sz size, struct kh_lexer_parse_result * out_result) {
   const kh_u8 n_lmp = kh_narray(lex_matchers);
   for (kh_u8 i_lmp = 0; i_lmp < n_lmp; ++i_lmp) {
     // [31/07/2023] Upon throw of non ok status, return the lexer match type that threw it for possibly diagnostic reasons
@@ -37,7 +37,7 @@ static const kh_utf8 group_matchers[][2] = {
   { '{', '}' },
 };
 
-enum kh_lexer_token_type kh_ll_lexer_parse_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_ll_parse_result * out_result) {
+enum kh_lexer_token_type kh_ll_lexer_parse_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_parse_result * out_result) {
   for (int i = 0; i < (int)kh_narray(group_matchers); ++i) {
     const kh_utf8 * group = group_matchers[i];
     if (code[0] != group[0]) {
@@ -142,7 +142,6 @@ static kh_bool skip_comments(struct kh_lexer_context * const ctx, const kh_utf8 
     return KH_FALSE;
   }
 
-
   kh_bool is_single = (code[ctx->_code_index + 1] == '/') ? KH_TRUE : KH_FALSE;
   ctx->_code_index += 2;
 
@@ -166,7 +165,7 @@ static kh_bool skip_comments(struct kh_lexer_context * const ctx, const kh_utf8 
   return KH_TRUE;
 }
 
-enum kh_lexer_token_type kh_lexer_context_parse_next(struct kh_lexer_context * ctx, struct kh_lexer_ll_parse_result * out_result) {
+enum kh_lexer_token_type kh_lexer_context_parse_next(struct kh_lexer_context * ctx, struct kh_lexer_parse_result * out_result) {
   const kh_utf8 * const code = (const kh_utf8 *)kh_refobj_get_object(ctx->_code_buffer);
 
   while (skip_comments(ctx, code) || skip_whitespaces(ctx, code)) {
