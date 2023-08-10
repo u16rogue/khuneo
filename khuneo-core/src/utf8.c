@@ -57,14 +57,16 @@ kh_bool kh_utf8_strcmp(const kh_utf8 * a, const kh_utf8 * b) {
   return KH_FALSE;
 }
 
-kh_bool kh_utf8_strcpy(kh_utf8 * dst, const kh_utf8 * src) {
-  while (*src) {
-    *dst = *src;
-    ++dst;
-    ++src;
-  }
-  *dst = '\0';
-  return KH_TRUE;
+kh_bool kh_utf8_strcpy(struct kh_utf8sp * dest, const struct kh_utf8sp * const src) {
+  (void)dest;
+  (void)src;
+  return KH_FALSE;
+}
+
+kh_bool kh_utf8_str_to_u64(const struct kh_utf8sp * str, kh_u64 * out) {
+  (void)str;
+  (void)out;
+  return KH_FALSE;
 }
 
 kh_bool kh_utf8_is_alpha(const kh_utf8 c) {

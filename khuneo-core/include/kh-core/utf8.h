@@ -46,7 +46,12 @@ kh_bool kh_utf8_strcmp(const kh_utf8 * a, const kh_utf8 * b);
  *  NOTE: Intentionally straight forward implementation for perf
  *  HIGHLY UNSAFE! Only use where buffer checks are done.
  */
-kh_bool kh_utf8_strcpy(kh_utf8 * dst, const kh_utf8 * src);
+kh_bool kh_utf8_strcpy(struct kh_utf8sp * dest, const struct kh_utf8sp * const src);
+
+/*
+ *
+ */
+kh_bool kh_utf8_str_to_u64(const struct kh_utf8sp * str, kh_u64 * out);
 
 #if 0
 /*

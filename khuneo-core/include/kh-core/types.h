@@ -31,4 +31,16 @@ typedef kh_u8  kh_bool;
 
 typedef kh_i8 kh_utf8;
 
+/*
+ *  # UTF8 Structure pointer
+ *  - Represents a UTF8 string buffer.
+ *
+ *  NOTE: Buffer may or may not include a null terminator
+ *  therefore size should be taken into consideration.
+ *  NOTE: Size should include the null terminator if exists
+ */
+struct kh_utf8sp {
+  kh_sz     size;
+  kh_utf8 * buffer;
+};
 
