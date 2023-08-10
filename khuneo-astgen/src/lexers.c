@@ -24,7 +24,7 @@
  *
  */
 
-enum kh_lexer_token_type lmp_symbols(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result) {
+enum kh_lexer_status lmp_symbols(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result) {
   (void)size;
 
   const kh_utf8 symbols[] = {
@@ -46,7 +46,8 @@ enum kh_lexer_token_type lmp_symbols(const kh_utf8 * const code, const kh_sz siz
   for (kh_u8 i = 0; i < kh_narray(symbols); ++i) {
     if (symbols[i] == symbol) {
       out_result->value.symbol = symbol;
-      return KH_LEXER_TOKEN_TYPE_SYMBOL;
+      out_result->type         = KH_LEXER_TOKEN_TYPE_SYMBOL;
+      return KH_LEXER_STATUS_MATCH;
     }
   }
 
@@ -54,11 +55,12 @@ enum kh_lexer_token_type lmp_symbols(const kh_utf8 * const code, const kh_sz siz
     const kh_u8 * symbol_range = symbol_ranges[i];
     if (symbol >= symbol_range[0] && symbol <= symbol_range[1]) {
       out_result->value.symbol = symbol;
-      return KH_LEXER_TOKEN_TYPE_SYMBOL;
+      out_result->type         = KH_LEXER_TOKEN_TYPE_SYMBOL;
+      return KH_LEXER_STATUS_MATCH;
     }
   }
 
-  return KH_LEXER_TOKEN_TYPE_NONE;
+  return KH_LEXER_STATUS_PASS;
 }
 
 static kh_bool valid_ident_char(const kh_utf8 c) {
@@ -70,9 +72,9 @@ static kh_bool valid_ident_char(const kh_utf8 c) {
          ) ? KH_TRUE : KH_FALSE;
 }
 
-enum kh_lexer_token_type lmp_identifiers(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result) {
+enum kh_lexer_status lmp_identifiers(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result) {
   if (code[0] != '$' && code[0] != '_' && !kh_utf8_is_alpha(code[0]) && !kh_utf8_is_utf8_lazy(code[0])) {
-    return KH_LEXER_TOKEN_TYPE_NONE;
+    return KH_LEXER_STATUS_PASS;
   } 
 
   const kh_utf8 * current   = code + 1;
@@ -91,16 +93,16 @@ enum kh_lexer_token_type lmp_identifiers(const kh_utf8 * const code, const kh_sz
   // Must either hit `end` or be lesser.
   // Going over `end` means we have an invalid UTF8 overflow
   if (current > end) {
-    out_result->status = KH_LEXER_STATUS_CODE_PARSE_OVERFLOW;
-    return KH_LEXER_TOKEN_TYPE_IDENTIFIER;
+    out_result->type = KH_LEXER_TOKEN_TYPE_IDENTIFIER;
+    return KH_LEXER_STATUS_CODE_PARSE_OVERFLOW;
   }
 
+  out_result->type = KH_LEXER_TOKEN_TYPE_IDENTIFIER;
   out_result->value.marker.size = current - code;
-  
-  return KH_LEXER_TOKEN_TYPE_IDENTIFIER;
+  return KH_LEXER_STATUS_MATCH;
 }
 
-enum kh_lexer_token_type lmp_string(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result) {
+enum kh_lexer_status lmp_string(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result) {
   struct sym_set {
     const kh_utf8 sym;
     const enum kh_lexer_token_type type;
@@ -123,25 +125,26 @@ enum kh_lexer_token_type lmp_string(const kh_utf8 * const code, const kh_sz size
 
     while (KH_TRUE) {
       if (current[0] == set->sym && (current - 1)[0] != '\\' ) {
+        out_result->type = set->type;
         out_result->value.marker.size = current - code + 1;
-        return set->type;
+        return KH_LEXER_STATUS_MATCH;
       }
       if (current >= end) {
-        out_result->status = KH_LEXER_STATUS_SYNTAX_ERROR; // Missing string token to end
-        return set->type;
+        out_result->type = set->type;
+        return KH_LEXER_STATUS_SYNTAX_ERROR;
       }
 
       ++current;
     }
   }
 
-  return KH_LEXER_TOKEN_TYPE_NONE;
+  return KH_LEXER_STATUS_PASS;
 }
 
 
-enum kh_lexer_token_type lmp_number(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result) {
+enum kh_lexer_status lmp_number(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result) {
   if (kh_utf8_is_num(code[0]) == KH_FALSE) {
-    return KH_LEXER_TOKEN_TYPE_NONE;
+    return KH_LEXER_STATUS_PASS;
   }
 
   const kh_utf8 * current    = code + 1;
@@ -151,7 +154,8 @@ enum kh_lexer_token_type lmp_number(const kh_utf8 * const code, const kh_sz size
     ++current;
   }
 
+  out_result->type = KH_LEXER_TOKEN_TYPE_NUMBER;
   out_result->value.marker.size = current - code;
 
-  return KH_LEXER_TOKEN_TYPE_NUMBER;
+  return KH_LEXER_STATUS_MATCH;
 }

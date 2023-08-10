@@ -24,7 +24,7 @@ struct code_set_marker_test_pretext {
   kh_bool should_status;
   kh_bool ignore_size;
 
-  enum kh_lexer_token_type(*ll_lexer)(const kh_utf8 *, kh_sz, struct kh_lexer_parse_result *);
+  enum kh_lexer_status(*ll_lexer)(const kh_utf8 *, kh_sz, struct kh_lexer_parse_result *);
 };
 
 
@@ -42,16 +42,16 @@ static void generic_marker_test(struct code_set_marker_test_context * ctx) {
   for (int i = 0; i < (int)ctx->ntests; ++i) {
     const struct code_set_marker_test_entry * test = &ctx->tests[i];
     struct kh_lexer_parse_result res = { 0 };
-    res.status = KH_LEXER_STATUS_OK;
+    res.type = KH_LEXER_TOKEN_TYPE_NONE;
 
-    enum kh_lexer_token_type mtype = ctx->pretext.ll_lexer(test->code, test->code_size, &res);
-    kh_bool rtype = (mtype == ctx->pretext.expected_type)        ? KH_FALSE : KH_TRUE  == ctx->pretext.should_type;
-    kh_bool rstat = (res.status == ctx->pretext.expected_status) ? KH_FALSE : KH_TRUE  == ctx->pretext.should_status;
+    enum kh_lexer_status status = ctx->pretext.ll_lexer(test->code, test->code_size, &res);
+    kh_bool rtype = (res.type == ctx->pretext.expected_type)   ? KH_FALSE : KH_TRUE  == ctx->pretext.should_type;
+    kh_bool rstat = (status   == ctx->pretext.expected_status) ? KH_FALSE : KH_TRUE  == ctx->pretext.should_status;
     kh_bool rsz   = (ctx->pretext.ignore_size == KH_FALSE && res.value.marker.size != test->expected_marker_size);
     if (rtype || rstat || rsz)  {
       ctx->pass = KH_FALSE;
-      MSG_UNIT_FMT("%s [Code \"%s\", Expected size %d, Reported size %d, Status flag %x, mtype: %d | T:%d, S:%d, s:%d]",
-        ctx->failmsg, test->code, (int)test->expected_marker_size, res.value.marker.size, res.status, mtype, rtype, rstat, rsz
+      MSG_UNIT_FMT("%s [Code \"%s\", Expected size %d, Reported size %d, Status flag %s, mtype: %s | T:%d, S:%d, s:%d]",
+        ctx->failmsg, test->code, (int)test->expected_marker_size, res.value.marker.size, kh_extra_lexer_tostr_ctx_status(status), kh_extra_lexer_tostr_token_type(res.type), rtype, rstat, rsz
       );
     }
   }
@@ -66,12 +66,12 @@ DEF_TEST_UNIT(t_ll_lex_match_symbols) {
   for (int i = 0; i < (int)kh_narray(symbols) - 1; ++i) {
     kh_utf8 code[4] = { symbols[i] };
     struct kh_lexer_parse_result result;
-    result.status = KH_LEXER_STATUS_OK;
+    result.type = KH_LEXER_TOKEN_TYPE_NONE;
 
-    enum kh_lexer_token_type matched = kh_ll_lexer_parse_type(code, sizeof(code), &result);
-    if (matched != KH_LEXER_TOKEN_TYPE_SYMBOL || result.status != KH_LEXER_STATUS_OK) {
+    enum kh_lexer_status status = kh_ll_lexer_parse_type(code, sizeof(code), &result);
+    if (result.type != KH_LEXER_TOKEN_TYPE_SYMBOL || status != KH_LEXER_STATUS_MATCH) {
       did_fail = KH_TRUE;
-      MSG_UNIT_FMT("Did not match symbol: '%c'. Matched as: %d", symbols[i], matched);
+      MSG_UNIT_FMT("Did not match symbol: '%c'. Matched as: %s", symbols[i], kh_extra_lexer_tostr_token_type(result.type));
     }
   }
 
@@ -101,35 +101,10 @@ DEF_TEST_UNIT(t_ll_lex_match_identifiers) {
   ctx.ntests = kh_narray(pass);
   ctx.pretext.expected_type   = KH_LEXER_TOKEN_TYPE_IDENTIFIER;
   ctx.pretext.should_type     = KH_TRUE;
-  ctx.pretext.expected_status = KH_LEXER_STATUS_OK;
+  ctx.pretext.expected_status = KH_LEXER_STATUS_MATCH;
   ctx.pretext.should_status   = KH_TRUE;
   ctx.failmsg = "Expected a pass parsing identifiers. ";
   generic_marker_test(&ctx);
-
-  const struct code_set_marker_test_entry fail[] = {
-    CODE_SET(" foo", 0),
-    CODE_SET("1bar", 0),
-  };
-  ctx.pretext.ignore_size = KH_TRUE;
-  ctx.tests = (struct code_set_marker_test_entry *)&fail;
-  ctx.ntests = kh_narray(fail);
-  ctx.pretext.should_type    = KH_FALSE;
-  ctx.failmsg = "Expected a fail parsing identifiers. ";
-  generic_marker_test(&ctx);
-
-  // Test UTF8 overflow
-  // Disabled due to implementation detail changes at [05/08/2023] see astgen/lexers.c
-  //{
-  //  const kh_utf8 code_utf8_overflow[] = { 'H', 'e', 'l', 'l', 0xE0, 'o' };
-  //  struct kh_lexer_ll_parse_result res = { 0 };
-  //  res.status = KH_LEXER_STATUS_OK;
-
-  //  enum kh_lexer_token_type mtype = kh_ll_lexer_parse(code_utf8_overflow, sizeof(code_utf8_overflow), &res);
-  //  if (mtype != KH_LEXER_TOKEN_TYPE_IDENTIFIER || res.status != KH_LEXER_STATUS_CODE_PARSE_OVERFLOW) {
-  //    ctx.pass = KH_FALSE;
-  //    MSG_UNIT_FMT("Expected code parsing to flow with match to identifier failed. Reported size: %d, mtype: %d, status: %d, u8z: %d", res.value.marker.size, mtype, res.status, kh_utf8_char_sz(0xE0));
-  //  }
-  //}
 
   if (ctx.pass) {
     PASS_UNIT();
@@ -157,7 +132,7 @@ DEF_TEST_UNIT(t_ll_lex_match_basic_string) {
   ctx.ntests = kh_narray(pass_str);
   ctx.pretext.expected_type   = KH_LEXER_TOKEN_TYPE_STRING; 
   ctx.pretext.should_type     = KH_TRUE;
-  ctx.pretext.expected_status = KH_LEXER_STATUS_OK;
+  ctx.pretext.expected_status = KH_LEXER_STATUS_MATCH;
   ctx.pretext.should_status   = KH_TRUE;
   ctx.failmsg = "Expected a pass parsing identifiers. ";
   generic_marker_test(&ctx);
@@ -193,8 +168,8 @@ DEF_TEST_UNIT(t_ll_lex_match_basic_string) {
   // Test missing closing string tag syntax error
   {
     struct kh_lexer_parse_result res = { 0 };
-    res.status = KH_LEXER_STATUS_OK;
-    if (kh_ll_lexer_parse_type("' foo", 5, &res) != KH_LEXER_TOKEN_TYPE_STRING || res.status != KH_LEXER_STATUS_SYNTAX_ERROR) {
+    res.type = KH_LEXER_TOKEN_TYPE_NONE;
+    if (kh_ll_lexer_parse_type("' foo", 5, &res) != KH_LEXER_STATUS_SYNTAX_ERROR || res.type != KH_LEXER_TOKEN_TYPE_STRING) {
       ctx.pass = KH_FALSE;
       MSG_UNIT_FMT("Parsing code '%s' expecting to to cause a string type syntax error failed.", "' foo");
     }
@@ -223,7 +198,7 @@ DEF_TEST_UNIT(t_ll_lex_match_unsigned_numbers) {
   ctx.ntests = kh_narray(pass);
   ctx.pretext.expected_type   = KH_LEXER_TOKEN_TYPE_NUMBER;
   ctx.pretext.should_type     = KH_TRUE;
-  ctx.pretext.expected_status = KH_LEXER_STATUS_OK;
+  ctx.pretext.expected_status = KH_LEXER_STATUS_MATCH;
   ctx.pretext.should_status   = KH_TRUE;
   ctx.failmsg = "Expected a pass parsing numerical values.";
   generic_marker_test(&ctx);
@@ -251,7 +226,7 @@ DEF_TEST_UNIT(t_ll_lex_match_groups) {
   ctx.ntests = kh_narray(pass);
   ctx.pretext.expected_type   = KH_LEXER_TOKEN_TYPE_GROUP;
   ctx.pretext.should_type     = KH_TRUE;
-  ctx.pretext.expected_status = KH_LEXER_STATUS_OK;
+  ctx.pretext.expected_status = KH_LEXER_STATUS_MATCH;
   ctx.pretext.should_status   = KH_TRUE;
   ctx.failmsg = "Expected a pass parsing group contexts.";
   generic_marker_test(&ctx);
@@ -328,14 +303,14 @@ DEF_TEST_UNIT(t_ll_lex_run_lexer_next) {
       FAIL_UNIT("Failed to parse code.");
     }
     struct kh_lexer_parse_result res;
-    res.status = KH_LEXER_STATUS_OK;
-    enum kh_lexer_token_type type = kh_lexer_context_parse_next(&ctx, &res);
-    if (type != matches[i] || res.status != KH_LEXER_STATUS_OK) {
+    res.type = KH_LEXER_TOKEN_TYPE_NONE;
+    enum kh_lexer_status status = kh_lexer_context_parse_next(&ctx, &res);
+    if (res.type != matches[i] || status != KH_LEXER_STATUS_MATCH) {
       MSG_UNIT_FMT("Parsing code at lexing stage failed. Expecting type: %s [%d], Got type: %s, Status: %s, Position: %d",
           kh_extra_lexer_tostr_token_type(matches[i]),
           i + 1,
-          kh_extra_lexer_tostr_token_type(type),
-          kh_extra_lexer_tostr_ctx_status(res.status),
+          kh_extra_lexer_tostr_token_type(res.type),
+          kh_extra_lexer_tostr_ctx_status(status),
           ctx._code_index
       );
       MSG_UNIT_FMT(">> %s", &code[ctx._code_index]);

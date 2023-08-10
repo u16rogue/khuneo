@@ -1,5 +1,6 @@
 #pragma once
 
+#include <kh-astgen/common.h>
 #include <kh-core/refobj.h>
 
 enum kh_lexer_token_type {
@@ -16,8 +17,11 @@ enum kh_lexer_token_type {
 #define KH_LEXER_CONTEXT_STATUS_FLAG_BITS 0x1F // Decode mask flag (0001_1111)
 
 enum kh_lexer_status {
-  KH_LEXER_STATUS_ = 0,
-  KH_LEXER_STATUS_OK = 0,
+  KH_LEXER_STATUS_OK      = 0,
+  KH_LEXER_STATUS_MATCH   = 1,
+  KH_LEXER_STATUS_NOMATCH = 2,
+  KH_LEXER_STATUS_PASS    = 3,
+
   KH_LEXER_STATUS_WARNING  = 0x20, // Denotes that the status could possiblly be incorrect and the context should be
                                    // checked and tended to.
                                    // WARNING FLAG using the 3rd most significant bit (0010_0000)- 
@@ -48,17 +52,14 @@ enum kh_lexer_status {
  *  See `kh_lexer_token_type` for reference as to what each token
  *  type uses to store and represent its parsed value.
  */
-union kh_lexer_ll_parse_result_value {
+union kh_lexer_parse_result_value {
   kh_utf8 symbol;
-  struct {
-    kh_u32 offset; // Starting position of the chunk
-    kh_u32 size;   // Size of the chunk (in bytes)
-  } marker;        // Refers a chunk of the raw source buffer
+  struct kh_code_marker marker; // Refers a chunk of the raw source buffer
 };
 
 struct kh_lexer_parse_result {
-  enum  kh_lexer_status                status;
-  union kh_lexer_ll_parse_result_value value;
+  enum  kh_lexer_token_type         type;
+  union kh_lexer_parse_result_value value;
 };
 
 /*
@@ -67,16 +68,15 @@ struct kh_lexer_parse_result {
  *  ## Arguments
  *  - code       : UTF8 khuneo code
  *  - size       : Size of the code in bytes not length. (utf8)
- *  - out_result : Holds the parsing context and resulting token value produced by the token
- *                 type.
+ *  - out_result : Outbound structure that contains the type and value of the token matched or the lexer
+ *                 that threw the exception.
  *                 NOTE: Due to the immutable nature and how this function consumes code. Token
  *                 types that uses the `marker` value will not have its `offset` updated. Because
- *                 its impossible as this function has no access to the context.
+ *                 its impossible as this function has no access to the context. This will be normally
+ *                 be updated by a higher function.
  *
  *  ## Return
- *  - return : The matched token type.
- *             NOTE: The return type does not denote the success or failure of the function but
- *             rather by the `status` field of `kh_lexer_ll_parse_result`.
+ *  - return : The parsing status.
  *
  *  ## Description
  *  A low level function to determine a match based off a provided code.
@@ -93,8 +93,8 @@ struct kh_lexer_parse_result {
  *  fullfill that necessity eliminating the need to either duplicate the underlying lexer or
  *  writing your own implementation. Simply put, a reusable component of khuneo.
  */
-enum kh_lexer_token_type kh_ll_lexer_parse_type(const kh_utf8 * code, kh_sz size, struct kh_lexer_parse_result * out_result);
-enum kh_lexer_token_type kh_ll_lexer_parse_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_parse_result * out_result);
+enum kh_lexer_status kh_ll_lexer_parse_type(const kh_utf8 * code, kh_sz size, struct kh_lexer_parse_result * out_result);
+enum kh_lexer_status kh_ll_lexer_parse_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_parse_result * out_result);
 
 /*
  *  Represents a Lexer context storing a lexer state
@@ -131,15 +131,17 @@ kh_bool kh_lexer_context_uninit(struct kh_lexer_context * ctx);
 
 /*
  *  # Context Lexer Next
- *  Parses the current context and returns the determined lexed type
- *  followed by advancing the context.
+ *  Consecutively parses a khuneo code upon call and returns upon
+ *  a lexer match or exception while providing information through
+ *  `out_result`.
  *
  *  ## Arguments
  *  - ctx        : Lexer context 
- *  - out_result : Contains the status and value of the matched type
+ *  - out_result : Contains the type and value of the matched type
+ *                 or offending parser. (`Offending` refers the the
+ *                 lexer type that have thrown an exception)
  *
  *  ## Return
- *  - return     : Returns the lexed token type presented in the `kh_lexer_token_type`
- *  enumerator
+ *  - return     : Returns the lexer status
  */
-enum kh_lexer_token_type kh_lexer_context_parse_next(struct kh_lexer_context * ctx, struct kh_lexer_parse_result * out_result);
+enum kh_lexer_status kh_lexer_context_parse_next(struct kh_lexer_context * ctx, struct kh_lexer_parse_result * out_result);

@@ -9,6 +9,8 @@ project(kh_astgen)
 add_library(
   ${PROJECT_NAME}
   STATIC
+  "include/kh-astgen/common.h"
+
   "include/kh-astgen/lexer.h"
   "src/lexer.c"
 
