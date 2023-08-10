@@ -17,10 +17,11 @@ enum kh_lexer_token_type {
 #define KH_LEXER_CONTEXT_STATUS_FLAG_BITS 0x1F // Decode mask flag (0001_1111)
 
 enum kh_lexer_status {
-  KH_LEXER_STATUS_OK      = 0,
-  KH_LEXER_STATUS_MATCH   = 1,
-  KH_LEXER_STATUS_NOMATCH = 2,
-  KH_LEXER_STATUS_PASS    = 3,
+  KH_LEXER_STATUS_OK      = 0, // Default setup OK status
+  KH_LEXER_STATUS_MATCH   = 1, // A token has been identified
+  KH_LEXER_STATUS_NOMATCH = 2, // A token cant be identified
+  KH_LEXER_STATUS_EOB     = 3, // End of Buffer (ran the entire buffer)         NOTE: Only viable in parser
+  KH_LEXER_STATUS_PASS    = 4, // Lexeme didnt match and should let others try. NOTE: Only viable on matchers (see `lexers.c`)
 
   KH_LEXER_STATUS_WARNING  = 0x20, // Denotes that the status could possiblly be incorrect and the context should be
                                    // checked and tended to.

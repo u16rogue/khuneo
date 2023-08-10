@@ -12,6 +12,8 @@ const char * kh_extra_lexer_tostr_ctx_status(enum kh_lexer_status status) {
     CASE_STR(KH_LEXER_STATUS_PASS);
     CASE_STR(KH_LEXER_STATUS_NOMATCH);
 
+    CASE_STR(KH_LEXER_STATUS_EOB);
+
     CASE_STR(KH_LEXER_STATUS_UNKNOWN_WARNING);
     CASE_STR(KH_LEXER_STATUS_CODE_PARSE_OVERFLOW);
 

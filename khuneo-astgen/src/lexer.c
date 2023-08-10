@@ -173,7 +173,7 @@ enum kh_lexer_status kh_lexer_context_parse_next(struct kh_lexer_context * ctx, 
   }
 
   if (ctx->_code_index >= ctx->_code_size) {
-    return KH_LEXER_STATUS_NOMATCH;
+    return KH_LEXER_STATUS_EOB;
   }
 
   enum kh_lexer_status status = kh_ll_lexer_parse_type(code + ctx->_code_index, ctx->_code_size - ctx->_code_index, out_result);
