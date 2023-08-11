@@ -2,6 +2,11 @@
 
 #include "types.h"
 
+kh_bool kh_utf8_is_alpha(const kh_utf8 c);
+kh_bool kh_utf8_is_num(const kh_utf8 c);
+kh_bool kh_utf8_is_hex(const kh_utf8 c);
+kh_bool kh_utf8_is_whitespace(const kh_utf8 c);
+
 /*
  *  Determine the size of a UTF8
  *  > Returns a KH_UTF8_INVALID_LEN when invalid.
@@ -39,29 +44,21 @@ kh_u8 kh_utf8_hexchar_to_nibble(const kh_utf8 c);
 /*
  *  Compares a kh_utf8 string if they match
  */
-kh_bool kh_utf8_strcmp(const kh_utf8 * a, const kh_utf8 * b);
+kh_bool kh_utf8_strcmp(const struct kh_utf8sp * const a, const struct kh_utf8sp * const b);
 
 /*
  *  Copies a kh_utf8 string from src to dst
  *  NOTE: Intentionally straight forward implementation for perf
  *  HIGHLY UNSAFE! Only use where buffer checks are done.
  */
-kh_bool kh_utf8_strcpy(struct kh_utf8sp * dest, const struct kh_utf8sp * const src);
+kh_bool kh_utf8_unsafe_strcpy(struct kh_utf8sp * dest, const struct kh_utf8sp * const src);
 
 /*
  *
  */
 kh_bool kh_utf8_str_to_u64(const struct kh_utf8sp * str, kh_u64 * out);
 
-#if 0
 /*
- *  Converts a u32 value to a string
+ *
  */
-kh_bool kh_utf8_u32_str(const kh_u32 n, kh_utf8 * out, kh_sz sz);
-#endif
-
-kh_bool kh_utf8_is_alpha(const kh_utf8 c);
-kh_bool kh_utf8_is_num(const kh_utf8 c);
-kh_bool kh_utf8_is_hex(const kh_utf8 c);
-kh_bool kh_utf8_is_whitespace(const kh_utf8 c);
-
+kh_bool kh_utf8_strlen(const struct kh_utf8sp * const str);

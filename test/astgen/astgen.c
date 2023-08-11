@@ -191,6 +191,7 @@ DEF_TEST_UNIT(t_ll_lex_match_unsigned_numbers) {
     CODE_SET("0123456789",  10),
     CODE_SET("12.34",        2),
     CODE_SET("12x34",        2),
+    CODE_SET("0x1a3F",       6),
   };
   ctx.pass = KH_TRUE;
   ctx.pretext.ignore_size = KH_FALSE;

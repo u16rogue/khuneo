@@ -143,14 +143,21 @@ enum kh_lexer_status lmp_string(const kh_utf8 * const code, const kh_sz size, st
 
 
 enum kh_lexer_status lmp_number(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result) {
-  if (kh_utf8_is_num(code[0]) == KH_FALSE) {
+  kh_bool is_hex = (code[0] == '0' && size > 2 && code[1] == 'x' && kh_utf8_is_hex(code[2])) ? KH_TRUE : KH_FALSE;
+  if (kh_utf8_is_num(code[0]) == KH_FALSE && is_hex == KH_FALSE) {
     return KH_LEXER_STATUS_PASS;
   }
 
-  const kh_utf8 * current    = code + 1;
+  const kh_utf8 * current    = code + (is_hex == KH_TRUE ? 3 : 1);
   const kh_utf8 * const end  = code + size;
 
-  while (current < end && kh_utf8_is_num(current[0]) == KH_TRUE) {
+  while (current < end &&
+          (
+            (is_hex == KH_TRUE  && kh_utf8_is_hex(current[0]) == KH_TRUE)
+            ||
+            (is_hex == KH_FALSE && kh_utf8_is_num(current[0]) == KH_TRUE)
+          )
+        ) {
     ++current;
   }
 
