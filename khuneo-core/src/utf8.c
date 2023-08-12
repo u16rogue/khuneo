@@ -19,7 +19,7 @@ kh_bool kh_utf8_is_hex(const kh_utf8 c) {
 }
 
 kh_bool kh_utf8_is_whitespace(const kh_utf8 c) {
-  return (c == '\r' || c == '\t' || c == '\n')
+  return (c == '\r' || c == '\t' || c == '\n' || c == ' ')
          ? KH_TRUE : KH_FALSE;
 }
 

@@ -17,6 +17,9 @@ add_library(
   "include/kh-core/refobj.h"
   "src/refobj.c"
 
+  "include/kh-core/math.h"
+  "src/math.c"
+
   "include/kh-core/identifier_encoding.h"
   "src/identifier_encoding.c"
 )

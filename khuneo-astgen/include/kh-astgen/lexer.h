@@ -1,17 +1,41 @@
 #pragma once
 
-#include <kh-astgen/common.h>
+#include <kh-core/types.h>
 #include <kh-core/refobj.h>
+#include <kh-astgen/common.h>
 
 enum kh_lexer_token_type {
   KH_LEXER_TOKEN_TYPE_NONE,
-  KH_LEXER_TOKEN_TYPE_GROUP,      // Refers to a range group used for lazy evaluation. Uses the `code_marker` value.
-  KH_LEXER_TOKEN_TYPE_SYMBOL,     // Refers to a single byte symbol. Uses the `token` value.
-  KH_LEXER_TOKEN_TYPE_IDENTIFIER, // Refers to an identifier. Uses the `code_marker` value.
-  KH_LEXER_TOKEN_TYPE_NUMBER,
+  
+  // Refers to a range group used for lazy evaluation. Uses the `code_marker` value.
+  KH_LEXER_TOKEN_TYPE_GROUP,
+  
+  // Refers to a single byte symbol. Represented by its own ASCII value.
+  KH_LEXER_TOKEN_TYPE_SYMBOL,
+
+  // Refers to an identifier. Uses the `code_marker` value.
+  KH_LEXER_TOKEN_TYPE_IDENTIFIER, 
+
+  // Refers to a 64 bit unsigned value. Can be produced by base10 and base16 literals.
+  KH_LEXER_TOKEN_TYPE_U64,
+
+  KH_LEXER_TOKEN_TYPE_F64,
+
   KH_LEXER_TOKEN_TYPE_STRING,
+
   KH_LEXER_TOKEN_TYPE_STRING_INTRP,
-  KH_LEXER_TOKEN_TYPE_STRING_FXHSH, // `Fixed Hash` Can be used to optimize string into a hash value. FOR: Can be used for fast pseudo enums
+  //
+  // `Fixed Hash` Can be used to optimize string into a hash value. FOR: Can be used for fast pseudo enums
+  KH_LEXER_TOKEN_TYPE_STRING_FXHSH, 
+
+  // Refers to a single or group of whitespace
+  // REASONING: can be useful to check for syntactic structure at parsing
+  // level without doing it in the lexer. eg. 123kk -> { [u64][identifier] } | 123 kk -> { [u64][whitespace][identifier]}
+  // allowing us to treat these syntax differently
+  // NOTE: This is generally grouped and represented by a marker, consecutive whitespaces are grouped together
+  KH_LEXER_TOKEN_TYPE_WHITESPACE,
+
+  KH_LEXER_TOKEN_TYPE_COMMENT,
 };
 
 #define KH_LEXER_CONTEXT_STATUS_FLAG_BITS 0x1F // Decode mask flag (0001_1111)
@@ -24,7 +48,7 @@ enum kh_lexer_status {
   KH_LEXER_STATUS_PASS    = 4, // Lexeme didnt match and should let others try. NOTE: Only viable on matchers (see `lexers.c`)
 
   KH_LEXER_STATUS_WARNING  = 0x20, // Denotes that the status could possiblly be incorrect and the context should be
-                                   // checked and tended to.
+                                   // inspected and tended to.
                                    // WARNING FLAG using the 3rd most significant bit (0010_0000)- 
 
   KH_LEXER_STATUS_ERROR    = 0x40, // Denotes that the status is fatal and the context should be disposed
@@ -54,8 +78,14 @@ enum kh_lexer_status {
  *  type uses to store and represent its parsed value.
  */
 union kh_lexer_parse_result_value {
-  kh_utf8 symbol;
+  kh_utf8               symbol;
   struct kh_code_marker marker; // Refers a chunk of the raw source buffer
+
+  struct {
+    union { kh_u64 u64; kh_f64 f64; };
+    // kh_sz marker_size; [11/08/2023] We use nconsume to track how much we should move code index.
+  } number;
+  
 };
 
 struct kh_lexer_parse_result {
@@ -67,14 +97,16 @@ struct kh_lexer_parse_result {
  *  # Low Level Lexer Parse Type / Group
  *
  *  ## Arguments
- *  - code       : UTF8 khuneo code
- *  - size       : Size of the code in bytes not length. (utf8)
- *  - out_result : Outbound structure that contains the type and value of the token matched or the lexer
- *                 that threw the exception.
- *                 NOTE: Due to the immutable nature and how this function consumes code. Token
- *                 types that uses the `marker` value will not have its `offset` updated. Because
- *                 its impossible as this function has no access to the context. This will be normally
- *                 be updated by a higher function.
+ *  - code         : UTF8 khuneo code
+ *  - size         : Size of the code in bytes not length. (utf8)
+ *  - out_result   : Outbound structure that contains the type and value of the token matched or the lexer
+ *                   that threw the exception.
+ *                   NOTE: Due to the immutable nature and how this function consumes code. Token
+ *                   types that uses the `marker` value will not have its `offset` updated. Because
+ *                   its impossible as this function has no access to the context. This will be normally
+ *                   be updated by a higher function.
+ *  - out_nconsume : Outbound unsigned value that denotes how much of the `code` was consumed to match the entire parse
+ *                   result.
  *
  *  ## Return
  *  - return : The parsing status.
@@ -94,8 +126,8 @@ struct kh_lexer_parse_result {
  *  fullfill that necessity eliminating the need to either duplicate the underlying lexer or
  *  writing your own implementation. Simply put, a reusable component of khuneo.
  */
-enum kh_lexer_status kh_ll_lexer_parse_type(const kh_utf8 * code, kh_sz size, struct kh_lexer_parse_result * out_result);
-enum kh_lexer_status kh_ll_lexer_parse_group(const kh_utf8 * code, kh_sz size, struct kh_lexer_parse_result * out_result);
+enum kh_lexer_status kh_ll_lexer_parse_type  (const kh_utf8 * code, kh_sz size, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume);
+enum kh_lexer_status kh_ll_lexer_parse_group (const kh_utf8 * code, kh_sz size, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume);
 
 /*
  *  Represents a Lexer context storing a lexer state
