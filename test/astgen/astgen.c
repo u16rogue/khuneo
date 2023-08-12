@@ -51,7 +51,7 @@ static void generic_marker_test(struct code_set_marker_test_context * ctx) {
     kh_bool rsz   = (ctx->pretext.ignore_size == KH_FALSE && nconsume != test->expected_marker_size);
     if (rtype || rstat || rsz)  {
       ctx->pass = KH_FALSE;
-      MSG_UNIT_FMT("%s [Code \"%s\", Expected size %llu, Reported size %llu, Status flag %s, mtype: %s | T:%d, S:%d, s:%d]",
+      MSG_UNIT_FMT("%s [Code \"%s\", Expected size %llu, Reported size %d, Status flag %s, mtype: %s | T:%d, S:%d, s:%d]",
         ctx->failmsg, test->code, test->expected_marker_size, res.value.marker.size, kh_extra_lexer_tostr_ctx_status(status), kh_extra_lexer_tostr_token_type(res.type), rtype, rstat, rsz
       );
     }
@@ -329,7 +329,7 @@ DEF_TEST_UNIT(t_ll_lex_run_lexer_next) {
     "// abcdef                      \n"
     "fn greet() nil {               \n"
     "  print(x);                    \n"
-    "}                              \n"
+    "}"
   ;
 
   const enum kh_lexer_token_type matches[] = {
@@ -399,6 +399,11 @@ DEF_TEST_UNIT(t_ll_lex_run_lexer_next) {
       MSG_UNIT_FMT(">> %s", &code[ctx._code_index]);
       FAIL_UNIT("Failed to parse code.");
     }
+  }
+
+  if (ctx._code_index > ctx._code_size) {
+    MSG_UNIT_FMT("Index off bound upon end. Index: %d", ctx._code_index);
+    FAIL_UNIT("Abnormal code parsing.");
   }
 
   if (kh_lexer_context_uninit(&ctx) == KH_FALSE) {

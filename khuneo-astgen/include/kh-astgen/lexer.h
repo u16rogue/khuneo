@@ -35,6 +35,7 @@ enum kh_lexer_token_type {
   // NOTE: This is generally grouped and represented by a marker, consecutive whitespaces are grouped together
   KH_LEXER_TOKEN_TYPE_WHITESPACE,
 
+  // Refers to a code comment
   KH_LEXER_TOKEN_TYPE_COMMENT,
 };
 

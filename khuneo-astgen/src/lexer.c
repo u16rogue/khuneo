@@ -135,5 +135,9 @@ enum kh_lexer_status kh_lexer_context_parse_next(struct kh_lexer_context * ctx, 
   }
 
   ctx->_code_index += nconsume;
+  if (ctx->_code_index > ctx->_code_size) {
+    return KH_LEXER_STATUS_CODE_PARSE_OVERFLOW;
+  }
+
   return KH_LEXER_STATUS_MATCH;
 }
