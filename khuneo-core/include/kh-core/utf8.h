@@ -56,9 +56,4 @@ kh_bool kh_utf8_unsafe_strcpy(struct kh_utf8sp * dest, const struct kh_utf8sp * 
 /*
  *
  */
-kh_bool kh_utf8_str_to_u64(const struct kh_utf8sp * str, kh_u64 * out);
-
-/*
- *
- */
 kh_bool kh_utf8_strlen(const struct kh_utf8sp * const str);

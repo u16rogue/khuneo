@@ -31,6 +31,16 @@ typedef kh_u8  kh_bool;
 
 typedef kh_i8 kh_utf8;
 
+// Represents the operating bits mode
+#define kh_unum kh_u64
+#define KH_UNUM_MAX KH_U64_MAX
+
+#define kh_inum kh_i64
+#define KH_INUM_MAX KH_I64_MAX
+
+#define kh_iflt kh_f64
+#define KH_IFLT_MAX
+
 /*
  *  # UTF8 Structure pointer
  *  - Represents a UTF8 string buffer.

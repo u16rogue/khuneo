@@ -197,12 +197,12 @@ DEF_TEST_UNIT(t_ll_lex_match_unsigned_numbers) {
   kh_bool is_success = KH_TRUE;
 
   const struct number_set sets[] = {
-    { "1234",        4, KH_LEXER_TOKEN_TYPE_U64, 1234       },
-    { "0x1234",      6, KH_LEXER_TOKEN_TYPE_U64, 0x1234     },
-    { "0x1aBf21cc", 10, KH_LEXER_TOKEN_TYPE_U64, 0x1aBf21cc },
-    { "0xabcdef",    8, KH_LEXER_TOKEN_TYPE_U64, 0xabcdef   },
-    { "0xABCDEF",    8, KH_LEXER_TOKEN_TYPE_U64, 0xABCDEF   },
-    { "0xABCDEFYY", 10, KH_LEXER_TOKEN_TYPE_U64, 0xABCDEF   },
+    { "1234",        4, KH_LEXER_TOKEN_TYPE_UNUM, 1234       },
+    { "0x1234",      6, KH_LEXER_TOKEN_TYPE_UNUM, 0x1234     },
+    { "0x1aBf21cc", 10, KH_LEXER_TOKEN_TYPE_UNUM, 0x1aBf21cc },
+    { "0xabcdef",    8, KH_LEXER_TOKEN_TYPE_UNUM, 0xabcdef   },
+    { "0xABCDEF",    8, KH_LEXER_TOKEN_TYPE_UNUM, 0xABCDEF   },
+    { "0xABCDEFYY", 10, KH_LEXER_TOKEN_TYPE_UNUM, 0xABCDEF   },
   };
 
   for (kh_sz i = 0; i < kh_narray(sets); ++i) {
@@ -211,13 +211,13 @@ DEF_TEST_UNIT(t_ll_lex_match_unsigned_numbers) {
     out_result.type = KH_LEXER_TOKEN_TYPE_NONE;
     kh_sz nconsume = 0;
     enum kh_lexer_status status = kh_ll_lexer_parse_type(set->code, set->size, &out_result, &nconsume);
-    if (status != KH_LEXER_STATUS_MATCH || out_result.type != KH_LEXER_TOKEN_TYPE_U64 || out_result.value.number.u64 != set->expect) {
+    if (status != KH_LEXER_STATUS_MATCH || out_result.type != KH_LEXER_TOKEN_TYPE_UNUM || out_result.value.number.unum != set->expect) {
       is_success = KH_FALSE;
       MSG_UNIT_FMT("Failed to parse '%s' as a u64 value. Status: %s, Type: %s, Got Value: %llu, Expecting: %llu, Consumed: (%llu/%llu)",
           set->code,
           kh_extra_lexer_tostr_ctx_status(status),
           kh_extra_lexer_tostr_token_type(out_result.type),
-          out_result.value.number.u64,
+          out_result.value.number.unum,
           set->expect,
           nconsume,
           set->expect
@@ -244,11 +244,11 @@ DEF_TEST_UNIT(t_ll_lex_match_floating) {
   kh_bool is_success = KH_TRUE;
 
   const struct number_set sets[] = {
-    { "12.34",    5, KH_LEXER_TOKEN_TYPE_F64, 12.34    },
-    { "123.4",    5, KH_LEXER_TOKEN_TYPE_F64, 123.4    },
-    { "1234.0",   6, KH_LEXER_TOKEN_TYPE_F64, 1234.0   },
-    { "0.1234",   6, KH_LEXER_TOKEN_TYPE_F64, 0.1234   },
-    { "1234.005", 8, KH_LEXER_TOKEN_TYPE_F64, 1234.005 },
+    { "12.34",    5, KH_LEXER_TOKEN_TYPE_IFLT, 12.34    },
+    { "123.4",    5, KH_LEXER_TOKEN_TYPE_IFLT, 123.4    },
+    { "1234.0",   6, KH_LEXER_TOKEN_TYPE_IFLT, 1234.0   },
+    { "0.1234",   6, KH_LEXER_TOKEN_TYPE_IFLT, 0.1234   },
+    { "1234.005", 8, KH_LEXER_TOKEN_TYPE_IFLT, 1234.005 },
   };
 
   for (kh_sz i = 0; i < kh_narray(sets); ++i) {
@@ -257,13 +257,13 @@ DEF_TEST_UNIT(t_ll_lex_match_floating) {
     out_result.type = KH_LEXER_TOKEN_TYPE_NONE;
     kh_sz nconsume = 0;
     enum kh_lexer_status status = kh_ll_lexer_parse_type(set->code, set->size, &out_result, &nconsume);
-    if (status != KH_LEXER_STATUS_MATCH || out_result.type != KH_LEXER_TOKEN_TYPE_F64 || out_result.value.number.f64 != set->expect) {
+    if (status != KH_LEXER_STATUS_MATCH || out_result.type != KH_LEXER_TOKEN_TYPE_IFLT || out_result.value.number.iflt != set->expect) {
       is_success = KH_FALSE;
       MSG_UNIT_FMT("Failed to parse '%s' as a f64 value. Status: %s, Type: %s, Got Value: %f, Expecting: %f, Consumed: (%llu/%llu)",
           set->code,
           kh_extra_lexer_tostr_ctx_status(status),
           kh_extra_lexer_tostr_token_type(out_result.type),
-          out_result.value.number.f64,
+          out_result.value.number.iflt,
           set->expect,
           nconsume,
           set->size
@@ -325,6 +325,9 @@ DEF_TEST_UNIT(t_ll_lex_run_lexer_next) {
     " */                            \n"
     "// what to say                 \n"
     "var x: string = 'hello world'; \n"
+    "var y = 1234;                  \n"
+    "let z = 0x34;                  \n"
+    "let w = 12.34;                 \n"
     "// does the talking            \n"
     "// abcdef                      \n"
     "fn greet() nil {               \n"
@@ -348,25 +351,47 @@ DEF_TEST_UNIT(t_ll_lex_run_lexer_next) {
     KH_LEXER_TOKEN_TYPE_STRING,     // 'hello world'
     KH_LEXER_TOKEN_TYPE_SYMBOL,     // ;
     KH_LEXER_TOKEN_TYPE_WHITESPACE,
+
+    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // var
+    KH_LEXER_TOKEN_TYPE_WHITESPACE,
+    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // y
+    KH_LEXER_TOKEN_TYPE_WHITESPACE,
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // =
+    KH_LEXER_TOKEN_TYPE_WHITESPACE,
+    KH_LEXER_TOKEN_TYPE_UNUM,        // 1234
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // ;
+    KH_LEXER_TOKEN_TYPE_WHITESPACE,
+
+    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // var
+    KH_LEXER_TOKEN_TYPE_WHITESPACE,
+    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // y
+    KH_LEXER_TOKEN_TYPE_WHITESPACE,
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // =
+    KH_LEXER_TOKEN_TYPE_WHITESPACE,
+    KH_LEXER_TOKEN_TYPE_UNUM,        // 0x34
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // ;
+    KH_LEXER_TOKEN_TYPE_WHITESPACE,
+
+    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // var
+    KH_LEXER_TOKEN_TYPE_WHITESPACE,
+    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // y
+    KH_LEXER_TOKEN_TYPE_WHITESPACE,
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // =
+    KH_LEXER_TOKEN_TYPE_WHITESPACE,
+    KH_LEXER_TOKEN_TYPE_IFLT,        // 12.34
+    KH_LEXER_TOKEN_TYPE_SYMBOL,     // ;
+    KH_LEXER_TOKEN_TYPE_WHITESPACE,
+
     KH_LEXER_TOKEN_TYPE_COMMENT,
     KH_LEXER_TOKEN_TYPE_COMMENT,
     KH_LEXER_TOKEN_TYPE_IDENTIFIER, // fn
     KH_LEXER_TOKEN_TYPE_WHITESPACE,
     KH_LEXER_TOKEN_TYPE_IDENTIFIER, // greet
-    KH_LEXER_TOKEN_TYPE_SYMBOL,     // (
-    KH_LEXER_TOKEN_TYPE_SYMBOL,     // )
+    KH_LEXER_TOKEN_TYPE_GROUP,      // ()
     KH_LEXER_TOKEN_TYPE_WHITESPACE,
     KH_LEXER_TOKEN_TYPE_IDENTIFIER, // nil
-    KH_LEXER_TOKEN_TYPE_WHITESPACE,
-    KH_LEXER_TOKEN_TYPE_SYMBOL,     // {
-    KH_LEXER_TOKEN_TYPE_WHITESPACE,
-    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // print
-    KH_LEXER_TOKEN_TYPE_SYMBOL,     // (
-    KH_LEXER_TOKEN_TYPE_IDENTIFIER, // x
-    KH_LEXER_TOKEN_TYPE_SYMBOL,     // )
-    KH_LEXER_TOKEN_TYPE_SYMBOL,     // ;
-    KH_LEXER_TOKEN_TYPE_WHITESPACE,
-    KH_LEXER_TOKEN_TYPE_SYMBOL,     // }
+    KH_LEXER_TOKEN_TYPE_WHITESPACE, //
+    KH_LEXER_TOKEN_TYPE_GROUP,      // {}
   };
 
   struct kh_refobj ro_code;
@@ -431,4 +456,5 @@ DEF_TEST_UNIT_GROUP(test_astgen) {
   RUN_UNIT_TESTS(tests);
 }
 
+#undef ZERO_MEMORY
 #undef CODE_SET

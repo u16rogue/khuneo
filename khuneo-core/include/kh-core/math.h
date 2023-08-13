@@ -2,4 +2,4 @@
 
 #include <kh-core/types.h>
 
-kh_u64 kh_math_pow_u64(kh_u64 v, kh_sz n);
+kh_unum kh_math_pow_unum(kh_unum v, kh_unum n);

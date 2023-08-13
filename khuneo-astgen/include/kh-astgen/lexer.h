@@ -17,9 +17,9 @@ enum kh_lexer_token_type {
   KH_LEXER_TOKEN_TYPE_IDENTIFIER, 
 
   // Refers to a 64 bit unsigned value. Can be produced by base10 and base16 literals.
-  KH_LEXER_TOKEN_TYPE_U64,
+  KH_LEXER_TOKEN_TYPE_UNUM,
 
-  KH_LEXER_TOKEN_TYPE_F64,
+  KH_LEXER_TOKEN_TYPE_IFLT,
 
   KH_LEXER_TOKEN_TYPE_STRING,
 
@@ -83,7 +83,7 @@ union kh_lexer_parse_result_value {
   struct kh_code_marker marker; // Refers a chunk of the raw source buffer
 
   struct {
-    union { kh_u64 u64; kh_f64 f64; };
+    union { kh_unum unum; kh_iflt iflt; };
     // kh_sz marker_size; [11/08/2023] We use nconsume to track how much we should move code index.
   } number;
   
@@ -138,6 +138,20 @@ struct kh_lexer_context {
   kh_u32     _code_index; // Current index of the code being lexed.
   kh_u32     _code_size;  // Size of code buffer in size
 };
+
+/*
+ *  Determines a possible match from the current
+ *  lexer state.
+ */
+enum kh_lexer_status kh_ll_lexer_context_determine(struct kh_lexer_context * ctx, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume);
+
+/*
+ *  Applies the side effects to a lexer context from
+ *  the determined match.
+ *  NOTE: Only call when a `KH_LEXER_STATUS_MATCH` is
+ *  created from a `kh_ll_lexer_context_determine` call.
+ */
+enum kh_lexer_status kh_ll_lexer_context_apply(struct kh_lexer_context * ctx, struct kh_lexer_parse_result * out_result, kh_sz nconsume);
 
 /*
  *  # Lexer context initializer

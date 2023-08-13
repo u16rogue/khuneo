@@ -1,9 +1,11 @@
 #include "kh-core/types.h"
 #include <kh-core/refobj.h>
 
-static struct kh_refobj * as_refobject(kh_refobji iref) {
-  return (struct kh_refobj *)iref;
-}
+//static struct kh_refobj * _as_refobject(kh_refobji iref) {
+//  return (struct kh_refobj *)iref;
+//}
+
+#define as_refobject(iref) ((struct kh_refobj *)iref)
 
 #if 0
 static kh_bool verify_iref_has_refcount(kh_refobji inout) {

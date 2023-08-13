@@ -214,7 +214,7 @@ enum kh_lexer_status lmp_number(const kh_utf8 * const code, const kh_sz size, st
   }
 
   kh_i8  floating_point = -1;
-  kh_u64 tval = 0;
+  kh_unum tval = 0;
 
   while (KH_TRUE) {
     if (current >= end) {
@@ -223,7 +223,7 @@ enum kh_lexer_status lmp_number(const kh_utf8 * const code, const kh_sz size, st
 
     if (current[0] == '.') {
       if (floating_point != -1 || is_hex == KH_TRUE) {
-        out_result->type = is_hex == KH_TRUE ? KH_LEXER_TOKEN_TYPE_U64 : KH_LEXER_TOKEN_TYPE_F64;
+        out_result->type = is_hex == KH_TRUE ? KH_LEXER_TOKEN_TYPE_UNUM : KH_LEXER_TOKEN_TYPE_IFLT;
         return KH_LEXER_STATUS_SYNTAX_ERROR;
       }
       ++current;
@@ -249,11 +249,11 @@ enum kh_lexer_status lmp_number(const kh_utf8 * const code, const kh_sz size, st
   }
 
   if (floating_point == -1) {
-    out_result->type = KH_LEXER_TOKEN_TYPE_U64;
-    out_result->value.number.u64 = tval;
+    out_result->type = KH_LEXER_TOKEN_TYPE_UNUM;
+    out_result->value.number.unum = tval;
   } else {
-    out_result->type = KH_LEXER_TOKEN_TYPE_F64;
-    out_result->value.number.f64 = (kh_f64)tval / kh_math_pow_u64(10, floating_point);
+    out_result->type = KH_LEXER_TOKEN_TYPE_IFLT;
+    out_result->value.number.iflt = (kh_iflt)tval / kh_math_pow_unum(10, floating_point);
   }
 
   *out_nconsume = current - code;

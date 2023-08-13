@@ -78,6 +78,49 @@ enum kh_lexer_status kh_ll_lexer_parse_group(const kh_utf8 * code, kh_sz size, s
   return KH_LEXER_STATUS_NOMATCH;
 }
 
+enum kh_lexer_status kh_ll_lexer_context_determine(struct kh_lexer_context * ctx, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume) {
+  if (ctx->_code_index >= ctx->_code_size) {
+    return KH_LEXER_STATUS_EOB;
+  }
+
+  const kh_utf8 * const code = ((const kh_utf8 *)kh_refobj_get_object(ctx->_code_buffer)) + ctx->_code_index;
+  const kh_sz           size = ctx->_code_size - ctx->_code_index;
+
+  enum kh_lexer_status status = kh_ll_lexer_parse_group(code, size, out_result, out_nconsume);
+  if (status != KH_LEXER_STATUS_NOMATCH) {
+    return status;
+  }
+
+  status = kh_ll_lexer_parse_type(code, size, out_result, out_nconsume);
+  return status;
+}
+
+enum kh_lexer_status kh_ll_lexer_context_apply(struct kh_lexer_context * ctx, struct kh_lexer_parse_result * out_result, kh_sz nconsume) {
+  switch (out_result->type) {
+    case KH_LEXER_TOKEN_TYPE_NONE:
+    case KH_LEXER_TOKEN_TYPE_SYMBOL:
+    case KH_LEXER_TOKEN_TYPE_UNUM:
+    case KH_LEXER_TOKEN_TYPE_IFLT:
+      break;
+    case KH_LEXER_TOKEN_TYPE_WHITESPACE:
+    case KH_LEXER_TOKEN_TYPE_COMMENT:
+    case KH_LEXER_TOKEN_TYPE_GROUP:
+    case KH_LEXER_TOKEN_TYPE_IDENTIFIER:
+    case KH_LEXER_TOKEN_TYPE_STRING:
+    case KH_LEXER_TOKEN_TYPE_STRING_INTRP:
+    case KH_LEXER_TOKEN_TYPE_STRING_FXHSH:
+      out_result->value.marker.offset = ctx->_code_index;
+      break;
+  }
+
+  ctx->_code_index += nconsume;
+  if (ctx->_code_index > ctx->_code_size) {
+    return KH_LEXER_STATUS_CODE_PARSE_OVERFLOW;
+  }
+
+  return KH_LEXER_STATUS_MATCH;
+}
+
 // -------------------------------------------------- 
 
 kh_bool kh_lexer_context_init(struct kh_lexer_context * ctx, kh_refobji code, kh_sz code_size) {
@@ -105,39 +148,10 @@ kh_bool kh_lexer_context_uninit(struct kh_lexer_context * ctx) {
 //==================================================================================================== 
 
 enum kh_lexer_status kh_lexer_context_parse_next(struct kh_lexer_context * ctx, struct kh_lexer_parse_result * out_result) {
-  const kh_utf8 * const code = (const kh_utf8 *)kh_refobj_get_object(ctx->_code_buffer);
-
-  if (ctx->_code_index >= ctx->_code_size) {
-    return KH_LEXER_STATUS_EOB;
-  }
-
   kh_sz nconsume = 0;
-  enum kh_lexer_status status = kh_ll_lexer_parse_type(code + ctx->_code_index, ctx->_code_size - ctx->_code_index, out_result, &nconsume);
+  enum kh_lexer_status status = kh_ll_lexer_context_determine(ctx, out_result, &nconsume);
   if (status != KH_LEXER_STATUS_MATCH) {
     return status;
   }
-
-  switch (out_result->type) {
-    case KH_LEXER_TOKEN_TYPE_NONE:
-    case KH_LEXER_TOKEN_TYPE_SYMBOL:
-    case KH_LEXER_TOKEN_TYPE_U64:
-    case KH_LEXER_TOKEN_TYPE_F64:
-      break;
-    case KH_LEXER_TOKEN_TYPE_WHITESPACE:
-    case KH_LEXER_TOKEN_TYPE_COMMENT:
-    case KH_LEXER_TOKEN_TYPE_GROUP:
-    case KH_LEXER_TOKEN_TYPE_IDENTIFIER:
-    case KH_LEXER_TOKEN_TYPE_STRING:
-    case KH_LEXER_TOKEN_TYPE_STRING_INTRP:
-    case KH_LEXER_TOKEN_TYPE_STRING_FXHSH:
-      out_result->value.marker.offset = ctx->_code_index;
-      break;
-  }
-
-  ctx->_code_index += nconsume;
-  if (ctx->_code_index > ctx->_code_size) {
-    return KH_LEXER_STATUS_CODE_PARSE_OVERFLOW;
-  }
-
-  return KH_LEXER_STATUS_MATCH;
+  return kh_ll_lexer_context_apply(ctx, out_result, nconsume);
 }

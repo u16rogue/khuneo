@@ -90,20 +90,3 @@ kh_bool kh_utf8_unsafe_strcpy(struct kh_utf8sp * dest, const struct kh_utf8sp * 
   dest->size = src->size;
   return KH_TRUE;
 }
-
-kh_bool kh_utf8_str_to_u64(const struct kh_utf8sp * str, kh_u64 * out) {
-  for (kh_sz i = 0; i < str->size; ++i) {
-    const kh_utf8 ch = str->buffer[i];
-    if (kh_utf8_is_num(ch) == KH_FALSE) {
-      return KH_FALSE;
-    }
-
-    *out *= 10;
-    *out += ch - '0';
-
-    if (i == (str->size - 1)) {
-      return KH_TRUE;
-    }
-  }
-  return KH_FALSE;
-}
