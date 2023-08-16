@@ -50,7 +50,7 @@ DEF_TEST_UNIT(refobj_counting) {
   kh_refobji roi = KH_REFOBJ_INVALID_IREF;
   kh_refobj_init(&ro, (kh_vptr)0xCC, &roi, refobj_cb);
 
-  if (ro._count != 1 || ro._object != (kh_vptr)0xCC || ro._resource_callback != refobj_cb) {
+  if (ro._count != 1 || ro._object != (kh_vptr)0xCC || ro._resource_callback != refobj_cb || roi == KH_REFOBJ_INVALID_IREF || kh_refobj_get_object(roi) != (kh_vptr)0xCC) {
     FAIL_UNIT("Reference object initialization failed.");
   }
 
