@@ -99,7 +99,6 @@ struct kh_lexer_parse_result {
  *
  *  ## Arguments
  *  - code         : UTF8 khuneo code
- *  - size         : Size of the code in bytes not length. (utf8)
  *  - out_result   : Outbound structure that contains the type and value of the token matched or the lexer
  *                   that threw the exception.
  *                   NOTE: Due to the immutable nature and how this function consumes code. Token
@@ -159,7 +158,6 @@ enum kh_lexer_status kh_ll_lexer_context_apply(struct kh_lexer_context * ctx, st
  *  ## Arguments
  *  - ctx       : Pointer to a `kh_lexer_context` structure
  *  - code      : A reference object that contains the raw UTF8 khuneo code to be parsed
- *  - code_size : Size of the code in bytes not in length. (UTF8)
  */
 kh_bool kh_lexer_context_init(struct kh_lexer_context * ctx, kh_refobji code);
 
