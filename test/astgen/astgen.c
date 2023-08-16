@@ -12,7 +12,7 @@
 #define ZERO_MEMORY(bf) memset(&bf, 0, sizeof(bf))
 
 struct code_set_marker_test_entry {
-  const kh_utf8 * code;
+  kh_utf8 * code;
   const kh_sz     code_size;
   const kh_sz     expected_marker_size;
 };
@@ -24,7 +24,7 @@ struct code_set_marker_test_pretext {
   kh_bool should_status;
   kh_bool ignore_size;
 
-  enum kh_lexer_status(*ll_lexer)(const kh_utf8 *, kh_sz, struct kh_lexer_parse_result *, kh_sz *);
+  enum kh_lexer_status(*ll_lexer)(const struct kh_utf8sp * const, struct kh_lexer_parse_result *, kh_sz *);
 };
 
 
@@ -45,7 +45,11 @@ static void generic_marker_test(struct code_set_marker_test_context * ctx) {
     res.type = KH_LEXER_TOKEN_TYPE_NONE;
 
     kh_sz nconsume = 0;
-    enum kh_lexer_status status = ctx->pretext.ll_lexer(test->code, test->code_size, &res, &nconsume);
+    const struct kh_utf8sp code = {
+      .size = test->code_size,
+      .buffer = test->code,
+    };
+    enum kh_lexer_status status = ctx->pretext.ll_lexer(&code, &res, &nconsume);
     kh_bool rtype = (res.type == ctx->pretext.expected_type)   ? KH_FALSE : KH_TRUE  == ctx->pretext.should_type;
     kh_bool rstat = (status   == ctx->pretext.expected_status) ? KH_FALSE : KH_TRUE  == ctx->pretext.should_status;
     kh_bool rsz   = (ctx->pretext.ignore_size == KH_FALSE && nconsume != test->expected_marker_size);
@@ -65,12 +69,16 @@ DEF_TEST_UNIT(t_ll_lex_match_symbols) {
   const kh_utf8 symbols[] = "!@#%^&*()[]{}\\|;,./<>-=+";
   kh_bool did_fail = KH_FALSE;
   for (int i = 0; i < (int)kh_narray(symbols) - 1; ++i) {
-    kh_utf8 code[4] = { symbols[i] };
+    kh_utf8 bcode[4] = { symbols[i] };
     struct kh_lexer_parse_result result;
     result.type = KH_LEXER_TOKEN_TYPE_NONE;
 
     kh_sz nconsume = 0;
-    enum kh_lexer_status status = kh_ll_lexer_parse_type(code, sizeof(code), &result, &nconsume);
+    struct kh_utf8sp code = {
+      .size   = sizeof(code),
+      .buffer = bcode,
+    };
+    enum kh_lexer_status status = kh_ll_lexer_parse_type(&code, &result, &nconsume);
     if (result.type != KH_LEXER_TOKEN_TYPE_SYMBOL || status != KH_LEXER_STATUS_MATCH) {
       did_fail = KH_TRUE;
       MSG_UNIT_FMT("Did not match symbol: '%c'. Matched as: %s", symbols[i], kh_extra_lexer_tostr_token_type(result.type));
@@ -172,7 +180,12 @@ DEF_TEST_UNIT(t_ll_lex_match_basic_string) {
     struct kh_lexer_parse_result res = { 0 };
     res.type = KH_LEXER_TOKEN_TYPE_NONE;
     kh_sz nconsume;
-    if (kh_ll_lexer_parse_type("' foo", 5, &res, &nconsume) != KH_LEXER_STATUS_SYNTAX_ERROR || res.type != KH_LEXER_TOKEN_TYPE_STRING) {
+
+    struct kh_utf8sp code = {
+      .size   = 5,
+      .buffer = "' foo",
+    };
+    if (kh_ll_lexer_parse_type(&code, &res, &nconsume) != KH_LEXER_STATUS_SYNTAX_ERROR || res.type != KH_LEXER_TOKEN_TYPE_STRING) {
       ctx.pass = KH_FALSE;
       MSG_UNIT_FMT("Parsing code '%s' expecting to to cause a string type syntax error failed.", "' foo");
     }
@@ -188,7 +201,7 @@ DEF_TEST_UNIT(t_ll_lex_match_basic_string) {
 DEF_TEST_UNIT(t_ll_lex_match_unsigned_numbers) {
 
   struct number_set {
-    const kh_utf8 * code;
+    kh_utf8 * code;
     kh_sz size;
     enum kh_lexer_token_type type;
     kh_u64 expect;
@@ -210,7 +223,11 @@ DEF_TEST_UNIT(t_ll_lex_match_unsigned_numbers) {
     struct kh_lexer_parse_result out_result = { 0 };
     out_result.type = KH_LEXER_TOKEN_TYPE_NONE;
     kh_sz nconsume = 0;
-    enum kh_lexer_status status = kh_ll_lexer_parse_type(set->code, set->size, &out_result, &nconsume);
+    const struct kh_utf8sp code = {
+      .size   = set->size,
+      .buffer = set->code,
+    };
+    enum kh_lexer_status status = kh_ll_lexer_parse_type(&code, &out_result, &nconsume);
     if (status != KH_LEXER_STATUS_MATCH || out_result.type != KH_LEXER_TOKEN_TYPE_UNUM || out_result.value.number.unum != set->expect) {
       is_success = KH_FALSE;
       MSG_UNIT_FMT("Failed to parse '%s' as a u64 value. Status: %s, Type: %s, Got Value: %llu, Expecting: %llu, Consumed: (%llu/%llu)",
@@ -235,7 +252,7 @@ DEF_TEST_UNIT(t_ll_lex_match_unsigned_numbers) {
 DEF_TEST_UNIT(t_ll_lex_match_floating) {
 
   struct number_set {
-    const kh_utf8 * code;
+    kh_utf8 * code;
     kh_sz size;
     enum kh_lexer_token_type type;
     kh_f64 expect;
@@ -256,7 +273,11 @@ DEF_TEST_UNIT(t_ll_lex_match_floating) {
     struct kh_lexer_parse_result out_result = { 0 };
     out_result.type = KH_LEXER_TOKEN_TYPE_NONE;
     kh_sz nconsume = 0;
-    enum kh_lexer_status status = kh_ll_lexer_parse_type(set->code, set->size, &out_result, &nconsume);
+    const struct kh_utf8sp code = {
+      .size   = set->size,
+      .buffer = set->code,
+    };
+    enum kh_lexer_status status = kh_ll_lexer_parse_type(&code, &out_result, &nconsume);
     if (status != KH_LEXER_STATUS_MATCH || out_result.type != KH_LEXER_TOKEN_TYPE_IFLT || out_result.value.number.iflt != set->expect) {
       is_success = KH_FALSE;
       MSG_UNIT_FMT("Failed to parse '%s' as a f64 value. Status: %s, Type: %s, Got Value: %f, Expecting: %f, Consumed: (%llu/%llu)",
@@ -319,7 +340,7 @@ DEF_TEST_UNIT(t_ll_lex_match_groups) {
 }
 
 DEF_TEST_UNIT(t_ll_lex_run_lexer_next) {
-  const kh_utf8 code[] =
+  kh_utf8 code[] =
     "/*                             \n"
     " * multiline                   \n"
     " */                            \n"
@@ -394,19 +415,24 @@ DEF_TEST_UNIT(t_ll_lex_run_lexer_next) {
     KH_LEXER_TOKEN_TYPE_GROUP,      // {}
   };
 
+  const struct kh_utf8sp codesp = {
+    .size   = sizeof(code) - 1,
+    .buffer = code,
+  };
+
   struct kh_refobj ro_code;
   kh_refobji roi_code = KH_REFOBJ_INVALID_IREF;
-  if (kh_refobj_init(&ro_code, (kh_vptr)code, &roi_code, KH_NULLPTR) == KH_FALSE) {
+  if (kh_refobj_init(&ro_code, (kh_vptr)&codesp, &roi_code, KH_NULLPTR) == KH_FALSE) {
     FAIL_UNIT("Failed to initialize code ref object");
   }
 
   struct kh_lexer_context ctx;
-  if (kh_lexer_context_init(&ctx, kh_refobj_imovearg(&roi_code), sizeof(code) - 1) == KH_FALSE) {
+  if (kh_lexer_context_init(&ctx, kh_refobj_imovearg(&roi_code)) == KH_FALSE) {
     FAIL_UNIT("Failed to initialize lexer context.");
   }
 
   for (int i = 0; i < (int)kh_narray(matches); ++i) {
-    if (ctx._code_index >= ctx._code_size) {
+    if (ctx._code_index >= codesp.size) {
       MSG_UNIT_FMT("Index off bound without completing full match. Index: %d", ctx._code_index);
       FAIL_UNIT("Failed to parse code.");
     }
@@ -426,7 +452,7 @@ DEF_TEST_UNIT(t_ll_lex_run_lexer_next) {
     }
   }
 
-  if (ctx._code_index > ctx._code_size) {
+  if (ctx._code_index > codesp.size) {
     MSG_UNIT_FMT("Index off bound upon end. Index: %d", ctx._code_index);
     FAIL_UNIT("Abnormal code parsing.");
   }

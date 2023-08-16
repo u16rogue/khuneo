@@ -25,12 +25,15 @@
  *
  */
 
-enum kh_lexer_status lmp_whitespace(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume) {
+enum kh_lexer_status lmp_whitespace(const struct kh_utf8sp * const codesp, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume) {
+  const kh_utf8 * const code = codesp->buffer;
+  const kh_sz size = codesp->size;
+
   if (kh_utf8_is_whitespace(code[0]) == KH_FALSE) {
     return KH_LEXER_STATUS_PASS;
   }
 
-  const kh_utf8 * current = code + 1;
+  const kh_utf8 * current   = code + 1;
   const kh_utf8 * const end = code + size;
 
   while (current < end && kh_utf8_is_whitespace(current[0])) {
@@ -42,7 +45,10 @@ enum kh_lexer_status lmp_whitespace(const kh_utf8 * const code, const kh_sz size
   return KH_LEXER_STATUS_MATCH;
 }
 
-enum kh_lexer_status lmp_comments(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume) {
+enum kh_lexer_status lmp_comments(const struct kh_utf8sp * const codesp, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume) {
+  const kh_utf8 * const code = codesp->buffer;
+  const kh_sz size = codesp->size;
+
   if (
       (size <= 1)
       ||
@@ -78,8 +84,8 @@ enum kh_lexer_status lmp_comments(const kh_utf8 * const code, const kh_sz size, 
   return KH_LEXER_STATUS_MATCH;
 }
 
-enum kh_lexer_status lmp_symbols(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume) {
-  (void)size;
+enum kh_lexer_status lmp_symbols(const struct kh_utf8sp * const codesp, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume) {
+  const kh_utf8 * const code = codesp->buffer;
 
   const kh_utf8 symbols[] = {
     '!',  /* 33i8 */
@@ -128,7 +134,10 @@ static kh_bool valid_ident_char(const kh_utf8 c) {
          ) ? KH_TRUE : KH_FALSE;
 }
 
-enum kh_lexer_status lmp_identifiers(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume) {
+enum kh_lexer_status lmp_identifiers(const struct kh_utf8sp * const codesp, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume) {
+  const kh_utf8 * const code = codesp->buffer;
+  const kh_sz size = codesp->size;
+
   if (code[0] != '$' && code[0] != '_' && !kh_utf8_is_alpha(code[0]) && !kh_utf8_is_utf8_lazy(code[0])) {
     return KH_LEXER_STATUS_PASS;
   } 
@@ -158,7 +167,10 @@ enum kh_lexer_status lmp_identifiers(const kh_utf8 * const code, const kh_sz siz
   return KH_LEXER_STATUS_MATCH;
 }
 
-enum kh_lexer_status lmp_string(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume) {
+enum kh_lexer_status lmp_string(const struct kh_utf8sp * const codesp, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume) {
+  const kh_utf8 * const code = codesp->buffer;
+  const kh_sz size = codesp->size;
+
   struct sym_set {
     const kh_utf8 sym;
     const enum kh_lexer_token_type type;
@@ -198,7 +210,10 @@ enum kh_lexer_status lmp_string(const kh_utf8 * const code, const kh_sz size, st
 }
 
 
-enum kh_lexer_status lmp_number(const kh_utf8 * const code, const kh_sz size, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume) {
+enum kh_lexer_status lmp_number(const struct kh_utf8sp * const codesp, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume) {
+  const kh_utf8 * const code = codesp->buffer;
+  const kh_sz size = codesp->size;
+
   kh_bool is_hex = (size >= 3 && code[0] == '0' && code[1] == 'x' && kh_utf8_is_hex(code[2])) ? KH_TRUE : KH_FALSE;
   kh_bool is_num = kh_utf8_is_num(code[0]) == KH_TRUE ? KH_TRUE : KH_FALSE;
   if (

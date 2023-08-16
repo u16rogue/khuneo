@@ -127,16 +127,15 @@ struct kh_lexer_parse_result {
  *  fullfill that necessity eliminating the need to either duplicate the underlying lexer or
  *  writing your own implementation. Simply put, a reusable component of khuneo.
  */
-enum kh_lexer_status kh_ll_lexer_parse_type  (const kh_utf8 * code, kh_sz size, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume);
-enum kh_lexer_status kh_ll_lexer_parse_group (const kh_utf8 * code, kh_sz size, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume);
+enum kh_lexer_status kh_ll_lexer_parse_type  (const struct kh_utf8sp * const codesp, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume);
+enum kh_lexer_status kh_ll_lexer_parse_group (const struct kh_utf8sp * const codesp, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume);
 
 /*
  *  Represents a Lexer context storing a lexer state
  */
 struct kh_lexer_context {
-  kh_refobji _code_buffer;
-  kh_u32     _code_index; // Current index of the code being lexed.
-  kh_u32     _code_size;  // Size of code buffer in size
+  kh_refobji _code_buffer; // Type of <kh_utf8sp *>
+  kh_u32     _code_index;  // Current index of the code being lexed.
 };
 
 /*
@@ -162,7 +161,7 @@ enum kh_lexer_status kh_ll_lexer_context_apply(struct kh_lexer_context * ctx, st
  *  - code      : A reference object that contains the raw UTF8 khuneo code to be parsed
  *  - code_size : Size of the code in bytes not in length. (UTF8)
  */
-kh_bool kh_lexer_context_init(struct kh_lexer_context * ctx, kh_refobji code, kh_sz code_size);
+kh_bool kh_lexer_context_init(struct kh_lexer_context * ctx, kh_refobji code);
 
 /*
  *  # Lexer context uninitializer
