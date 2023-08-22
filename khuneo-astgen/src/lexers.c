@@ -155,14 +155,14 @@ enum kh_lexer_status lmp_identifiers(const struct kh_utf8sp * const codesp, stru
     ++current;
   }
 
+  out_result->type = KH_LEXER_TOKEN_TYPE_IDENTIFIER;
+
   // Must either hit `end` or be lesser.
   // Going over `end` means we have an invalid UTF8 overflow
   if (current > end) {
-    out_result->type = KH_LEXER_TOKEN_TYPE_IDENTIFIER;
     return KH_LEXER_STATUS_CODE_PARSE_OVERFLOW;
   }
 
-  out_result->type = KH_LEXER_TOKEN_TYPE_IDENTIFIER;
   *out_nconsume = out_result->value.marker.size = current - code;
   return KH_LEXER_STATUS_MATCH;
 }
@@ -228,7 +228,7 @@ enum kh_lexer_status lmp_number(const struct kh_utf8sp * const codesp, struct kh
     current += 2;
   }
 
-  kh_i8  floating_point = -1;
+  kh_i8   floating_point = -1;
   kh_unum tval = 0;
 
   while (KH_TRUE) {

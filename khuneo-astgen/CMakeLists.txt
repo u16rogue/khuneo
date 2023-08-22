@@ -13,12 +13,12 @@ add_library(
 
   "include/kh-astgen/lexer.h"
   "src/lexer.c"
+  #
+  "src/lexers.h"
+  "src/lexers.c"
 
   "include/kh-astgen/parser.h"
   "src/parser.c"
-
-  "src/lexers.h"
-  "src/lexers.c"
 )
 
 set_target_properties(

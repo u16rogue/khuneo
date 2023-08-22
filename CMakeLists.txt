@@ -3,10 +3,9 @@ cmake_minimum_required(VERSION 3.18)
 project(khuneo)
 
 # --- Project Configuration ---
-option(KH_BUILD_TEST     "Build the unit test project of khuneo"    ON)
-option(KH_BUILD_RUN_TEST "Automatically run the unit test"          ON)
-option(KH_COMP_ASTGEN    "Enable khuneo's AST Generator component"  ON)
-option(KH_COMP_EXTRA     "Enable khuneo's Extra/Optional component" ON)
+option(KH_BUILD_TEST  "Build the unit test project of khuneo"    ON)
+option(KH_COMP_ASTGEN "Enable khuneo's AST Generator component"  ON)
+option(KH_COMP_EXTRA  "Enable khuneo's Extra/Optional component" ON)
 
 add_library(
   ${PROJECT_NAME}

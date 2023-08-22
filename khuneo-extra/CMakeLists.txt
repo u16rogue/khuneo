@@ -20,8 +20,11 @@ if (TARGET kh_astgen)
   target_sources(
     ${PROJECT_NAME}
     PRIVATE
+    "include/kh-extra/helper.h"
     "include/kh-extra/astgen/lexer.h"
     "src/lexer.c"
+    "include/kh-extra/astgen/parser.h"
+    "src/parser.c"
   )
   target_compile_definitions(${PROJECT_NAME} PUBLIC KH_EXTRA_ASTGEN=1)
 else()

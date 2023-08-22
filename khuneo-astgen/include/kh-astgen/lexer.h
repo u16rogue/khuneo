@@ -28,7 +28,7 @@ enum kh_lexer_token_type {
   // `Fixed Hash` Can be used to optimize string into a hash value. FOR: Can be used for fast pseudo enums
   KH_LEXER_TOKEN_TYPE_STRING_FXHSH, 
 
-  // Refers to a single or group of whitespace
+  // Refers to a single or group of whitespaces
   // REASONING: can be useful to check for syntactic structure at parsing
   // level without doing it in the lexer. eg. 123kk -> { [u64][identifier] } | 123 kk -> { [u64][whitespace][identifier]}
   // allowing us to treat these syntax differently
@@ -40,7 +40,6 @@ enum kh_lexer_token_type {
 };
 
 #define KH_LEXER_CONTEXT_STATUS_FLAG_BITS 0x1F // Decode mask flag (0001_1111)
-
 enum kh_lexer_status {
   KH_LEXER_STATUS_OK      = 0, // Default setup OK status
   KH_LEXER_STATUS_MATCH   = 1, // A token has been identified
@@ -79,8 +78,8 @@ enum kh_lexer_status {
  *  type uses to store and represent its parsed value.
  */
 union kh_lexer_parse_result_value {
-  kh_utf8               symbol;
-  struct kh_code_marker marker; // Refers a chunk of the raw source buffer
+  kh_utf8 symbol;
+  struct kh_astgen_marker marker; // Refers a chunk of the raw source buffer
 
   struct {
     union { kh_unum unum; kh_iflt iflt; };
@@ -190,3 +189,8 @@ kh_bool kh_lexer_context_uninit(struct kh_lexer_context * ctx);
  *  - return     : Returns the lexer status
  */
 enum kh_lexer_status kh_lexer_context_parse_next(struct kh_lexer_context * ctx, struct kh_lexer_parse_result * out_result);
+
+/*
+ *  Determines the token type of a result.
+ */
+enum kh_lexer_token_type kh_lexer_parse_result_type_is(const struct kh_lexer_parse_result * const result);
