@@ -4,9 +4,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-const char * kh_extra_lexer_tostr_ctx_status(enum kh_lexer_status status) {
+const struct kh_utf8sp * kh_extra_lexer_tostr_ctx_status(enum kh_lexer_status status) {
   KH_EXTRA_SET_OFFSET("KH_LEXER_STATUS_");
-  if (status & KH_LEXER_STATUS_EXTENDED) return "<extended>";
+  if (status & KH_LEXER_STATUS_EXTENDED) KH_EXTRA_RETURN_CCSTR("<extended>");
   switch (status) {
     KH_EXTRA_CASE_STR(KH_LEXER_STATUS_OK);
     KH_EXTRA_CASE_STR(KH_LEXER_STATUS_MATCH);
@@ -20,14 +20,14 @@ const char * kh_extra_lexer_tostr_ctx_status(enum kh_lexer_status status) {
     KH_EXTRA_CASE_STR(KH_LEXER_STATUS_SYNTAX_ERROR);
 
     case KH_LEXER_STATUS_EXTENDED:
-      return "<error>";
+      KH_EXTRA_RETURN_CCSTR("<error>");
   }
 
-  return "<invalid>";
+  KH_EXTRA_RETURN_CCSTR("<invalid>");
 }
 
 
-const char * kh_extra_lexer_tostr_token_type(enum kh_lexer_token_type type) {
+const struct kh_utf8sp * kh_extra_lexer_tostr_token_type(enum kh_lexer_token_type type) {
   KH_EXTRA_SET_OFFSET("KH_LEXER_TOKEN_TYPE_");
   switch (type) {
     KH_EXTRA_CASE_STR(KH_LEXER_TOKEN_TYPE_NONE);
@@ -43,7 +43,7 @@ const char * kh_extra_lexer_tostr_token_type(enum kh_lexer_token_type type) {
     KH_EXTRA_CASE_STR(KH_LEXER_TOKEN_TYPE_COMMENT);
   }
 
-  return "<invalid>";
+  KH_EXTRA_RETURN_CCSTR("<invalid>");
 }
 
 kh_bool kh_extra_lexer_tostr_result_value(
@@ -94,7 +94,7 @@ kh_bool kh_extra_lexer_tostr_result_value(
   return KH_TRUE;
 }
 
-kh_sz kh_extra_lexer_predict_tostr_result_value_size(const struct kh_lexer_parse_result * const in_result) {
+kh_sz kh_extra_lexer_predict_size_tostr_result_value(const struct kh_lexer_parse_result * const in_result) {
   switch (in_result->type) {
     case KH_LEXER_TOKEN_TYPE_NONE:
       return sizeof("<none>") - 1;

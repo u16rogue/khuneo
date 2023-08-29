@@ -56,7 +56,7 @@ static void generic_marker_test(struct code_set_marker_test_context * ctx) {
     if (rtype || rstat || rsz)  {
       ctx->pass = KH_FALSE;
       MSG_UNIT_FMT("%s [Code \"%s\", Expected size %llu, Reported size %d, Status flag %s, mtype: %s | T:%d, S:%d, s:%d]",
-        ctx->failmsg, test->code, test->expected_marker_size, res.value.marker.size, kh_extra_lexer_tostr_ctx_status(status), kh_extra_lexer_tostr_token_type(res.type), rtype, rstat, rsz
+        ctx->failmsg, test->code, test->expected_marker_size, res.value.marker.size, kh_extra_lexer_tostr_ctx_status(status)->buffer, kh_extra_lexer_tostr_token_type(res.type)->buffer, rtype, rstat, rsz
       );
     }
   }
@@ -81,7 +81,7 @@ DEF_TEST_UNIT(t_ll_lex_match_symbols) {
     enum kh_lexer_status status = kh_ll_lexer_parse_type(&code, &result, &nconsume);
     if (result.type != KH_LEXER_TOKEN_TYPE_SYMBOL || status != KH_LEXER_STATUS_MATCH) {
       did_fail = KH_TRUE;
-      MSG_UNIT_FMT("Did not match symbol: '%c'. Matched as: %s", symbols[i], kh_extra_lexer_tostr_token_type(result.type));
+      MSG_UNIT_FMT("Did not match symbol: '%c'. Matched as: %s", symbols[i], kh_extra_lexer_tostr_token_type(result.type)->buffer);
     }
   }
 
@@ -232,8 +232,8 @@ DEF_TEST_UNIT(t_ll_lex_match_unsigned_numbers) {
       is_success = KH_FALSE;
       MSG_UNIT_FMT("Failed to parse '%s' as a u64 value. Status: %s, Type: %s, Got Value: %llu, Expecting: %llu, Consumed: (%llu/%llu)",
           set->code,
-          kh_extra_lexer_tostr_ctx_status(status),
-          kh_extra_lexer_tostr_token_type(out_result.type),
+          kh_extra_lexer_tostr_ctx_status(status)->buffer,
+          kh_extra_lexer_tostr_token_type(out_result.type)->buffer,
           out_result.value.number.unum,
           set->expect,
           nconsume,
@@ -282,8 +282,8 @@ DEF_TEST_UNIT(t_ll_lex_match_floating) {
       is_success = KH_FALSE;
       MSG_UNIT_FMT("Failed to parse '%s' as a f64 value. Status: %s, Type: %s, Got Value: %f, Expecting: %f, Consumed: (%llu/%llu)",
           set->code,
-          kh_extra_lexer_tostr_ctx_status(status),
-          kh_extra_lexer_tostr_token_type(out_result.type),
+          kh_extra_lexer_tostr_ctx_status(status)->buffer,
+          kh_extra_lexer_tostr_token_type(out_result.type)->buffer,
           out_result.value.number.iflt,
           set->expect,
           nconsume,
@@ -441,10 +441,10 @@ DEF_TEST_UNIT(t_ll_lex_run_lexer_next) {
     enum kh_lexer_status status = kh_lexer_context_parse_next(&ctx, &res);
     if (res.type != matches[i] || status != KH_LEXER_STATUS_MATCH) {
       MSG_UNIT_FMT("Parsing code at lexing stage failed. Expecting type: %s [%d], Got type: %s, Status: %s, Position: %d",
-          kh_extra_lexer_tostr_token_type(matches[i]),
+          kh_extra_lexer_tostr_token_type(matches[i])->buffer,
           i + 1,
-          kh_extra_lexer_tostr_token_type(res.type),
-          kh_extra_lexer_tostr_ctx_status(status),
+          kh_extra_lexer_tostr_token_type(res.type)->buffer,
+          kh_extra_lexer_tostr_ctx_status(status)->buffer,
           ctx._code_index
       );
       MSG_UNIT_FMT(">> %s", &code[ctx._code_index]);

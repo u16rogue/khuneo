@@ -209,7 +209,6 @@ enum kh_lexer_status lmp_string(const struct kh_utf8sp * const codesp, struct kh
   return KH_LEXER_STATUS_PASS;
 }
 
-
 enum kh_lexer_status lmp_number(const struct kh_utf8sp * const codesp, struct kh_lexer_parse_result * out_result, kh_sz * out_nconsume) {
   const kh_utf8 * const code = codesp->buffer;
   const kh_sz size = codesp->size;

@@ -1,9 +1,13 @@
 #include <kh-extra/astgen/parser.h>
+#include <string.h>
 #include <kh-extra/helper.h>
 
-const char * kh_extra_parser_tostr_ctx_status(enum kh_parser_status status) {
+const struct kh_utf8sp * kh_extra_parser_tostr_ctx_status(enum kh_parser_status status) {
   KH_EXTRA_SET_OFFSET("KH_PARSER_STATUS_");
-  if (status & KH_PARSER_STATUS_EXTENDED) return "<extended>";
+
+  if (status & KH_PARSER_STATUS_EXTENDED)
+    KH_EXTRA_RETURN_CCSTR("<extended>");
+
   switch (status) {
     KH_EXTRA_CASE_STR(KH_PARSER_STATUS_OK);
     KH_EXTRA_CASE_STR(KH_PARSER_STATUS_MATCH);
@@ -13,10 +17,27 @@ const char * kh_extra_parser_tostr_ctx_status(enum kh_parser_status status) {
     KH_EXTRA_CASE_STR(KH_PARSER_STATUS_UNKNOWN_WARNING);
     KH_EXTRA_CASE_STR(KH_PARSER_STATUS_UNKNOWN_ERROR);
     KH_EXTRA_CASE_STR(KH_PARSER_STATUS_SYNTAX_ERROR);
+    KH_EXTRA_CASE_STR(KH_PARSER_STATUS_CONTEXT_ERROR);
 
     case KH_PARSER_STATUS_EXTENDED:
-      return "<error>";
+      KH_EXTRA_RETURN_CCSTR("<error>");
   }
 
-  return "<invalid>";
+  KH_EXTRA_RETURN_CCSTR("<invalid>");
+}
+
+const struct kh_utf8sp * kh_extra_parser_tostr_node_type(enum kh_parser_node_type type) {
+  KH_EXTRA_SET_OFFSET("KH_PARSER_NODE_TYPE_");
+
+  switch (type) {
+    KH_EXTRA_CASE_STR(KH_PARSER_NODE_TYPE_NONE);
+    KH_EXTRA_CASE_STR(KH_PARSER_NODE_TYPE_VARIABLE);
+    KH_EXTRA_CASE_STR(KH_PARSER_NODE_TYPE_EXPRESSION);
+    KH_EXTRA_CASE_STR(KH_PARSER_NODE_TYPE_IDENTIFIER);
+    KH_EXTRA_CASE_STR(KH_PARSER_NODE_TYPE_LITERAL_UNUM);
+    KH_EXTRA_CASE_STR(KH_PARSER_NODE_TYPE_FUNCTION);
+    KH_EXTRA_CASE_STR(KH_PARSER_NODE_TYPE_VARIANT);
+  }
+
+  KH_EXTRA_RETURN_CCSTR("<invalid>");
 }

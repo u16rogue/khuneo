@@ -45,6 +45,9 @@ typedef kh_i8 kh_utf8;
  *  # UTF8 Structure pointer
  *  - Represents a UTF8 string buffer.
  *
+ *  IMPORTANT: If an instance of kh_utf8sp is `const` also treat its members
+ *  `buffer` and `size` as const.
+ *
  *  NOTE: `size` refers the the literal size in bytes that the buffer relatively occupies (used)
  *  `size` does not denote `length` as this can vary with UTF8.
  *  NOTE: Buffer may or may not include a null terminator
