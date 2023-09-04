@@ -1,5 +1,6 @@
 #pragma once
 
+#include "kh-core/refobj.h"
 #include <kh-core/types.h>
 #include <kh-astgen/common.h>
 #include <kh-astgen/lexer.h>
@@ -86,36 +87,13 @@ struct kh_ll_parser_parse_result {
   } value;
 };
 
-/*
-struct kh_ll_parser_parse_result_nodes {
-union {
-  struct kh_ll_parser_parse_result * nodes[4];
-struct {
-  struct kh_ll_parser_parse_result * dom;
-
-  union {
-    // USED BY: KH_PARSER_DOM_NODE_TYPE_FUNCTION as Function body
-    struct kh_ll_parser_parse_result * expression;
-    // USED BY: KH_PARSER_DOM_NODE_TYPE_VARIABLE as Variable initialization
-    struct kh_ll_parser_parse_result * initializer;
-  };
-
-  union {
-    // USED BY: KH_PARSER_DOM_NODE_TYPE_VARIABLE as variable tyoe; 
-    //          KH_PARSER_DOM_NODE_TYPE_FUNCTION as function return type
-    struct kh_ll_parser_parse_result * type;
-  };
-
-  union {
-    // USED BY: KH_PARSER_DOM_NODE_TYPE_FUNCTION as function arguments
-    struct kh_ll_parser_parse_result * fn_args;
-  };
+struct kh_parser_context {
+  kh_refobji _code;
+  kh_refobji _tokens;
+  kh_sz      _ntokens;
+  kh_u32     _index;
 };
-};
-};
-*/
 
-// ----------------------------------------------------------------------------------------------------
 // temporary args struct to prevent changing all pmp_* signatures
 typedef const struct kh_utf8sp * const raw_code_t;
 typedef const struct kh_lexer_parse_result * const tokens_t;
@@ -123,11 +101,18 @@ typedef const kh_sz  ntokens_t;
 typedef struct kh_ll_parser_parse_result * out_result_t;
 
 struct _draft_pmp_args {
-  raw_code_t   raw_code;
-  tokens_t     tokens;
-  ntokens_t    ntokens;
-  out_result_t out_result;
+  raw_code_t                 raw_code;
+  tokens_t                   tokens;
+  ntokens_t                  ntokens;
+  out_result_t               out_result;
+  kh_sz *                    out_nconsume;
 };
-// ----------------------------------------------------------------------------------------------------
 
+kh_bool kh_parser_context_init(struct kh_parser_context * context, kh_refobji code, kh_refobji tokens, const kh_sz ntokens);
+
+kh_bool kh_parser_context_uninit(struct kh_parser_context * context);
+
+// ----------------------------------------------------------------------------------------------------
 enum kh_parser_status kh_ll_parser_identify_tokens(struct _draft_pmp_args * args);
+
+enum kh_parser_status kh_parser_parse_token_next(struct kh_parser_context * ctx, struct kh_ll_parser_parse_result * out_result);

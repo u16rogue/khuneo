@@ -19,6 +19,9 @@ add_library(
 
   "include/kh-astgen/parser.h"
   "src/parser.c"
+
+  "src/parsers.h"
+  "src/parsers.c"
 )
 
 set_target_properties(

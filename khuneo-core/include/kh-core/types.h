@@ -20,7 +20,9 @@ typedef float  kh_f32;
 typedef double kh_f64;
 
 typedef void * kh_vptr;
-#define KH_NULLPTR 0
+#if !defined(KH_NULLPTR)
+  #define KH_NULLPTR 0
+#endif
 
 #define KH_SZ_MAX KH_U64_MAX
 typedef kh_u64 kh_sz;

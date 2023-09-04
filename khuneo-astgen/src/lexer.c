@@ -131,12 +131,10 @@ enum kh_lexer_status kh_ll_lexer_context_apply(struct kh_lexer_context * ctx, st
 // -------------------------------------------------- 
 
 kh_bool kh_lexer_context_init(struct kh_lexer_context * ctx, kh_refobji code) {
-  ctx->_code_index = 0;
-
   if (!kh_refobj_imove(&code, &ctx->_code_buffer)) {
     return KH_FALSE;
   }
-
+  ctx->_code_index = 0;
   return KH_TRUE;
 }
 
@@ -144,9 +142,7 @@ kh_bool kh_lexer_context_uninit(struct kh_lexer_context * ctx) {
   if (kh_refobj_iremove(&ctx->_code_buffer) == KH_FALSE) {
     return KH_FALSE;
   }
-
   ctx->_code_index = 0;
-
   return KH_TRUE;
 }
 
