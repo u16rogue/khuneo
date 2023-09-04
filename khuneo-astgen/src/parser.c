@@ -39,7 +39,7 @@ kh_bool kh_parser_context_uninit(struct kh_parser_context * context) {
   return KH_TRUE;
 }
 
-enum kh_parser_status kh_parser_parse_token_next(struct kh_parser_context * ctx, struct kh_ll_parser_parse_result * out_result) {
+enum kh_parser_status kh_parser_parse_token_next(struct kh_parser_context * ctx, struct kh_ll_parser_parse_result ** out_result) {
   struct kh_lexer_parse_result * tokens = (struct kh_lexer_parse_result *)kh_refobj_get_object(ctx->_tokens);
   do {
     if (ctx->_index >= ctx->_ntokens)                               return KH_PARSER_STATUS_EOB;

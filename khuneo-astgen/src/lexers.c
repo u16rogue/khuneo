@@ -160,7 +160,7 @@ enum kh_lexer_status lmp_identifiers(const struct kh_utf8sp * const codesp, stru
   // Must either hit `end` or be lesser.
   // Going over `end` means we have an invalid UTF8 overflow
   if (current > end) {
-    return KH_LEXER_STATUS_CODE_PARSE_OVERFLOW;
+    return KH_LEXER_STATUS_EOI_OVERFLOW;
   }
 
   *out_nconsume = out_result->value.marker.size = current - code;

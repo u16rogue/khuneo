@@ -95,7 +95,7 @@ enum kh_parser_status pmp_declvar(struct _draft_pmp_args * args) {
     }
   }
 
-  struct kh_ll_parser_parse_result * const dom = &args->out_result[KH_PARSER_NODE_IDX_VARIABLE_DOM];
+  struct kh_ll_parser_parse_result * const dom = args->out_result[KH_PARSER_NODE_IDX_VARIABLE_DOM];
   dom->type = KH_PARSER_NODE_TYPE_VARIABLE;
   dom->value.variable.flags.is_constant = is_constant == KH_TRUE ? 1 : 0;
 
@@ -110,7 +110,7 @@ enum kh_parser_status pmp_declvar(struct _draft_pmp_args * args) {
 
   // Consume optional type
   if (args->tokens[itoken].type == KH_LEXER_TOKEN_TYPE_SYMBOL && args->tokens[itoken].value.symbol == ':') {
-    struct kh_ll_parser_parse_result * const type = &args->out_result[KH_PARSER_NODE_IDX_VARIABLE_TYPE];
+    struct kh_ll_parser_parse_result * const type = args->out_result[KH_PARSER_NODE_IDX_VARIABLE_TYPE];
     type->type = KH_PARSER_NODE_TYPE_EXPRESSION;
     type->attributes.unevaluated = 1;
     type->value.unevaluated.offset = ++itoken;
@@ -129,7 +129,7 @@ enum kh_parser_status pmp_declvar(struct _draft_pmp_args * args) {
 
   // Consume optional initializer
   if (args->tokens[itoken].type == KH_LEXER_TOKEN_TYPE_SYMBOL && args->tokens[itoken].value.symbol == '=') {
-    struct kh_ll_parser_parse_result * const initexpr = &args->out_result[KH_PARSER_NODE_IDX_VARIABLE_INITIALIZER];
+    struct kh_ll_parser_parse_result * const initexpr = args->out_result[KH_PARSER_NODE_IDX_VARIABLE_INITIALIZER];
     initexpr->type = KH_PARSER_NODE_TYPE_EXPRESSION; 
     initexpr->attributes.unevaluated = 1;
     initexpr->value.unevaluated.offset = ++itoken;
@@ -169,7 +169,7 @@ enum kh_parser_status pmp_function(struct _draft_pmp_args * args) {
     return KH_PARSER_STATUS_PASS;
   }
 
-  struct kh_ll_parser_parse_result * const dom = &args->out_result[KH_PARSER_NODE_IDX_FUNCTION_DOM];
+  struct kh_ll_parser_parse_result * const dom = args->out_result[KH_PARSER_NODE_IDX_FUNCTION_DOM];
   dom->type = KH_PARSER_NODE_TYPE_FUNCTION;
 
   kh_sz itoken = 1;
@@ -188,7 +188,7 @@ enum kh_parser_status pmp_function(struct _draft_pmp_args * args) {
 
   // Match optional args
   if (args->tokens[itoken].type == KH_LEXER_TOKEN_TYPE_GROUP && args->raw_code->buffer[args->tokens[itoken].value.marker.offset] == '(') {
-    struct kh_ll_parser_parse_result * const fnargs = &args->out_result[KH_PARSER_NODE_IDX_FUNCTION_ARGS];
+    struct kh_ll_parser_parse_result * const fnargs = args->out_result[KH_PARSER_NODE_IDX_FUNCTION_ARGS];
     fnargs->type = KH_PARSER_NODE_TYPE_VARIANT;
     fnargs->attributes.unevaluated = 1;
     fnargs->value.unevaluated.offset = itoken;
@@ -200,7 +200,7 @@ enum kh_parser_status pmp_function(struct _draft_pmp_args * args) {
 
   // Match optional return type
   if (args->tokens[itoken].type == KH_LEXER_TOKEN_TYPE_SYMBOL && args->tokens[itoken].value.symbol == ':') {
-    struct kh_ll_parser_parse_result * const rtype = &args->out_result[KH_PARSER_NODE_IDX_FUNCTION_RTYPE];
+    struct kh_ll_parser_parse_result * const rtype = args->out_result[KH_PARSER_NODE_IDX_FUNCTION_RTYPE];
     rtype->type = KH_PARSER_NODE_TYPE_EXPRESSION;
     rtype->attributes.unevaluated = 1;
     rtype->value.unevaluated.offset = ++itoken;
@@ -223,7 +223,7 @@ enum kh_parser_status pmp_function(struct _draft_pmp_args * args) {
     return KH_PARSER_STATUS_SYNTAX_ERROR;
   }
 
-  struct kh_ll_parser_parse_result * const body = &args->out_result[KH_PARSER_NODE_IDX_FUNCTION_BODY];
+  struct kh_ll_parser_parse_result * const body = args->out_result[KH_PARSER_NODE_IDX_FUNCTION_BODY];
   body->type = KH_PARSER_NODE_TYPE_EXPRESSION;
   body->attributes.unevaluated = 1;
   body->value.unevaluated.offset = itoken;

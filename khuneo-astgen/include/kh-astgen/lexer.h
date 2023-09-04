@@ -62,13 +62,13 @@ enum kh_lexer_status {
   // NOTE: Max flag bit value is 32
 
   // -- Warnings
-  KH_LEXER_STATUS_UNKNOWN_WARNING     = (0 & KH_LEXER_CONTEXT_STATUS_FLAG_BITS) | KH_LEXER_STATUS_WARNING, // Unspecified warning (Yes the or is pointless, its for verbosity)
-  KH_LEXER_STATUS_CODE_PARSE_OVERFLOW = (1 & KH_LEXER_CONTEXT_STATUS_FLAG_BITS) | KH_LEXER_STATUS_WARNING, // Parsing index went over the size limit.
+  KH_LEXER_STATUS_UNKNOWN_WARNING = (0 & KH_LEXER_CONTEXT_STATUS_FLAG_BITS) | KH_LEXER_STATUS_WARNING, // Unspecified warning (Yes the or is pointless, its for verbosity)
+  KH_LEXER_STATUS_EOI_OVERFLOW    = (1 & KH_LEXER_CONTEXT_STATUS_FLAG_BITS) | KH_LEXER_STATUS_WARNING, // End of index overflow: Parsing index went over the size limit.
 
   // -- Errors
-  KH_LEXER_STATUS_UNKNOWN_ERROR       = (0 & KH_LEXER_CONTEXT_STATUS_FLAG_BITS) | KH_LEXER_STATUS_ERROR, // Unspecified error (Yes the or is pointless, its for verbosity)
-  KH_LEXER_STATUS_UTF8_INVALID        = (1 & KH_LEXER_CONTEXT_STATUS_FLAG_BITS) | KH_LEXER_STATUS_ERROR, // Invalid UTF8 byte was met in the buffer.
-  KH_LEXER_STATUS_SYNTAX_ERROR        = (2 & KH_LEXER_CONTEXT_STATUS_FLAG_BITS) | KH_LEXER_STATUS_ERROR, // Invalid syntax
+  KH_LEXER_STATUS_UNKNOWN_ERROR   = (0 & KH_LEXER_CONTEXT_STATUS_FLAG_BITS) | KH_LEXER_STATUS_ERROR, // Unspecified error (Yes the or is pointless, its for verbosity)
+  KH_LEXER_STATUS_UTF8_INVALID    = (1 & KH_LEXER_CONTEXT_STATUS_FLAG_BITS) | KH_LEXER_STATUS_ERROR, // Invalid UTF8 byte was met in the buffer.
+  KH_LEXER_STATUS_SYNTAX_ERROR    = (2 & KH_LEXER_CONTEXT_STATUS_FLAG_BITS) | KH_LEXER_STATUS_ERROR, // Invalid syntax
 };
 
 /*

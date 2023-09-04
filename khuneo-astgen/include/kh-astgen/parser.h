@@ -32,6 +32,7 @@ enum kh_parser_node_type {
 };
 
 #define KH_PARSER_NODE_IDX_MAX 3
+#define KH_PARSER_NODE_COUNT (KH_PARSER_NODE_IDX_MAX + 1)
 
 #define KH_PARSER_CONTEXT_STATUS_FLAG_BITS 0x1F // Decode mask flag (0001_1111)
 enum kh_parser_status {
@@ -54,6 +55,7 @@ enum kh_parser_status {
 
   // -- Warnings
   KH_PARSER_STATUS_UNKNOWN_WARNING = (0 & KH_PARSER_CONTEXT_STATUS_FLAG_BITS) | KH_PARSER_STATUS_WARNING, // Unspecified warning (Yes the or is pointless, its for verbosity)
+  KH_PARSER_STATUS_EOI_OVERFLOW    = (0 & KH_PARSER_CONTEXT_STATUS_FLAG_BITS) | KH_PARSER_STATUS_WARNING, // End of Index overflow: Parsing index went over the expected size.
 
   // -- Errors
   KH_PARSER_STATUS_UNKNOWN_ERROR   = (0 & KH_PARSER_CONTEXT_STATUS_FLAG_BITS) | KH_PARSER_STATUS_ERROR, // Unspecified error (Yes the or is pointless, its for verbosity)
@@ -98,14 +100,14 @@ struct kh_parser_context {
 typedef const struct kh_utf8sp * const raw_code_t;
 typedef const struct kh_lexer_parse_result * const tokens_t;
 typedef const kh_sz  ntokens_t;
-typedef struct kh_ll_parser_parse_result * out_result_t;
+typedef struct kh_ll_parser_parse_result ** out_result_t;
 
 struct _draft_pmp_args {
-  raw_code_t                 raw_code;
-  tokens_t                   tokens;
-  ntokens_t                  ntokens;
-  out_result_t               out_result;
-  kh_sz *                    out_nconsume;
+  raw_code_t   raw_code;
+  tokens_t     tokens;
+  ntokens_t    ntokens;
+  out_result_t out_result;
+  kh_sz *      out_nconsume;
 };
 
 kh_bool kh_parser_context_init(struct kh_parser_context * context, kh_refobji code, kh_refobji tokens, const kh_sz ntokens);
@@ -115,4 +117,4 @@ kh_bool kh_parser_context_uninit(struct kh_parser_context * context);
 // ----------------------------------------------------------------------------------------------------
 enum kh_parser_status kh_ll_parser_identify_tokens(struct _draft_pmp_args * args);
 
-enum kh_parser_status kh_parser_parse_token_next(struct kh_parser_context * ctx, struct kh_ll_parser_parse_result * out_result);
+enum kh_parser_status kh_parser_parse_token_next(struct kh_parser_context * ctx, struct kh_ll_parser_parse_result ** out_result);
