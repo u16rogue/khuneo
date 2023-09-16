@@ -35,6 +35,8 @@ if (KH_COMP_ASTGEN)
   message("-- khuneo > AST Generator Component enabled.")
   add_subdirectory("khuneo-astgen")
   target_link_libraries(${PROJECT_NAME} PUBLIC kh_astgen)
+else()
+  message("-- khuneo > AST Generator Component disabled.")
 endif()
 
 # --- Extra
@@ -42,6 +44,8 @@ if (KH_COMP_EXTRA)
   message("-- khuneo > Extra Component enabled.")
   add_subdirectory("khuneo-extra/")
   target_link_libraries(${PROJECT_NAME} PUBLIC kh_extra)
+else()
+  message("-- khuneo > Extra Component disabled.")
 endif()
 
 # --- TESTS ---
