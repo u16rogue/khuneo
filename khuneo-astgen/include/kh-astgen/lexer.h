@@ -155,8 +155,8 @@ enum kh_lexer_status kh_ll_lexer_context_apply(struct kh_lexer_context * ctx, st
  *  Initializes a `kh_lexer_context` structure
  *
  *  ## Arguments
- *  - ctx       : Pointer to a `kh_lexer_context` structure
- *  - code      : A reference object that contains the raw UTF8 khuneo code to be parsed
+ *  - ctx  : Pointer to a `kh_lexer_context` structure
+ *  - code : A reference object that contains the raw UTF8 khuneo code to be parsed
  */
 kh_bool kh_lexer_context_init(struct kh_lexer_context * ctx, kh_refobji code);
 
@@ -169,7 +169,7 @@ kh_bool kh_lexer_context_init(struct kh_lexer_context * ctx, kh_refobji code);
  *  memory)
  *
  *  ## Arguments
- *  - ctx       : Pointer to a valid `kh_lexer_context` structure
+ *  - ctx : Pointer to a valid `kh_lexer_context` structure
  */
 kh_bool kh_lexer_context_uninit(struct kh_lexer_context * ctx);
 

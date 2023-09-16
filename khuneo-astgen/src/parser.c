@@ -1,7 +1,5 @@
 #include <kh-astgen/parser.h>
-#include "kh-astgen/lexer.h"
-#include "kh-core/refobj.h"
-#include "kh-core/utilities.h"
+#include <kh-core/utilities.h>
 #include "parsers.h"
 
 typedef enum kh_parser_status(* parse_matches_fn_t)(struct _draft_pmp_args *);
@@ -42,8 +40,15 @@ kh_bool kh_parser_context_uninit(struct kh_parser_context * context) {
 enum kh_parser_status kh_parser_parse_token_next(struct kh_parser_context * ctx, struct kh_ll_parser_parse_result ** out_result) {
   struct kh_lexer_parse_result * tokens = (struct kh_lexer_parse_result *)kh_refobj_get_object(ctx->_tokens);
   do {
-    if (ctx->_index >= ctx->_ntokens)                               return KH_PARSER_STATUS_EOB;
-    if (tokens[ctx->_index].type != KH_LEXER_TOKEN_TYPE_WHITESPACE) break;
+    if (ctx->_index >= ctx->_ntokens) {
+      return KH_PARSER_STATUS_EOB;
+    }
+
+    const enum kh_lexer_token_type type = tokens[ctx->_index].type;
+    if (type != KH_LEXER_TOKEN_TYPE_WHITESPACE && type != KH_LEXER_TOKEN_TYPE_COMMENT) {
+      break;
+    }
+
     ++ctx->_index;
   } while (KH_TRUE);
 
@@ -55,6 +60,7 @@ enum kh_parser_status kh_parser_parse_token_next(struct kh_parser_context * ctx,
     .tokens       = &tokens[ctx->_index],
     .ntokens      = ctx->_ntokens - ctx->_index,
     .out_nconsume = &nconsume,
+    .parent_leaf  = KH_NULLPTR,
   };
 
   const enum kh_parser_status status = kh_ll_parser_identify_tokens(&_args);

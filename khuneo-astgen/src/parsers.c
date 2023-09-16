@@ -3,16 +3,6 @@
 #include <kh-core/utf8.h>
 #include <kh-core/utilities.h>
 
-#define hlp_mk_strp(nm, str)    \
-  const struct kh_utf8sp nm = { \
-    .size   = sizeof(str) - 1,  \
-    .buffer = str,              \
-  }
-
-#define hlp_match_marker(marker, str, expect)                                \
-  hlp_mk_strp(kh_mglue(__cmp, __LINE__), str);                               \
-  if (strcmp_marker(raw_code, marker, &kh_mglue(__cmp, __LINE__)) == expect)
-
 // [18/08/2023] WARNING: This will make the assumption that the marker's offset is within bounds.
 static kh_bool strcmp_marker(raw_code_t raw_code, const struct kh_astgen_marker * const marker, const struct kh_utf8sp * const match) {
   // [18/08/2023]
@@ -28,53 +18,34 @@ static kh_bool strcmp_marker(raw_code_t raw_code, const struct kh_astgen_marker 
   return kh_utf8_strcmp(&partial, match);
 }
 
-static kh_bool is_tok_comment(tokens_t tokens, kh_sz i) {
-  return kh_bool_expr(tokens[i].type == KH_LEXER_TOKEN_TYPE_COMMENT);
+static kh_bool is_tok_type(const tokens_t tokens, const kh_sz i, const enum kh_lexer_token_type type) {
+  return kh_bool_expr(tokens[i].type == type);
 }
 
-static kh_bool is_tok_whitespace(tokens_t tokens, kh_sz i) {
-  return kh_bool_expr(tokens[i].type == KH_LEXER_TOKEN_TYPE_WHITESPACE);
-}
-
-static kh_bool skip_whitespace(tokens_t tokens, ntokens_t ntokens, kh_sz * itoken) {
+static kh_bool skip_tok_type(const tokens_t tokens, const ntokens_t ntokens, kh_sz * const itoken, const enum kh_lexer_token_type type) {
   const kh_sz old = *itoken;
-  while (*itoken < ntokens && is_tok_whitespace(tokens, *itoken) == KH_TRUE) {
+  while (*itoken < ntokens && is_tok_type(tokens, *itoken, type) == KH_TRUE) {
     ++(*itoken);
   }
 
   return kh_bool_expr(old != *itoken);
 }
 
-static kh_bool skip_comments(tokens_t tokens, ntokens_t ntokens, kh_sz * itoken) {
-  const kh_sz old = *itoken;
-  while (*itoken < ntokens && is_tok_comment(tokens, *itoken) == KH_TRUE) {
-    ++(*itoken);
-  }
-
-  return kh_bool_expr(old != *itoken);
+static kh_bool skip_whitespace(const tokens_t tokens, const ntokens_t ntokens, kh_sz * const itoken) {
+  return skip_tok_type(tokens, ntokens, itoken, KH_LEXER_TOKEN_TYPE_WHITESPACE); 
 }
 
-static kh_bool skip_wc_expecting(tokens_t tokens, ntokens_t ntokens, kh_sz * itoken) {
+static kh_bool skip_comments(const tokens_t tokens, const ntokens_t ntokens, kh_sz * const itoken) {
+  return skip_tok_type(tokens, ntokens, itoken, KH_LEXER_TOKEN_TYPE_COMMENT); 
+}
+
+static kh_bool skip_wc_expecting(const tokens_t tokens, const ntokens_t ntokens, kh_sz * const itoken) {
   while (skip_comments(tokens, ntokens, itoken) || skip_whitespace(tokens, ntokens, itoken));
   if (*itoken >= ntokens) {
     return KH_FALSE;
   }
-
   return KH_TRUE;
 }
-
-#define m_glob_tokens_till(expr)                                                  \
-  while (KH_TRUE) {                                                               \
-    if (itoken >= ntokens) return KH_PARSER_STATUS_SYNTAX_ERROR;                  \
-    if (tokens[itoken].type == KH_LEXER_TOKEN_TYPE_SYMBOL) {                      \
-      const kh_utf8 symbol = tokens[itoken].value.symbol;                         \
-      if ((expr)) {                                                               \
-        type->value.uneval_group.size = itoken - type->value.uneval_group.offset; \
-        break;                                                                    \
-      }                                                                           \
-    }                                                                             \
-    ++itoken;                                                                     \
-  }
 
 enum kh_parser_status pmp_declvar(struct _draft_pmp_args * args) {
   if (args->tokens[0].type != KH_LEXER_TOKEN_TYPE_IDENTIFIER) {
@@ -265,6 +236,3 @@ enum kh_parser_status pmp_function(struct _draft_pmp_args * args) {
 //
 //  return KH_PARSER_STATUS_MATCH;
 //}
-
-#undef hlp_match_marker
-#undef hlp_mk_strp

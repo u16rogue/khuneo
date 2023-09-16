@@ -1,6 +1,5 @@
 #pragma once
 
-#include "kh-core/refobj.h"
 #include <kh-core/types.h>
 #include <kh-astgen/common.h>
 #include <kh-astgen/lexer.h>
@@ -55,7 +54,7 @@ enum kh_parser_status {
 
   // -- Warnings
   KH_PARSER_STATUS_UNKNOWN_WARNING = (0 & KH_PARSER_CONTEXT_STATUS_FLAG_BITS) | KH_PARSER_STATUS_WARNING, // Unspecified warning (Yes the or is pointless, its for verbosity)
-  KH_PARSER_STATUS_EOI_OVERFLOW    = (0 & KH_PARSER_CONTEXT_STATUS_FLAG_BITS) | KH_PARSER_STATUS_WARNING, // End of Index overflow: Parsing index went over the expected size.
+  KH_PARSER_STATUS_EOI_OVERFLOW    = (1 & KH_PARSER_CONTEXT_STATUS_FLAG_BITS) | KH_PARSER_STATUS_WARNING, // End of Index overflow: Parsing index went over the expected size.
 
   // -- Errors
   KH_PARSER_STATUS_UNKNOWN_ERROR   = (0 & KH_PARSER_CONTEXT_STATUS_FLAG_BITS) | KH_PARSER_STATUS_ERROR, // Unspecified error (Yes the or is pointless, its for verbosity)
@@ -82,9 +81,9 @@ struct kh_ll_parser_parse_result {
   } attributes;
 
   union {
-    struct kh_ll_parser_domnode_t_declvar  variable;
     struct kh_astgen_marker                unevaluated; // Refers to token group
     struct kh_astgen_marker                identifier;  // Refers to raw code group
+    struct kh_ll_parser_domnode_t_declvar  variable;
     struct kh_ll_parser_domnode_t_function function;
   } value;
 };
@@ -108,6 +107,8 @@ struct _draft_pmp_args {
   ntokens_t    ntokens;
   out_result_t out_result;
   kh_sz *      out_nconsume;
+
+  struct kh_ll_parser_parse_result * parent_leaf;
 };
 
 kh_bool kh_parser_context_init(struct kh_parser_context * context, kh_refobji code, kh_refobji tokens, const kh_sz ntokens);
@@ -116,5 +117,4 @@ kh_bool kh_parser_context_uninit(struct kh_parser_context * context);
 
 // ----------------------------------------------------------------------------------------------------
 enum kh_parser_status kh_ll_parser_identify_tokens(struct _draft_pmp_args * args);
-
 enum kh_parser_status kh_parser_parse_token_next(struct kh_parser_context * ctx, struct kh_ll_parser_parse_result ** out_result);

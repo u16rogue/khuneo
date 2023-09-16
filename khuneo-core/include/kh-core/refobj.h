@@ -19,6 +19,7 @@ struct kh_refobj_rcb_info {
 };
 
 typedef kh_bool(*kh_refobj_rcb_fnt)(struct kh_refobj_rcb_info *); // Function type for Reference Object's Resource callback function
+#define KH_REFOBJ_RCB_NO_CALLBACK KH_NULLPTR
 
 /*
  *  A reference object. Allows an abstract value
