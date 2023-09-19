@@ -54,6 +54,11 @@ typedef struct _kh_refobji { kh_u8 __compatibility_padding_donottouch; } * kh_re
 kh_bool kh_refobj_init(struct kh_refobj * ro, kh_vptr value, kh_refobji * out_firstref, kh_refobj_rcb_fnt resource_callback);
 
 /*
+ *  Uninitializes a `kh_refobj` struct.
+ */
+kh_bool kh_refobj_uninit(struct kh_refobj * ro);
+
+/*
  *  Moves a `kh_refobj` reference from one `kh_refobji` to another then
  *  sets the latter into `KH_REFOBJ_INVALID_IREF`.
  *  > Moving does not acquire and inc/dec the refrence count.
@@ -103,3 +108,8 @@ kh_bool kh_refobj_alive(struct kh_refobj * ro);
  *  Get the internal object value
  */
 kh_vptr kh_refobj_get_object(kh_refobji iro);
+
+/*
+ *  Get the reference count from a ref instance
+ */
+kh_sz kh_refobj_get_ref_count(kh_refobji iro);

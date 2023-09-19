@@ -48,6 +48,17 @@ kh_bool kh_refobj_init(struct kh_refobj * ro, kh_vptr value, kh_refobji * out_fi
   return KH_TRUE;
 }
 
+kh_bool kh_refobj_uninit(struct kh_refobj * ro) {
+  if (ro->_count != 0) {
+    return KH_FALSE;
+  }
+
+  ro->_object            = KH_REFOBJ_INVALID_IREF;
+  ro->_resource_callback = KH_REFOBJ_RCB_NO_CALLBACK;
+
+  return KH_TRUE;
+}
+
 kh_bool kh_refobj_imove(kh_refobji * inout_source, kh_refobji * out_dest) {
   *out_dest = *inout_source;
   *inout_source = KH_REFOBJ_INVALID_IREF;
@@ -120,4 +131,8 @@ kh_bool kh_refobj_alive(struct kh_refobj * ro) {
 
 kh_vptr kh_refobj_get_object(kh_refobji iro) {
   return as_refobject(iro)->_object;
+}
+
+kh_sz kh_refobj_get_ref_count(kh_refobji iro) {
+  return as_refobject(iro)->_count;
 }
