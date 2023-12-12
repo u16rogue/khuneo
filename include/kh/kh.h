@@ -1,7 +1,6 @@
 #pragma once
 
-#include <kh-core/impldec.h>
-#include <kh-core/alloc.h>
+#include <kh-core/mem.h>
 #include <kh-core/defs.h>
 #include <kh-core/str.h>
 #include <kh-astgen/lexer.h>

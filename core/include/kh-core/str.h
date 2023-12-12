@@ -24,6 +24,6 @@ enum kh_U8FromCStringResponse {
 
 enum kh_U8FromCStringResponse
 kh_u8string_from_cstr(
-  KH_ARG_OUT struct kh_U8String * out,
-  KH_ARG_IN  const char * string
+  KH_ANT_ARG_OUT struct kh_U8String * out,
+  KH_ANT_ARG_IN  const char * string
 );

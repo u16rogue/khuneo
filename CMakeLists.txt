@@ -8,12 +8,13 @@ add_subdirectory("astgen/")
 add_library(${PROJECT_NAME} STATIC
   "include/kh/kh.h"
   "src/kh.c"
-  #$<$<BOOL:${KH_USE_STD_ALLOC_DEFAULT}>:src/_impl_mem.c>
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC "include/")
 
-#set_target_properties(${PROJECT_NAME} PROPERTIES)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+  C_STANDARD 17
+)
 
 target_compile_options(${PROJECT_NAME}
   PRIVATE

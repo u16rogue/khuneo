@@ -15,8 +15,8 @@ typedef unsigned long long kh_u64;
 typedef void * kh_vptr;
 #define KH_PNIL 0
 
-#define KH_ARG_IN
-#define KH_ARG_OUT
-#define KH_ARG_INOUT
-
-#define KH_ARG_OPTNIL
+// -- Annotation
+#define KH_ANT_ARG_IN
+#define KH_ANT_ARG_OUT
+#define KH_ANT_ARG_INOUT
+#define KH_ANT_ARG_OPTNIL

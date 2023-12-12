@@ -9,7 +9,9 @@ add_library(${PROJECT_NAME} STATIC
 
 target_include_directories(${PROJECT_NAME} PUBLIC "include/")
 
-#set_target_properties(${PROJECT_NAME} PROPERTIES)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+  C_STANDARD 17
+)
 
 target_compile_options(${PROJECT_NAME}
   PRIVATE
