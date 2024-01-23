@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 
+include("utils.cmake")
+
 option(KH_USERDEF_MEM "Determines if the library should be aware of and use the user defined memory manager. See: `kh-core/impldec.h` for declaring your own." OFF)
 
 project("kh-core")
@@ -22,14 +24,10 @@ target_compile_definitions(${PROJECT_NAME}
   PUBLIC $<$<BOOL:${KH_USERDEF_MEM}>:KH_USERDEF_MEM=1>
 )
 
-target_compile_options(${PROJECT_NAME}
-  PRIVATE
-    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Wpedantic -Werror -Wsign-conversion>
-    $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>
-)
+kh_target_pedantic(${PROJECT_NAME})
 
 if (KH_USERDEF_MEM)
-  message("-- kh > core > Default memory management definitions are off which requires you to implement your own! Check 'KH_USERDEF_MEM'.")
+  message("-- kh > core > Default memory management definitions are off, which requires you to implement your own! Check 'KH_USERDEF_MEM'.")
 else()
-  message("-- kh > core > Default memory management definitions are on this will cause the library to use the standard library! Check 'KH_USERDEF_MEM'.")
+  message("-- kh > core > Default memory management definitions are on, this will cause the library to use the standard library! Check 'KH_USERDEF_MEM'.")
 endif()

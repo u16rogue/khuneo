@@ -1,11 +1,19 @@
 #include <kh-core/str.h>
 
-kh_utf8 * kh_u8string_data(struct kh_U8String * u8string) {
+kh_U8Char * kh_u8string_data(struct kh_U8String * u8string) {
   return u8string->size <= 8 ? u8string->idata : u8string->pdata;
 }
 
-enum kh_U8FromCStringResponse kh_u8string_from_cstr(struct kh_U8String * out, const char * string) {
-  (void)out;
-  (void)string;
-  return KH_U8_FROM_CSTR_OK;
+kh_U8CharPtr kh_u8stringview_data(struct kh_U8StringView * view) {
+  return view->data;
+}
+
+kh_bool kh_u8stringview_from_u8string(struct kh_U8StringView * view, struct kh_U8String * string) {
+  view->data = kh_u8string_data(string);
+  view->size = string->size;
+  return KH_TRUE;
+}
+
+kh_bool kh_u8char_is_alphabetic(kh_U8Char character) {
+  return (character >= 'A' && character <= 'Z') || (character >= 'a' && character <= 'z');
 }

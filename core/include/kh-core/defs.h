@@ -1,5 +1,7 @@
 #pragma once
 
+// -- Types
+
 typedef unsigned char kh_u8;
 typedef char kh_i8;
 
@@ -15,8 +17,19 @@ typedef unsigned long long kh_u64;
 typedef void * kh_vptr;
 #define KH_PNIL 0
 
+// -- Boolean
+typedef enum {
+  KH_FALSE = 0,
+  KH_TRUE  = 1,
+} kh_bool;
+
 // -- Annotation
 #define KH_ANT_ARG_IN
 #define KH_ANT_ARG_OUT
 #define KH_ANT_ARG_INOUT
 #define KH_ANT_ARG_OPTNIL
+#define KH_UNUSED(x) ((void)x)
+
+// -- Helper Macro's
+#define kh_array_length(arr) \
+  (sizeof(arr) / sizeof(arr[0]))
