@@ -4,7 +4,8 @@ include("utils.cmake")
 
 option(KH_USERDEF_MEM "Determines if the library should be aware of and use the user defined memory manager. See: `kh-core/impldec.h` for declaring your own." OFF)
 
-project("kh-core")
+message("-- kh > core > Loading")
+project(kh-core)
 
 add_library(${PROJECT_NAME} STATIC
   "include/kh-core/defs.h"

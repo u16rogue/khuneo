@@ -1,4 +1,4 @@
-message("-- kh > Loaded utils.cmake")
+message("-- kh > core > cmakeutils > Loading")
 
 function (kh_target_pedantic target)
   target_compile_options(${target}

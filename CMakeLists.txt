@@ -3,7 +3,9 @@ cmake_minimum_required(VERSION 3.18)
 project("kh")
 
 add_subdirectory("core/")
-add_subdirectory("astgen/")
+add_subdirectory("gen/")
+
+add_subdirectory("extra/") # Load last
 
 add_library(${PROJECT_NAME} STATIC
   "include/kh/kh.h"
@@ -19,5 +21,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 kh_target_pedantic(${PROJECT_NAME})
 
 target_link_libraries(${PROJECT_NAME}
-  PUBLIC kh-core kh-astgen
+  PUBLIC kh-core
+    $<$<TARGET_EXISTS:kh-gen>:kh-gen> 
+    $<$<TARGET_EXISTS:kh-extra>:kh-extra>
 )
