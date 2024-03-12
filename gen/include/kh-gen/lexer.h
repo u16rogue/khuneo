@@ -31,7 +31,7 @@ enum kh_TokenType {
   KH_TOKEN_TYPE_STRING,
 };
 
-enum kh_TokSymbol {
+enum kh_TokenSymbol {
   KH_TOKEN_SYMBOL_INVALID,
   //
   KH_TOKEN_SYMBOL_EXC,     // !
@@ -77,14 +77,26 @@ enum kh_TokSymbol {
   KH_TOKEN_SYMBOL_BAR_BAR, // ||
 };
 
+enum kh_TokenKeyword {
+  KH_TOKEN_KEYWORD_INVALID,
+  //
+  
+};
+
 struct kh_LexerDescribeResult {
   enum kh_TokenType type;
   union {
     kh_u32 size;
+
     struct {
-      enum kh_TokSymbol type : 28;
-      kh_u8             size :  4;
-    } symbol;
+      enum kh_TokenSymbol type : 28;
+      kh_u8               size :  4;
+    } symbol;               // = 32
+    
+    struct {
+      enum kh_TokenKeyword type : 28;
+      kh_u8                size :  4;
+    } keyword;               // = 32
   };
 };
 
@@ -108,6 +120,13 @@ enum kh_LexerResponse {
  */
 enum kh_LexerResponse
 kh_ll_lexer_describe(
+  KH_ANT_ARG_IN  const kh_U8Char * const chunk,
+  KH_ANT_ARG_IN  const kh_U8StringSize chunk_range,
+  KH_ANT_ARG_OUT struct kh_LexerDescribeResult * described
+);
+
+enum kh_LexerResponse
+kh_ll_lexer_identifier_to_keyword(
   KH_ANT_ARG_IN  const kh_U8Char * const chunk,
   KH_ANT_ARG_IN  const kh_U8StringSize chunk_range,
   KH_ANT_ARG_OUT struct kh_LexerDescribeResult * described

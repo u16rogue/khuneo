@@ -30,7 +30,7 @@ static kh_bool is_char_whitespace(const kh_U8Char ch) {
   return KH_FALSE;
 }
 
-static kh_bool is_char_string(const kh_U8Char ch) {
+static kh_bool is_char_string_delim(const kh_U8Char ch) {
   switch (ch) {
     case '\'':
     case '"':
@@ -42,14 +42,17 @@ static kh_bool is_char_string(const kh_U8Char ch) {
 
 //------------------------------------------------------------------------------
 
-typedef const kh_U8Char * const               DescriberChunk;
-typedef const kh_U8StringSize                 DescriberRange;
+typedef const kh_U8Char * const DescriberChunk;
+typedef const kh_U8StringSize DescriberRange;
 typedef struct kh_LexerDescribeResult * const DescriberResult;
-typedef enum kh_LexerResponse(DescriberFn)(DescriberChunk, DescriberRange, DescriberResult);
+typedef enum kh_LexerResponse(DescriberFn)(DescriberChunk, DescriberRange,
+  DescriberResult);
 
 //------------------------------------------------------------------------------
 
-static enum kh_LexerResponse describe_identifier(DescriberChunk chunk, DescriberRange chunk_range, DescriberResult described) {
+static enum kh_LexerResponse describe_identifier(DescriberChunk chunk,
+                                                 DescriberRange chunk_range,
+                                                 DescriberResult described) {
   if (!is_char_alpha(chunk[0])
   &&  chunk[0] != '$'
   &&  chunk[0] != '_'
@@ -66,7 +69,9 @@ static enum kh_LexerResponse describe_identifier(DescriberChunk chunk, Describer
   return KH_LEXER_RES_MATCH;
 }
 
-static enum kh_LexerResponse describe_number(DescriberChunk chunk, DescriberRange chunk_range, DescriberResult described) {
+static enum kh_LexerResponse describe_number(DescriberChunk chunk,
+                                             DescriberRange chunk_range,
+                                             DescriberResult described) {
   if (!is_char_numeric(chunk[0])) {
     return KH_LEXER_RES_PASS;
   }
@@ -80,9 +85,11 @@ static enum kh_LexerResponse describe_number(DescriberChunk chunk, DescriberRang
   return KH_LEXER_RES_MATCH;
 }
 
-static enum kh_LexerResponse describe_string(DescriberChunk chunk, DescriberRange chunk_range, DescriberResult described) {
+static enum kh_LexerResponse describe_string(DescriberChunk chunk,
+                                             DescriberRange chunk_range,
+                                             DescriberResult described) {
   #define END_MARKER '\0'
-  if (chunk_range < 2 || !is_char_string(chunk[0])) {
+  if (chunk_range < 2 || !is_char_string_delim(chunk[0])) {
     return KH_LEXER_RES_PASS; 
   }
 
@@ -106,7 +113,9 @@ static enum kh_LexerResponse describe_string(DescriberChunk chunk, DescriberRang
   #undef END_MARKER
 }
 
-static enum kh_LexerResponse describe_whitespace(DescriberChunk chunk, DescriberRange chunk_range, DescriberResult described) {
+static enum kh_LexerResponse describe_whitespace(DescriberChunk chunk,
+                                                 DescriberRange chunk_range,
+                                                 DescriberResult described) {
   if (!is_char_whitespace(chunk[0])) {
     return KH_LEXER_RES_PASS;
   }
@@ -120,9 +129,11 @@ static enum kh_LexerResponse describe_whitespace(DescriberChunk chunk, Describer
   return KH_LEXER_RES_MATCH;
 }
 
-static enum kh_LexerResponse describe_symbol(DescriberChunk chunk, DescriberRange chunk_range, DescriberResult described) {
-  enum kh_TokSymbol symbol = KH_TOKEN_SYMBOL_INVALID;
-  kh_u8             size   = 0;
+static enum kh_LexerResponse describe_symbol(DescriberChunk chunk,
+                                             DescriberRange chunk_range,
+                                             DescriberResult described) {
+  enum kh_TokenSymbol symbol = KH_TOKEN_SYMBOL_INVALID;
+  kh_u8               size   = 0;
 
   if (chunk_range > 1) {
     switch ( *(const kh_u16 *)chunk ) {
@@ -176,19 +187,22 @@ static enum kh_LexerResponse describe_symbol(DescriberChunk chunk, DescriberRang
     }
   }
 
-  if (symbol != KH_TOKEN_SYMBOL_INVALID) {
-    described->type = KH_TOKEN_TYPE_SYMBOL;
-    described->symbol.type = symbol;
-    described->symbol.size = size;
+  if (symbol == KH_TOKEN_SYMBOL_INVALID) {
+    return KH_LEXER_RES_PASS;  
   }
 
+  described->type = KH_TOKEN_TYPE_SYMBOL;
+  described->symbol.type = symbol;
+  described->symbol.size = size;
   return KH_LEXER_RES_MATCH;
 }
 
-DescriberFn * const describers[] = {
+static DescriberFn * const describers[] = {
   describe_whitespace,
   describe_identifier,
   describe_number,
+  describe_symbol,
+  describe_string,
 };
 
 enum kh_LexerResponse kh_ll_lexer_describe(const kh_U8Char * const chunk, const kh_U8StringSize chunk_range, struct kh_LexerDescribeResult * const described) {
@@ -206,4 +220,25 @@ enum kh_LexerResponse kh_ll_lexer_describe(const kh_U8Char * const chunk, const 
   }
 
   return KH_LEXER_RES_UNDESCRIBED;
+}
+
+enum kh_LexerResponse kh_ll_lexer_identifier_to_keyword(const kh_U8Char * const chunk, const kh_U8StringSize chunk_range, struct kh_LexerDescribeResult * const described) {
+  described->type = KH_TOKEN_TYPE_INVALID;
+
+  switch (chunk_range) {
+    case 2: {
+      switch ( *(const kh_u16 *)chunk ) {
+
+      }
+      break;
+    }
+    case 3: {
+      switch ( ( (const kh_u32)chunk[2] << 16 ) | *(const kh_u16 *)chunk ) {
+
+      }
+      break;
+    }
+  }
+
+  return KH_LEXER_RES_PASS;
 }

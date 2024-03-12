@@ -1,21 +1,21 @@
 cmake_minimum_required(VERSION 3.18)
 
 message("-- kh > gen > Loading")
-project(kh-gen)
+set(_NAME kh-gen)
 
-add_library(${PROJECT_NAME} STATIC
+add_library(${_NAME} STATIC
   "include/kh-gen/lexer.h"
   "src/lexer.c"
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC "include/")
+target_include_directories(${_NAME} PUBLIC "include/")
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
+set_target_properties(${_NAME} PROPERTIES
   C_STANDARD 17
 )
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${_NAME}
   PUBLIC kh-core
 )
 
-kh_target_pedantic(${PROJECT_NAME})
+kh_target_pedantic(${_NAME})
