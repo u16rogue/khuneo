@@ -12,6 +12,7 @@ const kh_U8Char * kh_stringify_token_type(enum kh_TokenType type) {
     case_str(KH_TOKEN_TYPE_WHITESPACE);
     case_str(KH_TOKEN_TYPE_STRING);
     case_str(KH_TOKEN_TYPE_SYMBOL);
+    case_str(KH_TOKEN_TYPE_KEYWORD);
   }
   return (const kh_U8Char *)r;
 }
@@ -26,6 +27,7 @@ const kh_U8Char * kh_stringify_lexer_response(enum kh_LexerResponse response) {
     case_str(KH_LEXER_RES_UNDESCRIBED);
     case_str(KH_LEXER_RES_UNCLOSED);
     case_str(KH_LEXER_RES_EXTENDED);
+    case_str(KH_LEXER_RES_INVALID_CTX);
   }
   return (const kh_U8Char *)r;
 }

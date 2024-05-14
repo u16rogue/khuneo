@@ -25,9 +25,10 @@ kh_lexer_init(
 enum kh_TokenType {
   KH_TOKEN_TYPE_INVALID,
 
-  // Any wordset that starts with a alphabet, an underscore, or a dollar sign
+  // Any wordset that starts with an alphabet, underscore, or a dollar sign
   // followed consecutively by the same parameters with the addition of numbers.
   KH_TOKEN_TYPE_IDENTIFIER,
+  KH_TOKEN_TYPE_KEYWORD,
 
   KH_TOKEN_TYPE_NUMBER,
   KH_TOKEN_TYPE_WHITESPACE,
@@ -68,31 +69,42 @@ enum kh_TokenKeyword {
   #undef __KH_TOKKW2_DEF
 };
 
-struct kh_LexerDescribeResult {
+/*
+ *  Description of a single token
+ */
+struct kh_LexerDescription {
   enum kh_TokenType type;
   union {
     kh_u32 size;
 
     struct {
-      enum kh_TokenSymbol type : 28;
+      enum kh_TokenSymbol symb : 28;
       kh_u8               size :  4;
     } symbol;               // = 32
     
     struct {
-      enum kh_TokenKeyword type : 28;
+      enum kh_TokenKeyword what : 28;
       kh_u8                size :  4;
     } keyword;               // = 32
+    
+    struct {
+      kh_u32               value : 28;
+      kh_u8                size  :  4;
+    } generic;
+
   };
 };
 
 enum kh_LexerResponse {
   KH_LEXER_RES_OK          = 0x00,
-  KH_LEXER_RES_MATCH       = 0x01,
+  //
+  KH_LEXER_RES_MATCH       = 0x01, // [15.05.2024 @u16rogue TODO] remove and just use OK
   KH_LEXER_RES_PASS        = 0x02,
   //
   KH_LEXER_RES_FAIL        = 0x80,
   KH_LEXER_RES_UNDESCRIBED = 0x80 | 0x01,
   KH_LEXER_RES_UNCLOSED    = 0x80 | 0x02,
+  KH_LEXER_RES_INVALID_CTX = 0x80 | 0x03,
 
   /*
    *  [14.03.2024 @u16rogue] NOTE: Preserves the KH_LEXER_RES_FAIL bit.
@@ -109,45 +121,62 @@ enum kh_LexerResponse {
 /*
  *  Describe what the token is in a given chunk buffer. Operates purely on the
  *  premise of identification NOT parsing.
+ *
+ *  NOTE: WILL NOT MATCH `KEYWORD` SEE `kh_ll_lexer_identifier_to_keyword`
  */
 enum kh_LexerResponse
 kh_ll_lexer_describe(
   // Start chunk
-  KH_ANT_ARG_IN  const kh_U8Char * const         chunk,
+  KH_ANT_ARG_IN  const kh_U8Char * const      chunk,
   // Chunk range for the lexer
-  KH_ANT_ARG_IN  const kh_U8StringSize           chunk_range,
+  KH_ANT_ARG_IN  const kh_U8StringSize        chunk_range,
   // Result of the lexer
-  KH_ANT_ARG_OUT struct kh_LexerDescribeResult * described
+  KH_ANT_ARG_OUT struct kh_LexerDescription * described
 );
 
 /*
- *  Identifies if a given identifier result is a built in keyword. Used in
+ *  Identifies if a given identifier description is a built in keyword. Used in
  *  conjunction with `kh_ll_lexer_describe` after receiving a
- *  `KH_TOKEN_TYPE_IDENTIFIER`. This fills the `keyword.type` field.
+ *  `KH_TOKEN_TYPE_IDENTIFIER`. This fills the `keyword.type` field and updates
+ *  IDENTIFIER to KEYWORD on match.
  */
 enum kh_LexerResponse
 kh_ll_lexer_identifier_to_keyword(
   // Start chunk
-  KH_ANT_ARG_IN  const kh_U8Char * const         chunk,
+  KH_ANT_ARG_IN  const kh_U8Char * const      chunk,
   // Chunk range for the lexer
-  KH_ANT_ARG_IN  const kh_U8StringSize           chunk_range,
+  KH_ANT_ARG_IN  const kh_U8StringSize        chunk_range,
   // Result of the lexer
-  KH_ANT_ARG_OUT struct kh_LexerDescribeResult * described
+  KH_ANT_ARG_OUT struct kh_LexerDescription * described
 );
 
 //------------------------------------------------------------------------------
 
+struct kh_LexerGobbleContext {
+  kh_u32                         cursor;
+  const struct kh_U8StringView * code;
+  struct kh_LexerDescription     description;
+};
+
+struct kh_LexerDescription * kh_lexer_gobble_get_described(
+  struct kh_LexerGobbleContext * ctx
+);
+
+enum kh_LexerResponse kh_lexer_gobble_analyze(
+  struct kh_LexerGobbleContext * ctx
+);
+
 enum kh_LexerResponse kh_lexer_gobble_step(
-  struct kh_LexerContext * ctx
+  struct kh_LexerGobbleContext * ctx
 );
 
 enum kh_LexerResponse kh_lexer_gobble_stop(
-  struct kh_LexerContext * ctx
+  struct kh_LexerGobbleContext * ctx
 );
 
 enum kh_LexerResponse kh_lexer_gobble_start(
-  struct kh_LexerContext * ctx,
-  struct kh_U8StringView code
+  struct kh_LexerGobbleContext * ctx,
+  const struct kh_U8StringView * code
 );
 
 //------------------------------------------------------------------------------

@@ -48,7 +48,7 @@ kh_u8stringview_data(
 
 kh_bool
 kh_u8stringview_from_u8string(
-  KH_ANT_ARG_OUT struct kh_U8StringView * view,
+  KH_ANT_ARG_OUT struct kh_U8StringView   * view,
   KH_ANT_ARG_IN  struct kh_U8String * string
 );
 
