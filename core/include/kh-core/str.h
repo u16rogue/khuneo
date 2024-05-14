@@ -40,7 +40,6 @@ struct kh_U8StringView {
   kh_U8StringSize            size;
   enum kh_U8StringAttributes attrib;
 };
-//_Static_assert(sizeof(struct kh_U8StringView) <= 16, "kh_U8StringView size is larger than expected.");
 
 kh_U8CharPtr
 kh_u8stringview_data(
@@ -59,9 +58,3 @@ kh_u8stringview_from_cstring(cstr) {     \
   .size   = sizeof(cstr) - 1,            \
   .attrib = KH_U8STRING_ATTRIB_READONLY, \
 }
-
-//-[ String Utilities ]---------------------------------------------------------
-
-kh_bool kh_u8char_is_alphabetic(kh_U8Char character);
-
-//------------------------------------------------------------------------------

@@ -13,7 +13,3 @@ kh_bool kh_u8stringview_from_u8string(struct kh_U8StringView * view, struct kh_U
   view->size = string->size;
   return KH_TRUE;
 }
-
-kh_bool kh_u8char_is_alphabetic(kh_U8Char character) {
-  return (character >= 'A' && character <= 'Z') || (character >= 'a' && character <= 'z');
-}

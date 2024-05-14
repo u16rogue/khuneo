@@ -1,4 +1,4 @@
-#include <kh-extra-gen/stringify.h>
+#include <kh-gen-extra/stringify.h>
 
 #define case_str(x) \
   case x: r = #x; break

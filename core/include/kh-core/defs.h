@@ -24,11 +24,19 @@ typedef enum {
 } kh_bool;
 
 // -- Annotation
-#define KH_ANT_ARG_IN
-#define KH_ANT_ARG_OUT
-#define KH_ANT_ARG_INOUT
-#define KH_ANT_ARG_OPTNIL
+#define KH_ANT_ARG_IN     // Function argument receives a value
+#define KH_ANT_ARG_OUT    // Function argument outputs a value
+#define KH_ANT_ARG_INOUT  // Function argument can receive and output a value
+#define KH_ANT_ARG_OPTNIL // Function argument is optional, can either be
+                          // KH_PNIL or the function's designated default value
+
 #define KH_UNUSED(x) ((void)x)
+
+#ifndef KH_DEBUG_UNUSED
+  // [26.04.2024 @u16rogue] Use this macro if the unused variable is temporary
+  // (mainly indev state). Prevents unused from being pushed to release
+  #define KH_DEBUG_UNUSED(x) ((void)x)
+#endif
 
 // -- Helper Macro's
 #define kh_array_length(arr) \
