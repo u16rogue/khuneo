@@ -194,7 +194,7 @@ enum kh_LexerResponse kh_ll_lexer_describe(const kh_U8Char * const chunk, const 
   return KH_LEXER_RES_UNDESCRIBED;
 }
 
-enum kh_LexerResponse kh_ll_lexer_identifier_to_keyword(const kh_U8Char * const chunk, const kh_U8StringSize chunk_range, struct kh_LexerDescription * const described) {
+enum kh_LexerResponse kh_ll_lexer_identifier_to_keyword(const kh_U8Char * const chunk, const kh_U8StringSize identifier_size, struct kh_LexerDescription * const described) {
   // [15.05.2024 @u16rogue NOTE] Should we even check? Only time we'll run this is if we're determined
   // that it IS an identifier, no loss is done on accidental call (afaik). Otherwise we'll be doing
   // double checks
@@ -208,7 +208,7 @@ enum kh_LexerResponse kh_ll_lexer_identifier_to_keyword(const kh_U8Char * const 
   kh_u8 size = 0;
 
   #define __KH_TOKKW_DEF(b, e) case b: keyword = e; break;
-  switch (chunk_range) {
+  switch (identifier_size) {
     case 2: {
       size = 2;
       switch ( *(const kh_u16 *)chunk ) {
@@ -236,47 +236,68 @@ enum kh_LexerResponse kh_ll_lexer_identifier_to_keyword(const kh_U8Char * const 
   return KH_LEXER_RES_PASS;
 }
 
-struct kh_LexerDescription * kh_lexer_gobble_get_described(struct kh_LexerGobbleContext * ctx) {
-  return &ctx->description;
-}
-
-enum kh_LexerResponse kh_lexer_gobble_analyze(struct kh_LexerGobbleContext * ctx) {
-  enum kh_LexerResponse res = kh_ll_lexer_describe(ctx->code->data, ctx->code->size, &ctx->description);
-  if (res != KH_LEXER_RES_MATCH) {
-    return res;
-  }
-
-  if (ctx->description.type == KH_TOKEN_TYPE_IDENTIFIER) {
-    // [15.05.2024 @u16rogue] Ignoring return as this function does not error out and will only
-    // respond if its either a keyword (match) or its not (pass).
-    kh_ll_lexer_identifier_to_keyword(ctx->code->data, ctx->code->size, &ctx->description);
-  }
-
-  return KH_LEXER_RES_FAIL;
-}
-
-enum kh_LexerResponse kh_lexer_gobble_step(struct kh_LexerGobbleContext * ctx) {
-  const struct kh_LexerDescription * const description = kh_lexer_gobble_get_described(ctx);
+kh_u32 kh_lexer_describe_size_get(const struct kh_LexerDescription * const description) {
   switch (description->type) {
     case KH_TOKEN_TYPE_INVALID: {
-      return KH_LEXER_RES_INVALID_CTX;
+      return 0;
     }
     case KH_TOKEN_TYPE_IDENTIFIER:
     case KH_TOKEN_TYPE_NUMBER:
     case KH_TOKEN_TYPE_WHITESPACE:
     case KH_TOKEN_TYPE_STRING:
     {
-      ctx->cursor += description->size;
+      return description->size;
       break;
     }
     case KH_TOKEN_TYPE_KEYWORD:
     case KH_TOKEN_TYPE_SYMBOL:
     {
-      ctx->cursor += description->generic.size;
+      return description->generic.size;
       break;
     }
   }
 
+  return 0;
+}
+
+static struct kh_LexerDescription * gobble_described_get(struct kh_LexerGobbleContext * ctx) {
+  return &ctx->description;
+}
+
+enum kh_LexerResponse kh_lexer_gobble_analyze(struct kh_LexerGobbleContext * ctx) {
+  // [17.05.2024 @u16rogue NOTE] `kh_ll_lexer_describe` already sets it to invalid.
+  // gobble_described_get(ctx)->type = KH_TOKEN_TYPE_INVALID;
+
+  const kh_U8CharPtr pcursor = ctx->code->data + ctx->cursor;
+  const kh_u32       size    = ctx->code->size - ctx->cursor;
+
+  enum kh_LexerResponse res = kh_ll_lexer_describe(pcursor, size, &ctx->description);
+  if (res != KH_LEXER_RES_OK) {
+    return res;
+  }
+
+  if (ctx->description.type == KH_TOKEN_TYPE_IDENTIFIER) {
+    // [15.05.2024 @u16rogue] Ignoring return as this function does not error out and will only
+    // respond if its either a keyword (match) or its not (pass).
+    kh_ll_lexer_identifier_to_keyword(pcursor, kh_lexer_describe_size_get(gobble_described_get(ctx)), &ctx->description);
+  }
+
+  return KH_LEXER_RES_OK;
+}
+
+enum kh_LexerResponse kh_lexer_gobble_step(struct kh_LexerGobbleContext * ctx) {
+  const kh_u32 offset = kh_lexer_describe_size_get(gobble_described_get(ctx));
+  if (offset == 0) {
+    return KH_LEXER_RES_INVALID_OFF;
+  }
+
+  if (ctx->cursor + offset > ctx->code->size) {
+    // [17.05.2024 @u16rogue NOTE] automatic clamping to make sure it's always at buffer end.
+    ctx->cursor = ctx->code->size;
+    return KH_LEXER_RES_END;
+  }
+
+  ctx->cursor += offset;
   return KH_LEXER_RES_OK;
 }
 

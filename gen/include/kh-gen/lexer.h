@@ -93,16 +93,26 @@ struct kh_LexerDescription {
   };
 };
 
+kh_u32 kh_lexer_describe_size_get(
+  const struct kh_LexerDescription * const description
+);
+
+//------------------------------------------------------------------------------
+
 enum kh_LexerResponse {
   KH_LEXER_RES_OK          = 0x00,
   //
-  KH_LEXER_RES_MATCH       = 0x01, // [15.05.2024 @u16rogue TODO] remove and just use OK
-  KH_LEXER_RES_PASS        = 0x02,
+  // [15.05.2024 @u16rogue TODO] remove and just use OK
+  // [17.05.2024 @u16rogue NOTE] Just have it the same value.
+  KH_LEXER_RES_MATCH       = 0x00, 
+  KH_LEXER_RES_PASS        = 0x01,
   //
   KH_LEXER_RES_FAIL        = 0x80,
-  KH_LEXER_RES_UNDESCRIBED = 0x80 | 0x01,
-  KH_LEXER_RES_UNCLOSED    = 0x80 | 0x02,
-  KH_LEXER_RES_INVALID_CTX = 0x80 | 0x03,
+  KH_LEXER_RES_END         = 0x80 | 0x01,
+  KH_LEXER_RES_UNDESCRIBED = 0x80 | 0x02,
+  KH_LEXER_RES_UNCLOSED    = 0x80 | 0x03,
+  KH_LEXER_RES_INVALID_CTX = 0x80 | 0x04,
+  KH_LEXER_RES_INVALID_OFF = 0x80 | 0x05,
 
   /*
    *  [14.03.2024 @u16rogue] NOTE: Preserves the KH_LEXER_RES_FAIL bit.
@@ -142,8 +152,8 @@ enum kh_LexerResponse
 kh_ll_lexer_identifier_to_keyword(
   // Start chunk
   KH_ANT_ARG_IN  const kh_U8Char * const      chunk,
-  // Chunk range for the lexer
-  KH_ANT_ARG_IN  const kh_U8StringSize        chunk_range,
+  // Size of the identifier chunk
+  KH_ANT_ARG_IN  const kh_U8StringSize        identifier_size,
   // Result of the lexer
   KH_ANT_ARG_OUT struct kh_LexerDescription * described
 );
@@ -155,10 +165,6 @@ struct kh_LexerGobbleContext {
   const struct kh_U8StringView * code;
   struct kh_LexerDescription     description;
 };
-
-struct kh_LexerDescription * kh_lexer_gobble_get_described(
-  struct kh_LexerGobbleContext * ctx
-);
 
 enum kh_LexerResponse kh_lexer_gobble_analyze(
   struct kh_LexerGobbleContext * ctx

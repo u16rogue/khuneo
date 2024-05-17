@@ -21,13 +21,14 @@ const kh_U8Char * kh_stringify_lexer_response(enum kh_LexerResponse response) {
   const char * r = "<invalid>";
   switch (response) {
     case_str(KH_LEXER_RES_OK);
-    case_str(KH_LEXER_RES_MATCH);
     case_str(KH_LEXER_RES_PASS);
     case_str(KH_LEXER_RES_FAIL);
+    case_str(KH_LEXER_RES_END);
     case_str(KH_LEXER_RES_UNDESCRIBED);
     case_str(KH_LEXER_RES_UNCLOSED);
     case_str(KH_LEXER_RES_EXTENDED);
     case_str(KH_LEXER_RES_INVALID_CTX);
+    case_str(KH_LEXER_RES_INVALID_OFF);
   }
   return (const kh_U8Char *)r;
 }
