@@ -134,27 +134,21 @@ static enum kh_LexerResponse describe_symbol(DescriberChunk chunk,
   enum kh_TokenSymbol symbol = KH_TOKEN_SYMBOL_INVALID;
   kh_u8 size   = 0;
 
+  #define __KH_TOKSYM_DEF(b, e) case b: symbol = e; break;
   if (chunk_range > 1) {
-    #define __KH_TOKSYM2_DEF(b, e) case b: symbol = e; break;
-    #define __KH_TOKSYM1_DEF(...)
     switch ( *(const kh_u16 *)chunk ) {
-      #include <kh-gen/lst/symbols.lst>
+      #include <kh-gen/lst/symbols2.lst>
     }
-    #undef __KH_TOKSYM1_DEF
-    #undef __KH_TOKSYM2_DEF
   }
 
   if (symbol != KH_TOKEN_SYMBOL_INVALID) {
     size = 2;
   } else {
-    #define __KH_TOKSYM1_DEF(b, e) case b: symbol = e; break;
-    #define __KH_TOKSYM2_DEF(...) 
     switch (*chunk) {
-      #include <kh-gen/lst/symbols.lst>
+      #include <kh-gen/lst/symbols1.lst>
     }
-    #undef __KH_TOKSYM2_DEF
-    #undef __KH_TOKSYM1_DEF
   }
+  #undef __KH_TOKSYM_DEF
 
   if (symbol == KH_TOKEN_SYMBOL_INVALID) {
     return KH_LEXER_RES_PASS;  
@@ -213,30 +207,24 @@ enum kh_LexerResponse kh_ll_lexer_identifier_to_keyword(const kh_U8Char * const 
   enum kh_TokenKeyword keyword = KH_TOKEN_KEYWORD_INVALID;
   kh_u8 size = 0;
 
+  #define __KH_TOKKW_DEF(b, e) case b: keyword = e; break;
   switch (chunk_range) {
     case 2: {
       size = 2;
       switch ( *(const kh_u16 *)chunk ) {
-        #define __KH_TOKKW2_DEF(b, e) case b: keyword = e; break;
-        #define __KH_TOKKW3_DEF(...)
-        #include <kh-gen/lst/keywords.lst>
-        #undef __KH_TOKKW3_DEF
-        #undef __KH_TOKKW2_DEF
+        #include <kh-gen/lst/keywords2.lst>
       }
       break;
     }
     case 3: {
       size = 3;
       switch ( ((const kh_u32)chunk[2] << 16) | *(const kh_u16 *)chunk ) {
-        #define __KH_TOKKW3_DEF(b, e) case b: keyword = e; break;
-        #define __KH_TOKKW2_DEF(...)
-        #include <kh-gen/lst/keywords.lst>
-        #undef __KH_TOKKW2_DEF
-        #undef __KH_TOKKW3_DEF
+        #include <kh-gen/lst/keywords3.lst>
       }
       break;
     }
   }
+  #undef __KH_TOKKW_DEF
 
   if (keyword != KH_TOKEN_KEYWORD_INVALID) {
     described->type         = KH_TOKEN_TYPE_KEYWORD;

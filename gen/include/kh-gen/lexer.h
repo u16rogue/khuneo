@@ -49,11 +49,10 @@ enum kh_TokenNumber {
 enum kh_TokenSymbol {
   KH_TOKEN_SYMBOL_INVALID,
 
-  #define __KH_TOKSYM1_DEF(b, e) e,
-  #define __KH_TOKSYM2_DEF(b, e) __KH_TOKSYM1_DEF(b, e)
-  #include "lst/symbols.lst"
-  #undef __KH_TOKSYM2_DEF
-  #undef __KH_TOKSYM1_DEF
+  #define __KH_TOKSYM_DEF(b, e) e,
+  #include "lst/symbols1.lst"
+  #include "lst/symbols2.lst"
+  #undef __KH_TOKSYM_DEF
 };
 
 /*
@@ -62,11 +61,10 @@ enum kh_TokenSymbol {
 enum kh_TokenKeyword {
   KH_TOKEN_KEYWORD_INVALID,
 
-  #define __KH_TOKKW2_DEF(b, e) e,
-  #define __KH_TOKKW3_DEF(b, e) __KH_TOKKW2_DEF(b, e)
-  #include "lst/keywords.lst"
-  #undef __KH_TOKKW3_DEF
-  #undef __KH_TOKKW2_DEF
+  #define __KH_TOKKW_DEF(b, e) e,
+  #include "lst/keywords2.lst"
+  #include "lst/keywords3.lst"
+  #undef __KH_TOKKW_DEF
 };
 
 /*
