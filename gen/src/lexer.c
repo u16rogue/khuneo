@@ -177,7 +177,9 @@ static DescriberFn * const describers[] = {
   describe_whitespace, // [15.05.2024 @u16rogue NOTE] Placed this last incase someone wants to implement their own whitespace lexer thing
 };
 
-enum kh_LexerResponse kh_ll_lexer_describe(const kh_U8Char * const chunk, const kh_U8StringSize chunk_range, struct kh_LexerDescription * const described) {
+enum kh_LexerResponse kh_ll_lexer_describe(const kh_U8Char * const chunk,
+                                           const kh_U8StringSize chunk_range,
+                                           struct kh_LexerDescription * const described) {
   described->type = KH_TOKEN_TYPE_INVALID;
 
   for (kh_u8 i = 0; i < kh_array_length(describers); ++i) {
@@ -194,7 +196,10 @@ enum kh_LexerResponse kh_ll_lexer_describe(const kh_U8Char * const chunk, const 
   return KH_LEXER_RES_UNDESCRIBED;
 }
 
-enum kh_LexerResponse kh_ll_lexer_identifier_to_keyword(const kh_U8Char * const chunk, const kh_U8StringSize identifier_size, struct kh_LexerDescription * const described) {
+enum kh_LexerResponse kh_ll_lexer_identifier_to_keyword(const kh_U8Char * const chunk,
+                                                        const kh_U8StringSize identifier_size,
+                                                        struct kh_LexerDescription * const described) {
+
   // [15.05.2024 @u16rogue NOTE] Should we even check? Only time we'll run this is if we're determined
   // that it IS an identifier, no loss is done on accidental call (afaik). Otherwise we'll be doing
   // double checks
@@ -205,19 +210,16 @@ enum kh_LexerResponse kh_ll_lexer_identifier_to_keyword(const kh_U8Char * const 
   */
 
   enum kh_TokenKeyword keyword = KH_TOKEN_KEYWORD_INVALID;
-  kh_u8 size = 0;
 
   #define __KH_TOKKW_DEF(b, e) case b: keyword = e; break;
   switch (identifier_size) {
     case 2: {
-      size = 2;
       switch ( *(const kh_u16 *)chunk ) {
         #include <kh-gen/lst/keywords2.lst>
       }
       break;
     }
     case 3: {
-      size = 3;
       switch ( ((const kh_u32)chunk[2] << 16) | *(const kh_u16 *)chunk ) {
         #include <kh-gen/lst/keywords3.lst>
       }
@@ -229,7 +231,7 @@ enum kh_LexerResponse kh_ll_lexer_identifier_to_keyword(const kh_U8Char * const 
   if (keyword != KH_TOKEN_KEYWORD_INVALID) {
     described->type         = KH_TOKEN_TYPE_KEYWORD;
     described->keyword.what = keyword;
-    described->keyword.size = size;
+    described->keyword.size = identifier_size;
     return KH_LEXER_RES_MATCH;
   }
 
