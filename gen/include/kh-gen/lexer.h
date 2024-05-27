@@ -126,6 +126,27 @@ enum kh_LexerResponse {
 
 //------------------------------------------------------------------------------
 
+// [28.05.2024 @u16rogue NOTE] This exists so we can cache the values we need
+// when doing a straight up parse as we dispatch it to the lexer and other comp
+// this way we dont have to keep calling kh_u8string*_* functions since we cache
+// it before lexing. This is within the assumption that at the point the source
+// code we're working on is in an immutable state.
+
+struct kh_SourceCodeBuffer {
+  const kh_U8Char * _buffer;
+  kh_U8StringSize _size;
+};
+
+/*
+enum kh_LexerResponse
+kh_lexer_u8strview_to_scb(
+  KH_ANT_ARG_OUT struct kh_SourceCodeBuffer * scb,
+  KH_ANT_ARG_IN  struct kh_U8StringView     * view
+);
+*/
+
+//------------------------------------------------------------------------------
+
 /*
  *  Describe what the token is in a given chunk buffer. Operates purely on the
  *  premise of identification NOT parsing.
@@ -161,26 +182,30 @@ kh_ll_lexer_identifier_to_keyword(
 //------------------------------------------------------------------------------
 
 struct kh_LexerGobbleContext {
-  kh_u32                         cursor;
-  const struct kh_U8StringView * code;
-  struct kh_LexerDescription     description;
+  kh_u32 _cursor;
+  const struct kh_SourceCodeBuffer * _code;
+  struct kh_LexerDescription description;
 };
 
-enum kh_LexerResponse kh_lexer_gobble_analyze(
+enum kh_LexerResponse
+kh_lexer_gobble_analyze(
   struct kh_LexerGobbleContext * ctx
 );
 
-enum kh_LexerResponse kh_lexer_gobble_step(
+enum kh_LexerResponse
+kh_lexer_gobble_step(
   struct kh_LexerGobbleContext * ctx
 );
 
-enum kh_LexerResponse kh_lexer_gobble_stop(
+enum kh_LexerResponse
+kh_lexer_gobble_stop(
   struct kh_LexerGobbleContext * ctx
 );
 
-enum kh_LexerResponse kh_lexer_gobble_start(
+enum kh_LexerResponse
+kh_lexer_gobble_start(
   struct kh_LexerGobbleContext * ctx,
-  const struct kh_U8StringView * code
+  const struct kh_SourceCodeBuffer * code
 );
 
 //------------------------------------------------------------------------------

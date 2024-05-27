@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.18)
 include("utils.cmake")
 
 option(KH_USERDEF_MEM "Determines if the library should be aware of and use the user defined memory manager. See: `kh-core/impldec.h` for declaring your own." OFF)
+option(KH_DEBUG_ALLOW_UNUSED "Enable KH_DEBUG_UNUSED definition" OFF)
 
 message("-- kh > core > Loading")
 set(_NAME kh-core)
@@ -24,7 +25,9 @@ set_target_properties(${_NAME} PROPERTIES
 )
 
 target_compile_definitions(${_NAME}
-  PUBLIC $<$<BOOL:${KH_USERDEF_MEM}>:KH_USERDEF_MEM=1>
+  PUBLIC
+    $<$<BOOL:${KH_USERDEF_MEM}>:KH_USERDEF_MEM=1>
+    $<$<BOOL:${KH_DEBUG_ALLOW_UNUSED}>:KH_DEBUG_ALLOW_UNUSED=1>
 )
 
 kh_target_pedantic(${_NAME})

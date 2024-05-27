@@ -270,8 +270,8 @@ enum kh_LexerResponse kh_lexer_gobble_analyze(struct kh_LexerGobbleContext * ctx
   // [17.05.2024 @u16rogue NOTE] `kh_ll_lexer_describe` already sets it to invalid.
   // gobble_described_get(ctx)->type = KH_TOKEN_TYPE_INVALID;
 
-  const kh_U8CharPtr pcursor = ctx->code->data + ctx->cursor;
-  const kh_u32       size    = ctx->code->size - ctx->cursor;
+  const kh_U8Char * pcursor = ctx->_code->_buffer + ctx->_cursor;
+  const kh_u32      size    = ctx->_code->_size - ctx->_cursor;
 
   enum kh_LexerResponse res = kh_ll_lexer_describe(pcursor, size, &ctx->description);
   if (res != KH_LEXER_RES_OK) {
@@ -293,13 +293,13 @@ enum kh_LexerResponse kh_lexer_gobble_step(struct kh_LexerGobbleContext * ctx) {
     return KH_LEXER_RES_INVALID_OFF;
   }
 
-  if (ctx->cursor + offset > ctx->code->size) {
+  if (ctx->_cursor + offset > ctx->_code->_size) {
     // [17.05.2024 @u16rogue NOTE] automatic clamping to make sure it's always at buffer end.
-    ctx->cursor = ctx->code->size;
+    ctx->_cursor = ctx->_code->_size;
     return KH_LEXER_RES_END;
   }
 
-  ctx->cursor += offset;
+  ctx->_cursor += offset;
   return KH_LEXER_RES_OK;
 }
 
@@ -308,9 +308,9 @@ enum kh_LexerResponse kh_lexer_gobble_stop(struct kh_LexerGobbleContext * ctx) {
   return KH_LEXER_RES_OK;
 }
 
-enum kh_LexerResponse kh_lexer_gobble_start(struct kh_LexerGobbleContext * ctx, const struct kh_U8StringView * code) {
-  ctx->cursor           = 0;
-  ctx->code             = code;
+enum kh_LexerResponse kh_lexer_gobble_start(struct kh_LexerGobbleContext * ctx, const struct kh_SourceCodeBuffer * code) {
+  ctx->_cursor          = 0;
+  ctx->_code            = code;
   ctx->description.type = KH_TOKEN_TYPE_INVALID;
   ctx->description.size = 0;
   return KH_LEXER_RES_OK;
