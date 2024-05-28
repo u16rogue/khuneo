@@ -106,13 +106,14 @@ enum kh_LexerResponse {
   // [17.05.2024 @u16rogue NOTE] Just have it the same value.
   KH_LEXER_RES_MATCH       = 0x00, 
   KH_LEXER_RES_PASS        = 0x01,
+  KH_LEXER_RES_END         = 0x02,
+
   //
   KH_LEXER_RES_FAIL        = 0x80,
-  KH_LEXER_RES_END         = 0x80 | 0x01,
-  KH_LEXER_RES_UNDESCRIBED = 0x80 | 0x02,
-  KH_LEXER_RES_UNCLOSED    = 0x80 | 0x03,
-  KH_LEXER_RES_INVALID_CTX = 0x80 | 0x04,
-  KH_LEXER_RES_INVALID_OFF = 0x80 | 0x05,
+  KH_LEXER_RES_UNDESCRIBED = 0x80 | 0x01,
+  KH_LEXER_RES_UNCLOSED    = 0x80 | 0x02,
+  KH_LEXER_RES_INVALID_CTX = 0x80 | 0x03,
+  KH_LEXER_RES_INVALID_OFF = 0x80 | 0x04,
 
   /*
    *  [14.03.2024 @u16rogue] NOTE: Preserves the KH_LEXER_RES_FAIL bit.
@@ -129,7 +130,7 @@ enum kh_LexerResponse {
 // [28.05.2024 @u16rogue NOTE] This exists so we can cache the values we need
 // when doing a straight up parse as we dispatch it to the lexer and other comp
 // this way we dont have to keep calling kh_u8string*_* functions since we cache
-// it before lexing. This is within the assumption that at the point the source
+// it before lexing. This is within the assumption that at that point the source
 // code we're working on is in an immutable state.
 
 struct kh_SourceCodeBuffer {

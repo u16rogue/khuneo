@@ -1,6 +1,6 @@
 #include <kh/kh.h>
 
 enum kh_EvalResponse kh_eval(const char * code) {
-  (void)code;
+  KH_DEBUG_UNUSED(code);
   return KH_EVAL_OK;
 }

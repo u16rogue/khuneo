@@ -43,3 +43,9 @@ kh_U8StringSize kh_u8stringview_length(struct kh_U8StringView * view) {
 
   return 0;
 }
+
+kh_bool kh_u8stringview_from_u8string(struct kh_U8StringView * view, struct kh_U8String * string) {
+  view->_u8str  = string;
+  view->_attrib = KH_U8STRING_ATTRIB_U8STR;
+  return KH_TRUE;
+}
