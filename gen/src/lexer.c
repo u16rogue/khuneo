@@ -64,7 +64,7 @@ static enum kh_LexerResponse describe_identifier(DescriberChunk chunk,
   for (; i < chunk_range && is_char_identifier(chunk[i]); ++i) {}
   described->size = i; 
 
-  return KH_LEXER_RES_MATCH;
+  return KH_LEXER_RES_OK;
 }
 
 static enum kh_LexerResponse describe_number(DescriberChunk chunk,
@@ -80,7 +80,7 @@ static enum kh_LexerResponse describe_number(DescriberChunk chunk,
   for (; i < chunk_range && is_char_numeric(chunk[i]); ++i) {}
   described->size = i;
 
-  return KH_LEXER_RES_MATCH;
+  return KH_LEXER_RES_OK;
 }
 
 static enum kh_LexerResponse describe_string(DescriberChunk chunk,
@@ -107,7 +107,7 @@ static enum kh_LexerResponse describe_string(DescriberChunk chunk,
     return KH_LEXER_RES_UNCLOSED;
   }
 
-  return KH_LEXER_RES_MATCH;
+  return KH_LEXER_RES_OK;
   #undef END_MARKER
 }
 
@@ -124,7 +124,7 @@ static enum kh_LexerResponse describe_whitespace(DescriberChunk chunk,
   for (;i < chunk_range && is_char_whitespace(chunk[i]); ++i) {}
   described->size = i;
 
-  return KH_LEXER_RES_MATCH;
+  return KH_LEXER_RES_OK;
 }
 
 static enum kh_LexerResponse describe_symbol(DescriberChunk chunk,
@@ -159,7 +159,7 @@ static enum kh_LexerResponse describe_symbol(DescriberChunk chunk,
   described->type = KH_TOKEN_TYPE_SYMBOL;
   described->symbol.symb = symbol;
   described->symbol.size = size;
-  return KH_LEXER_RES_MATCH;
+  return KH_LEXER_RES_OK;
 }
 
 // [15.05.2024 @u16rogue TODO] sort by average frequency
@@ -188,7 +188,7 @@ enum kh_LexerResponse kh_ll_lexer_describe(const kh_U8Char * const chunk,
       return response;
     }
 
-    if (response == KH_LEXER_RES_MATCH) {
+    if (response == KH_LEXER_RES_OK) {
       return KH_LEXER_RES_OK;
     }
   }
@@ -232,7 +232,7 @@ enum kh_LexerResponse kh_ll_lexer_identifier_to_keyword(const kh_U8Char * const 
     described->type         = KH_TOKEN_TYPE_KEYWORD;
     described->keyword.what = keyword;
     described->keyword.size = identifier_size;
-    return KH_LEXER_RES_MATCH;
+    return KH_LEXER_RES_OK;
   }
 
   return KH_LEXER_RES_PASS;

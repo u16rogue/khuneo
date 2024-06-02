@@ -102,18 +102,14 @@ kh_u32 kh_lexer_describe_size_get(
 enum kh_LexerResponse {
   KH_LEXER_RES_OK          = 0x00,
   //
-  // [15.05.2024 @u16rogue TODO] remove and just use OK
-  // [17.05.2024 @u16rogue NOTE] Just have it the same value.
-  KH_LEXER_RES_MATCH       = 0x00, 
-  KH_LEXER_RES_PASS        = 0x01,
-  KH_LEXER_RES_END         = 0x02,
-
+  KH_LEXER_RES_PASS        = KH_MSGBIT_SET(1),
+  KH_LEXER_RES_END         = KH_MSGBIT_SET(2),
   //
-  KH_LEXER_RES_FAIL        = 0x80,
-  KH_LEXER_RES_UNDESCRIBED = 0x80 | 0x01,
-  KH_LEXER_RES_UNCLOSED    = 0x80 | 0x02,
-  KH_LEXER_RES_INVALID_CTX = 0x80 | 0x03,
-  KH_LEXER_RES_INVALID_OFF = 0x80 | 0x04,
+  KH_LEXER_RES_FAIL        = KH_FAIL_BIT,
+  KH_LEXER_RES_UNDESCRIBED = KH_FAIL_BIT | KH_MSGBIT_SET(1),
+  KH_LEXER_RES_UNCLOSED    = KH_FAIL_BIT | KH_MSGBIT_SET(2),
+  KH_LEXER_RES_INVALID_CTX = KH_FAIL_BIT | KH_MSGBIT_SET(3),
+  KH_LEXER_RES_INVALID_OFF = KH_FAIL_BIT | KH_MSGBIT_SET(4),
 
   /*
    *  [14.03.2024 @u16rogue] NOTE: Preserves the KH_LEXER_RES_FAIL bit.
@@ -122,7 +118,7 @@ enum kh_LexerResponse {
    *  This makes it easy to determine if a result is a failure or not without
    *  any lookup.
    */
-  KH_LEXER_RES_EXTENDED    = 0x7F, // Extended result, see next byte.
+  KH_LEXER_RES_EXTENDED    = 0xFE, // Extended result, see next byte.
 };
 
 //------------------------------------------------------------------------------

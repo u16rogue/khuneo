@@ -43,3 +43,6 @@ typedef enum {
 // -- Helper Macro's
 #define kh_array_length(arr) \
   (sizeof(arr) / sizeof(arr[0]))
+
+#define KH_FAIL_BIT      0x1
+#define KH_MSGBIT_SET(x) (x << 1)
