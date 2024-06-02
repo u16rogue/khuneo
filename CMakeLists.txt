@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 
+option(KH_ENABLE_EXTRA "Enable 'extra' library" OFF)
+
 project("kh")
 
 add_subdirectory("core/")

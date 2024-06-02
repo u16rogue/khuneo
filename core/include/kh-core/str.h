@@ -89,11 +89,15 @@ kh_u8stringview_from_u8string(
   KH_ANT_ARG_IN  struct kh_U8String     * string
 );
 
+// [02.06.2024 @u16rogue NOTE] We set size to  -1 because
+// we operate of our own string handling principles and
+// NOT C's therefore we pretend null terminators dont
+// exist.
 #define                                      \
 kh_u8stringview_from_cstring(cstr) {         \
   ._cstr_raw {                               \
     ._data   = (kh_U8CharPtr)cstr,           \
-    ._size   = sizeof(cstr),                 \
+    ._size   = sizeof(cstr) - 1,             \
   },                                         \
   ._attrib = KH_U8STRING_ATTRIB_IS_RCSTRING, \
 }

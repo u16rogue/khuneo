@@ -173,8 +173,8 @@ static DescriberFn * const describers[] = {
 
   describe_symbol,
   describe_string,
-
-  describe_whitespace, // [15.05.2024 @u16rogue NOTE] Placed this last incase someone wants to implement their own whitespace lexer thing
+  // [15.05.2024 @u16rogue NOTE] Placed this last incase someone wants to implement their own whitespace lexer thing
+  describe_whitespace, 
 };
 
 enum kh_LexerResponse kh_ll_lexer_describe(const kh_U8Char * const chunk,
@@ -293,7 +293,7 @@ enum kh_LexerResponse kh_lexer_gobble_step(struct kh_LexerGobbleContext * ctx) {
     return KH_LEXER_RES_INVALID_OFF;
   }
 
-  if (ctx->_cursor + offset > ctx->_code->_size) {
+  if (ctx->_cursor + offset >= ctx->_code->_size) {
     // [17.05.2024 @u16rogue NOTE] automatic clamping to make sure it's always at buffer end.
     ctx->_cursor = ctx->_code->_size;
     return KH_LEXER_RES_END;
