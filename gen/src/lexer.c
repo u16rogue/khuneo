@@ -287,10 +287,12 @@ enum kh_LexerResponse kh_lexer_gobble_analyze(struct kh_LexerGobbleContext * ctx
   return KH_LEXER_RES_OK;
 }
 
-enum kh_LexerResponse kh_lexer_gobble_step(struct kh_LexerGobbleContext * ctx) {
-  const kh_u32 offset = kh_lexer_describe_size_get(gobble_described_get(ctx));
-  if (offset == 0) {
-    return KH_LEXER_RES_INVALID_OFF;
+enum kh_LexerResponse kh_lexer_gobble_step(struct kh_LexerGobbleContext * ctx, kh_u32 offset) {
+  if (offset == KH_NIL) {
+    offset = kh_lexer_describe_size_get(gobble_described_get(ctx));
+    if (offset == 0) {
+      return KH_LEXER_RES_INVALID_OFF;
+    }
   }
 
   if (ctx->_cursor + offset >= ctx->_code->_size) {

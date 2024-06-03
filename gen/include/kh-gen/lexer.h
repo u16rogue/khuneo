@@ -191,7 +191,8 @@ kh_lexer_gobble_analyze(
 
 enum kh_LexerResponse
 kh_lexer_gobble_step(
-  struct kh_LexerGobbleContext * ctx
+  struct kh_LexerGobbleContext * ctx,
+  KH_ANT_ARG_OPTNIL kh_u32 offset
 );
 
 enum kh_LexerResponse

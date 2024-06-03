@@ -1,11 +1,10 @@
 #pragma once
 
-#include <kh-core/mem.h>
 #include <kh-core/defs.h>
-#include <kh-core/str.h>
 
 enum kh_EvalResponse {
-  KH_EVAL_OK,
+  KH_EVAL_OK   = 0,
+  KH_EVAL_FAIL = KH_FAIL_BIT,
 };
 
 enum kh_EvalResponse kh_eval(const char * code);

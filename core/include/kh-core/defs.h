@@ -15,6 +15,7 @@ typedef long long kh_i64;
 typedef unsigned long long kh_u64;
 
 typedef void * kh_vptr;
+#define KH_NIL  0
 #define KH_PNIL 0
 
 // -- Boolean
