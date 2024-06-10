@@ -2,37 +2,34 @@ cmake_minimum_required(VERSION 3.18)
 
 message("-- kh > extra > Loading")
 
-set(_NAME kh-extra)
-add_library(${_NAME} STATIC)
-kh_target_pedantic(${_NAME})
-target_link_libraries(${_NAME} PUBLIC kh-core)
-
 #-------------------------------------------------------------------------------
 
-function (KH_PROMPT_LOAD target status)
-  message("-- kh > extra > Load extra library for '${target}'... ${status}")
-endfunction()
-
-# Message Load Available
-function (KH_MSGLDAV target)
-  if (TARGET ${target})
-    KH_PROMPT_LOAD("${target}" "Yes.")
+function(KH_LOAD_OPT component)
+  function (KH_PROMPT_LOAD component status)
+    message("-- kh > extra > Load extra library for '${component}'... ${status}")
+  endfunction()
+  if (${KH_COMP_${component}})
+    KH_PROMPT_LOAD("${component}" "Yes.")
+    cmake_parse_arguments(
+      PARSE_ARGV 1
+      KH_OPTS
+      ""
+      ""
+      "SOURCES;INCLUDE"
+    )
+    target_sources(${PROJECT_NAME} PUBLIC ${KH_OPTS_SOURCES})
+    target_include_directories(${PROJECT_NAME} PUBLIC ${KH_OPTS_INCLUDE})
   else()
-    KH_PROMPT_LOAD("${target}" "No.")
+    KH_PROMPT_LOAD("${opt}" "No.")
   endif()
 endfunction()
 
 #-------------------------------------------------------------------------------
 
-# [25-01-2024 - r] TODO: Turn into a macro
-KH_MSGLDAV(kh-gen)
-if (TARGET kh-gen)
-  target_link_libraries(${_NAME} PUBLIC kh-gen)
-  target_sources(${_NAME} PUBLIC
+KH_LOAD_OPT(GEN
+  SOURCES
     "incl-gen/kh-gen-extra/stringify.h"
     "src-gen/stringify.c"
-  )
-  target_include_directories(${_NAME} PUBLIC
+  INCLUDE
     "incl-gen/"
-  )
-endif()
+)

@@ -1,12 +1,5 @@
 #include <kh-gen/lexer.h>
 
-enum kh_LexerInitResponse kh_lexer_init(struct kh_LexerContext * const ctx) {
-  (void)ctx;
-  return KH_LEXER_INIT_OK;
-}
-
-//------------------------------------------------------------------------------
-
 static kh_bool is_char_alpha(const kh_U8Char ch) {
   return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z');
 }

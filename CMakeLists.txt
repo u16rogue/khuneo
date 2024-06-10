@@ -1,29 +1,43 @@
 cmake_minimum_required(VERSION 3.18)
 
-option(KH_ENABLE_EXTRA "Enable 'extra' library" OFF)
+option(KH_COMP_MAIN  "Enable the main implementation" ON )
+option(KH_COMP_GEN   "Enable 'gen' component"         ON )
+option(KH_COMP_EXTRA "Enable 'extra' component"       ON )
+
+#-------------------------------------------------------------------------------
 
 project("kh")
-
-add_subdirectory("core/")
-add_subdirectory("gen/")
-
-add_subdirectory("extra/") # Load last
-
-add_library(${PROJECT_NAME} STATIC
-  "include/kh/kh.h"
-  "src/kh.c"
-)
-
-target_include_directories(${PROJECT_NAME} PUBLIC "include/")
+add_library(${PROJECT_NAME} STATIC)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
   C_STANDARD 17
 )
 
-kh_target_pedantic(${PROJECT_NAME})
-
-target_link_libraries(${PROJECT_NAME}
-  PUBLIC kh-core
-    $<$<TARGET_EXISTS:kh-gen>:kh-gen> 
-    $<$<TARGET_EXISTS:kh-extra>:kh-extra>
+target_compile_options(${PROJECT_NAME}
+  PRIVATE
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:
+      -Wall -Wextra -Wpedantic -Werror -Wsign-conversion>
+    $<$<CXX_COMPILER_ID:MSVC>:
+      /W4 /WX>
 )
+
+#-------------------------------------------------------------------------------
+
+add_subdirectory("core/")
+
+if (KH_COMP_GEN)
+  add_subdirectory("gen/")
+endif()
+
+if (KH_COMP_MAIN)
+  target_sources(${PROJECT_NAME} PUBLIC
+    "include/kh/kh.h"
+    "src/kh.c"
+  )
+  target_include_directories(${PROJECT_NAME} PUBLIC "include/")
+endif()
+
+# Load last
+if (KH_COMP_EXTRA)
+  add_subdirectory("extra/") 
+endif()
