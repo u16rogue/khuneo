@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kh-core/defs.h>
+#include <kh-common/defs.h>
 #include <kh-gen/lexer.h>
 
 struct kh_ParserContext {
@@ -8,8 +8,8 @@ struct kh_ParserContext {
 };
 
 struct _kh_stubctx {
-  struct kh_LexerDescription description;
-  kh_U8Char * cursor;
+  struct kh_LexerDescription * description;
+  kh_U8Char * content;
 };
 
 enum kh_ParserResult {

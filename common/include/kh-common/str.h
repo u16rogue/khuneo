@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kh-core/defs.h>
+#include <kh-common/defs.h>
 
 //-[ String ]-------------------------------------------------------------------
 

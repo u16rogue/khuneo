@@ -23,7 +23,7 @@ target_compile_options(${PROJECT_NAME}
 
 #-------------------------------------------------------------------------------
 
-add_subdirectory("core/")
+add_subdirectory("common/")
 
 if (KH_COMP_GEN)
   add_subdirectory("gen/")

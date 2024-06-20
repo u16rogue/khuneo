@@ -11,7 +11,7 @@
  *  management.
  */
 
-#include <kh-core/defs.h>
+#include <kh-common/defs.h>
 
 //------------------------------------------------------------ 
 //--- Allocator implementation

@@ -1,5 +1,5 @@
-#include <kh-core/mem.h>
-#include <kh-core/impldec.h>
+#include <kh-common/mem.h>
+#include <kh-common/impldec.h>
 
 #if !defined(KH_USERDEF_MEM)
 

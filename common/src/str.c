@@ -1,4 +1,4 @@
-#include <kh-core/str.h>
+#include <kh-common/str.h>
 
 kh_U8Char * kh_u8string_data(struct kh_U8String * string) {
   return kh_u8string_size(string) <= 8 ? string->_idata : string->_pdata;

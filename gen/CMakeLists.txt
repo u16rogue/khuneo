@@ -11,3 +11,5 @@ target_sources(${PROJECT_NAME} PUBLIC
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC "include/")
+
+set(KH_COMP_GEN ON PARENT_SCOPE)

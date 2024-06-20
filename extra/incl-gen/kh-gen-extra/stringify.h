@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kh-core/str.h>
+#include <kh-common/str.h>
 #include <kh-gen/lexer.h>
 
 const kh_U8Char * kh_stringify_token_type(enum kh_TokenType type);
