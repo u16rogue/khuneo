@@ -3,6 +3,7 @@
 #include <kh-common/defs.h>
 #include <kh-gen/lexer.h>
 
+
 struct kh_ParserContext {
   kh_u8 _;
 };
@@ -13,7 +14,7 @@ struct _kh_stubctx {
 };
 
 enum kh_ParserResult {
-  KH_PARSER_RES_OK   = 0,
+  KH_PARSER_RES_OK   = KH_OK,
   KH_PARSER_RES_FAIL = KH_FAIL_BIT,
 };
 
@@ -29,6 +30,8 @@ kh_parser_stop(
 
 enum kh_ParserResult
 kh_parser_feed(
-  struct kh_ParserContext * ctx,
-  struct _kh_stubctx * stub
+  struct kh_ParserContext *     ctx,
+  struct kh_LexerDescription ** descriptions,
+  const  kh_U8Char **           content,
+  const kh_u8                   ncount
 );

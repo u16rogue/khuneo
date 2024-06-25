@@ -173,8 +173,6 @@ static DescriberFn * const describers[] = {
 enum kh_LexerResponse kh_ll_lexer_describe(const kh_U8Char * const chunk,
                                            const kh_U8StringSize chunk_range,
                                            struct kh_LexerDescription * const described) {
-  described->type = KH_TOKEN_TYPE_INVALID;
-
   for (kh_u8 i = 0; i < kh_array_length(describers); ++i) {
     const enum kh_LexerResponse response = describers[i](chunk, chunk_range, described);
     if (response & KH_LEXER_RES_FAIL) {

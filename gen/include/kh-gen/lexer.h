@@ -83,16 +83,16 @@ kh_u32 kh_lexer_describe_size_get(
 //------------------------------------------------------------------------------
 
 enum kh_LexerResponse {
-  KH_LEXER_RES_OK          = 0x00,
+  KH_LEXER_RES_OK          = KH_OK,
   //
-  KH_LEXER_RES_PASS        = KH_MSGBIT_SET(1),
-  KH_LEXER_RES_END         = KH_MSGBIT_SET(2),
+  KH_LEXER_RES_PASS        = KH_MSG_SET(1),
+  KH_LEXER_RES_END         = KH_MSG_SET(2),
   //
   KH_LEXER_RES_FAIL        = KH_FAIL_BIT,
-  KH_LEXER_RES_UNDESCRIBED = KH_FAIL_BIT | KH_MSGBIT_SET(1),
-  KH_LEXER_RES_UNCLOSED    = KH_FAIL_BIT | KH_MSGBIT_SET(2),
-  KH_LEXER_RES_INVALID_CTX = KH_FAIL_BIT | KH_MSGBIT_SET(3),
-  KH_LEXER_RES_INVALID_OFF = KH_FAIL_BIT | KH_MSGBIT_SET(4),
+  KH_LEXER_RES_UNDESCRIBED = KH_FAIL_SET(1),
+  KH_LEXER_RES_UNCLOSED    = KH_FAIL_SET(2),
+  KH_LEXER_RES_INVALID_CTX = KH_FAIL_SET(3),
+  KH_LEXER_RES_INVALID_OFF = KH_FAIL_SET(4),
 
   /*
    *  [14.03.2024 @u16rogue] NOTE: Preserves the KH_LEXER_RES_FAIL bit.

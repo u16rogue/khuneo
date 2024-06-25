@@ -45,5 +45,11 @@ typedef enum {
 #define kh_array_length(arr) \
   (sizeof(arr) / sizeof(arr[0]))
 
-#define KH_FAIL_BIT      0x1
-#define KH_MSGBIT_SET(x) (x << 1)
+#define KH_OK       0
+#define KH_FAIL_BIT 0x01
+
+// [20.06.2024 @u16rogue] Not called `OK_SET` as an ok operation should always
+// be KH_OK therefore a non KH_OK is a non failure notifier.
+#define KH_MSG_SET(x)  (x << 1) 
+
+#define KH_FAIL_SET(x) (KH_MSG_SET(x) | KH_FAIL_BIT)

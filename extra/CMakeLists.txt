@@ -33,3 +33,5 @@ KH_LOAD_OPT(GEN
   INCLUDE
     "incl-gen/"
 )
+
+set(KH_COMP_EXTRA ON PARENT_SCOPE)
