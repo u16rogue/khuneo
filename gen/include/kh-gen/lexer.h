@@ -8,7 +8,7 @@
 enum kh_TokenType {
   KH_TOKEN_TYPE_INVALID,
 
-  // Any wordset that starts with an alphabet, underscommon, or a dollar sign
+  // Any wordset that starts with an alphabet, underscore, or a dollar sign
   // followed consecutively by the same parameters with the addition of numbers.
   KH_TOKEN_TYPE_IDENTIFIER,
   KH_TOKEN_TYPE_KEYWORD,
