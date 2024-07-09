@@ -36,9 +36,10 @@ static enum kh_ParserResult psm_execute(struct kh_ParserContext * const ctx
                                       , const kh_U8Char * content
                                       ) {
 
-  const Instr * instructions = psm_instr_set[set_index];
+  KH_DEBUG_UNUSED(content);
 
-  do {
+  const Instr * instructions = psm_instr_set[set_index];
+  do /*PSMI_SWITCH*/ {
     const Instr instruction = instructions[ctx->_ins_index];
     if (instruction & KH_PSM_HUNGRY) {
       if (description == KH_PNIL) {
@@ -46,25 +47,50 @@ static enum kh_ParserResult psm_execute(struct kh_ParserContext * const ctx
         return KH_PARSER_RES_HUNGRY;
       }
 
+      #define $match_success description = KH_PNIL
       // [02.07.2024 @u16rogue OPTI] premature opt. benchmark in the future
       // Remove the highest bit to assist the compiler in optimizing it with a jump table
       switch(0x7f & instruction) {
         case 0x7f & KH_PSM_IMATCH_KW: {
           if (description->type == KH_TOKEN_TYPE_KEYWORD && description->keyword.what == instructions[ctx->_ins_index + 1]) {
             ctx->_ins_index += 2;
-            description = KH_PNIL;
-            return KH_PARSER_RES_HUNGRY;
-          } else {
-            return KH_PARSER_RES_PASS;
+            $match_success;
           }
           break;
         } 
         case 0x7f & KH_PSM_IMATCH_WS: {
+          if (description->type == KH_TOKEN_TYPE_WHITESPACE) {
+            ctx->_ins_index += 1;
+            $match_success;
+          }
           break;
         }
-        case 0x7f & KH_PSM_IMATCH_ID: { break; }
-        case 0x7f & KH_PSM_IMATCH_SYM: { break; }
+        case 0x7f & KH_PSM_IMATCH_ID: {
+          if (description->type == KH_TOKEN_TYPE_IDENTIFIER) {
+            ctx->_ins_index += 1;
+            $match_success;
+          }
+          break;
+        }
+        case 0x7f & KH_PSM_IMATCH_SYM: {
+          if (description->type == KH_TOKEN_TYPE_SYMBOL) {
+            ctx->_ins_index += 1;
+            $match_success;
+          }
+          break;
+        }
+        default: {
+          return KH_PARSER_RES_INV_INSTR;
+        }
       }
+      #undef $match_success
+
+      if (description != KH_PNIL) {
+        return KH_PARSER_RES_PASS;  // Instruction match unsuccessful
+      }
+
+      goto KH_CONTINUE_PSMI_SWITCH;
+
     } else {
       switch (instruction) {
         case KH_PSM_INOP: {
@@ -102,6 +128,7 @@ enum kh_ParserResult kh_parser_start(struct kh_ParserContext * ctx) {
 }
 
 enum kh_ParserResult kh_parser_stop(struct kh_ParserContext * ctx) {
+  KH_DEBUG_UNUSED(ctx);
   return KH_PARSER_RES_OK;
 }
 
@@ -109,6 +136,12 @@ enum kh_ParserResult kh_parser_feed(struct kh_ParserContext * ctx,
                                     const struct kh_LexerDescription ** descriptions,
                                     const kh_U8Char ** contents,
                                     const kh_u8 ncount) {
+
+  KH_DEBUG_UNUSED(ctx);
+  KH_DEBUG_UNUSED(descriptions);
+  KH_DEBUG_UNUSED(contents);
+  KH_DEBUG_UNUSED(ncount);
+  KH_DEBUG_UNUSED(psm_execute);
 
   // Run through all the available descriptions
   for (kh_u8 i = 0; i < ncount; ++i) {
