@@ -36,7 +36,7 @@ typedef enum {
 #ifdef KH_DEBUG_ALLOW_UNUSED
   // [26.04.2024 @u16rogue] Use this macro if the unused variable is temporary
   // (mainly indev state). Prevents unused from being pushed to release
-  #define KH_DEBUG_UNUSED(x) ((void)x)
+  #define KH_DEBUG_UNUSED(x) KH_UNUSED(x)
 #else
   #define KH_DEBUG_UNUSED(x)
 #endif

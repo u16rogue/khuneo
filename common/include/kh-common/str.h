@@ -11,10 +11,8 @@ typedef kh_u32     kh_U8StringLength;
 
 enum kh_U8StringAttributes {
   KH_U8STRING_ATTRIB_READONLY = (1 << 0),
-  // [27.05.2024 @u16rogue NOTE] If unset and READONLY it can be assumed its
-  // a C string
-  KH_U8STRING_ATTRIB_U8STR      = (1 << 1),
-  KH_U8STRING_ATTRIB_NULLTERM   = (1 << 2),
+  KH_U8STRING_ATTRIB_U8STR    = (1 << 1),
+  KH_U8STRING_ATTRIB_NULLTERM = (1 << 2),
   // KH_U8STRING_ATTRIB_PURE_ASCII = (1 << 3),
 
   //----------------------------------------------------------------------------
@@ -36,23 +34,23 @@ struct kh_U8String {
 
 kh_U8CharPtr
 kh_u8string_data(
-  KH_ANT_ARG_IN struct kh_U8String * string
+  struct kh_U8String * string KH_ANT_ARG_IN
 );
 
 kh_U8StringSize
 kh_u8string_size(
-  KH_ANT_ARG_IN struct kh_U8String * string
+  struct kh_U8String * string KH_ANT_ARG_IN
 );
 
 kh_U8StringSize
 kh_u8string_length(
-  KH_ANT_ARG_IN struct kh_U8String * string
+  struct kh_U8String * string KH_ANT_ARG_IN
 );
 
 kh_bool
 kh_u8string_from_cstr(
-  KH_ANT_ARG_OUT struct kh_U8String * out,
-  KH_ANT_ARG_IN  const char * string
+  struct kh_U8String * out    KH_ANT_ARG_OUT
+, const char         * string KH_ANT_ARG_IN
 );
 
 //-[ String View ]--------------------------------------------------------------
@@ -70,27 +68,27 @@ struct kh_U8StringView {
 
 kh_U8CharPtr
 kh_u8stringview_data(
-  KH_ANT_ARG_IN struct kh_U8StringView * view
+  struct kh_U8StringView * view KH_ANT_ARG_IN
 );
 
 kh_U8StringSize
 kh_u8stringview_size(
-  KH_ANT_ARG_IN struct kh_U8StringView * view
+  struct kh_U8StringView * view KH_ANT_ARG_IN
 );
 
 kh_U8StringSize
 kh_u8stringview_length(
-  KH_ANT_ARG_IN struct kh_U8StringView * view
+  struct kh_U8StringView * view KH_ANT_ARG_IN
 );
 
 kh_bool
 kh_u8stringview_from_u8string(
-  KH_ANT_ARG_OUT struct kh_U8StringView * view,
-  KH_ANT_ARG_IN  struct kh_U8String     * string
+  struct kh_U8StringView * view   KH_ANT_ARG_OUT
+, struct kh_U8String     * string KH_ANT_ARG_IN
 );
 
-// [02.06.2024 @u16rogue NOTE] We set size to  -1 because
-// we operate of our own string handling principles and
+// [02.06.2024 @u16rogue NOTE] We set size to -1 because
+// we operate on our own string handling principles and
 // NOT C's therefore we pretend null terminators dont
 // exist.
 #define                                      \

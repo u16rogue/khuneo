@@ -30,9 +30,9 @@ struct kh_ImplAllocEx {
 extern
 void *                                              // Address of Allocated memory
 kh__impl_alloc(
-  KH_ANT_ARG_OPTNIL kh_vptr address,                // Preferred address or address for re-allocation
-  kh_u64 size,                                      // Size in bytes to allocate
-  KH_ANT_ARG_INOUT struct kh_ImplAllocEx * extended // Extended information
+  kh_vptr address KH_ANT_ARG_OPTNIL                 // Preferred address or address for re-allocation
+, kh_u64 size,                                      // Size in bytes to allocate
+  struct kh_ImplAllocEx * extended KH_ANT_ARG_INOUT // Extended information
 );
 
 //------------------------------------------------------------ 
@@ -52,7 +52,7 @@ struct kh_ImplDeAllocEx {
 extern
 kh_u64                                                // Size of memory free'd (opt)
 kh__impl_dealloc(
-  KH_ANT_ARG_IN kh_vptr address,                      // Memory address to deallocate
-  kh_u64 size,                                        // Size of the memory to deallocate
-  KH_ANT_ARG_INOUT struct kh_ImplDeAllocEx * extended // Extended information
+  kh_vptr address KH_ANT_ARG_IN                       // Memory address to deallocate
+, kh_u64  size                                        // Size of the memory to deallocate
+, struct kh_ImplDeAllocEx * extended KH_ANT_ARG_INOUT // Extended information
 );
