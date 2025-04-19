@@ -1,0 +1,20 @@
+.{
+    .name = "khuneo",
+    .version = "0.0.1",
+    //.minimum_zig_version = "0.11.0",
+    .dependencies = .{
+        //.example = .{
+        //    .url = "https://example.com/foo.tar.gz",
+        //    .hash = "...",
+        //    .path = "foo",
+        //    .lazy = false,
+        //},
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "khuneo",
+        "libkhuneo",
+        "pkr",
+    },
+}

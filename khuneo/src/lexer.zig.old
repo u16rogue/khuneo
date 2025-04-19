@@ -1,0 +1,67 @@
+/// @deprecated Old implementation of `peek`
+    fn _peek(self: *Tokenizer) ErrorPeek!Token {
+        if (self._index >= self._source.len) {
+            return .exhausted;
+        }
+
+        var state: enum {
+            none,
+            identifier,
+            comment,
+            number,
+            ws_space,
+            ws_tab,
+            ws_carriage,
+            ws_newline,
+        } = .none;
+
+        var match_len: usize = 0;
+        consumer: for (self._source[self._index..]) |value| {
+            defer match_len += 1;
+            switch (state) {
+                .none => {
+                    switch (value) {
+                        '#' => state = .comment,
+                        ' ' => state = .ws_space,
+                        '\t' => state = .ws_tab,
+                        '\r' => state = .ws_carriage,
+                        '\n' => state = .ws_newline,
+                        '0'...'9' => state = .number,
+                        'A'...'Z', 'a'...'z', '$', '_' => state = .identifier,
+                        '@', '!', '=', '+', '-', '.', '{', '}', ';', '\'', '"', '(', ')', ',', ':', '?', '[', ']', '&' => return .{ .symbol = value },
+                        else => return error.InvalidCharacter,
+                    }
+                    if (state != .none) continue :consumer;
+                },
+                .identifier => switch (value) {
+                    'A'...'Z', 'a'...'z', '$', '_', '0'...'9' => continue :consumer,
+                    else => {},
+                },
+                .number => switch (value) {
+                    '0'...'9' => continue :consumer,
+                    else => {},
+                },
+                .comment => switch (value) {
+                    '\n' => {},
+                    else => continue :consumer,
+                },
+                .ws_space => if (value == ' ') continue :consumer,
+                .ws_tab => if (value == '\t') continue :consumer,
+                .ws_carriage => if (value == '\r') continue :consumer,
+                .ws_newline => if (value == '\n') continue :consumer,
+            }
+
+            // If we can no longer match check the state on how to deal with the slice
+            switch (state) {
+                .none        => return error.InvalidCharacter,
+                .identifier  => return .{ .identifier = self._source[self._index.. self._index + match_len] },
+                .comment     => return .{ .comment    = self._source[self._index.. self._index + match_len] },
+                .number      => return .{ .number     = self._source[self._index.. self._index + match_len] },
+                .ws_space    => return .{ .whitespace = .{ .kind = .space,    .length = match_len } },
+                .ws_tab      => return .{ .whitespace = .{ .kind = .tab,      .length = match_len } },
+                .ws_carriage => return .{ .whitespace = .{ .kind = .carriage, .length = match_len } },
+                .ws_newline  => return .{ .whitespace = .{ .kind = .newline,  .length = match_len } },
+            }
+        }
+        return .exhausted;
+    }
